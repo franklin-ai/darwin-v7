@@ -1,0 +1,10 @@
+[package]
+name = "darwin-v7"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Unofficial rust client for the [V7 annotation platform](https://darwin.v7labs.com/)"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
