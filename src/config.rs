@@ -1,14 +1,12 @@
-use crate::types::Team;
+use crate::team::Team;
 use anyhow::{Context, Result};
 use serde_yaml;
 use std::io::Read;
 use std::path::Path;
-use std::{collections::HashMap, fs::File, path::PathBuf};
+use std::{collections::HashMap, fs::File};
 
-pub const DEFAULT_CONFIG_PATH: &str = "~/.darwin/config";
-
+#[derive(Debug, Clone)]
 pub struct Config {
-    path: Option<PathBuf>,
     base_url: String,
     api_endpoint: String,
     default_team: String,
@@ -16,8 +14,18 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn path(&self) -> &Option<PathBuf> {
-        &self.path
+    pub fn new(
+        base_url: String,
+        api_endpoint: String,
+        default_team: String,
+        teams: HashMap<String, Team>,
+    ) -> Self {
+        Self {
+            base_url,
+            api_endpoint,
+            default_team,
+            teams,
+        }
     }
 
     pub fn base_url(&self) -> &str {
@@ -28,16 +36,19 @@ impl Config {
         &self.api_endpoint
     }
 
-    pub fn default_team(&self) -> &Team {
-        self.teams.get(&self.default_team).unwrap()
+    pub fn default_team(&self) -> &String {
+        &self.default_team
     }
 
     pub fn teams(&self) -> &HashMap<String, Team> {
         &self.teams
     }
 
-    pub fn from_file<T: AsRef<Path>>(file_path: T) -> Result<Self> {
-        let mut file = File::open(file_path)?;
+    pub fn from_file<T>(file_path: T) -> Result<Self>
+    where
+        T: AsRef<Path>,
+    {
+        let mut file = File::open(&file_path)?;
         let mut buffer = String::new();
         file.read_to_string(&mut buffer)?;
 
@@ -80,7 +91,6 @@ impl TryFrom<&str> for Config {
         }
 
         Ok(Self {
-            path: None, // If provided from a string is set to None
             base_url,
             api_endpoint,
             default_team,
@@ -110,14 +120,14 @@ teams:
 
     #[test]
     fn test_config_from_str() {
-        let config: Config = CONFIG_STR.try_into().unwrap();
+        let config = Config::try_from(CONFIG_STR).unwrap();
 
         assert_eq!(config.api_endpoint(), "https://darwin.v7labs.com/api/");
         assert_eq!(config.base_url(), "https://darwin.v7labs.com");
 
         // Get the known default team
-        let default_team = config.teams().get("team-a").unwrap();
-        assert_eq!(config.default_team(), default_team);
+        let default_team = config.teams().get(config.default_team()).unwrap();
+        assert_eq!(default_team.slug(), "team-a");
 
         // Check the teams
         let team_keys: Vec<String> = config.teams().keys().map(|x| x.clone()).collect();
@@ -126,7 +136,7 @@ teams:
         assert!(team_keys.contains(&"team-b".to_string()));
 
         // Check the default team
-        let default_team = config.default_team();
+        let default_team = config.teams().get(config.default_team()).unwrap();
         assert_eq!(default_team.slug(), "team-a");
 
         // Get the other team
@@ -144,11 +154,12 @@ teams:
         write!(file, "{}", CONFIG_STR).unwrap();
 
         let config = Config::from_file(file.path()).unwrap();
+
         assert_eq!(config.api_endpoint(), "https://darwin.v7labs.com/api/");
         assert_eq!(config.base_url(), "https://darwin.v7labs.com");
 
         // Get the known default team
-        let default_team = config.teams().get("team-a").unwrap();
-        assert_eq!(config.default_team(), default_team);
+        let default_team = config.teams().get(config.default_team()).unwrap();
+        assert_eq!(default_team.slug(), "team-a");
     }
 }
