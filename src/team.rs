@@ -10,6 +10,13 @@ pub struct Team {
 }
 
 impl Team {
+    pub fn new(slug: String, datasets_dir: Option<PathBuf>, api_key: Option<String>) -> Self {
+        Self {
+            slug,
+            datasets_dir,
+            api_key,
+        }
+    }
     pub fn slug(&self) -> &str {
         &self.slug
     }
