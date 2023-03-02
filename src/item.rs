@@ -1,4 +1,5 @@
 use crate::workflow::Workflow;
+use anyhow::bail;
 use fake::{Dummy, Fake, Faker};
 use serde::ser::SerializeMap;
 use serde::{de::MapAccess, de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
@@ -201,6 +202,24 @@ impl Display for DatasetItemStatus {
             DatasetItemStatus::Review => write!(f, "Review"),
             DatasetItemStatus::Uploading => write!(f, "Uploading"),
         }
+    }
+}
+
+impl TryFrom<&str> for DatasetItemStatus {
+    type Error = anyhow::Error;
+
+    fn try_from(value: &str) -> Result<Self, <DatasetItemStatus as TryFrom<&str>>::Error> {
+        Ok(match value.to_lowercase().as_str() {
+            "annotate" => Self::Annotate,
+            "archived" => Self::Archived,
+            "complete" => Self::Complete,
+            "error" => Self::Error,
+            "new" => Self::New,
+            "processing" => Self::Processing,
+            "review" => Self::Review,
+            "uploading" => Self::Uploading,
+            _ => bail!("Cannot convert DatasetItemStatus from {value}"),
+        })
     }
 }
 

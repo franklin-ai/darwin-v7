@@ -90,7 +90,7 @@ pub struct Workflow {
     pub current_workflow_stage_template_id: u32,
     pub dataset_item_id: u32,
     pub id: u32,
-    pub stages: HashMap<String, Vec<Stage>>,
+    pub stages: HashMap<u32, Vec<Stage>>,
     pub status: String, // This can probably be an enum
     pub workflow_template_id: u32,
 }

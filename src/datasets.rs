@@ -1,7 +1,8 @@
 use crate::client::V7Client;
 use crate::expect_http_ok;
+use crate::filter::Filter;
 use crate::item::DatasetItem;
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 use fake::{Dummy, Fake};
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
@@ -62,12 +63,70 @@ pub struct Dataset {
     pub work_prioritization: Option<String>,
 }
 
+// TODO: Fix this when working on the annotation aspects of the APi
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+pub struct AnnotationClass {
+    pub id: u32,
+    pub name: String,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+pub struct AnnotationType {
+    pub id: u32,
+    pub count: u32,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+pub struct ExportMetadata {
+    pub annotation_classes: Vec<AnnotationClass>,
+    pub annotation_types: Vec<AnnotationType>,
+}
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+pub struct Export {
+    pub download_url: String,
+    pub format: String,
+    pub inserted_at: String,
+    pub latest: bool,
+    pub metadata: ExportMetadata,
+}
+
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
 struct DatasetName {
     pub name: String,
 }
 
 impl Dataset {
+    pub async fn assign_items(
+        &self,
+        client: &V7Client,
+        assignee_id: &u32,
+        filter: &Filter,
+    ) -> Result<()> {
+        #[derive(Serialize, Deserialize)]
+        struct Payload {
+            pub assignee_id: u32,
+            pub filter: Filter,
+        }
+
+        let payload = Payload {
+            assignee_id: *assignee_id,
+            filter: filter.clone(),
+        };
+
+        let response = client
+            .post(&format!("datasets/{}/assign_items", self.id), &payload)
+            .await?;
+
+        let status = response.status();
+
+        // 204 is correct operation for this endpoint
+        if status != 204 {
+            bail!("Invalid status code {status}")
+        }
+
+        Ok(())
+    }
+
     pub async fn create_dataset(client: &V7Client, name: String) -> Result<Dataset> {
         let response = client.post("datasets", &DatasetName { name }).await?;
 
@@ -82,6 +141,59 @@ impl Dataset {
         expect_http_ok!(response, Dataset)
     }
 
+    pub async fn generate_export(
+        &self,
+        client: &V7Client,
+        export_name: &String,
+        filter: &Filter,
+    ) -> Result<()> {
+        let endpoint = format!(
+            "teams/{}/datasets/{}/exports",
+            self.team_slug.as_ref().context("Missing team slug")?,
+            self.slug
+        );
+
+        // TODO: pass these through to method
+        #[derive(Serialize, Deserialize)]
+        struct Payload {
+            pub name: String,
+            pub format: String,
+            pub include_authorship: bool,
+            pub include_export_token: bool,
+            pub filter: Filter,
+        }
+
+        let payload = Payload {
+            name: export_name.to_string(),
+            format: "json".to_string(),
+            include_authorship: true,
+            include_export_token: true,
+            filter: filter.clone(),
+        };
+
+        let response = client.post(&endpoint, &payload).await?;
+
+        let status = response.status();
+
+        if status != 200 {
+            bail!("Invalid status code {status}")
+        }
+
+        Ok(())
+    }
+
+    pub async fn list_exports(&self, client: &V7Client) -> Result<Vec<Export>> {
+        let endpoint = format!(
+            "teams/{}/datasets/{}/exports",
+            self.team_slug.as_ref().context("Missing team slug")?,
+            self.slug
+        );
+
+        let response = client.get(&endpoint).await?;
+
+        expect_http_ok!(response, Vec<Export>)
+    }
+
     pub async fn list_datasets(client: &V7Client) -> Result<Vec<Dataset>> {
         let response = client.get("datasets").await?;
 
@@ -92,6 +204,32 @@ impl Dataset {
         let response = client.get(&format!("datasets/{}/items", self.id)).await?;
 
         expect_http_ok!(response, Vec<DatasetItem>)
+    }
+
+    pub async fn set_stage(&self, client: &V7Client, stage: &u32, filter: &Filter) -> Result<()> {
+        #[derive(Debug, Serialize, Deserialize)]
+        struct Payload {
+            pub workflow_stage_template_id: u32,
+            pub filter: Filter,
+        }
+
+        let payload = Payload {
+            workflow_stage_template_id: *stage,
+            filter: filter.clone(),
+        };
+
+        let response = client
+            .put(&format!("datasets/{}/set_stage", self.id), Some(&payload))
+            .await?;
+
+        let status = response.status();
+
+        // 204 is correct operation for this endpoint
+        if status != 204 {
+            bail!("Invalid status code {status}")
+        }
+
+        Ok(())
     }
 
     pub async fn show_dataset(client: &V7Client, id: &u32) -> Result<Dataset> {
@@ -105,7 +243,7 @@ impl Display for Dataset {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{{id-{}}}:{}/{}",
+            "{}:{}/{}",
             self.id,
             self.team_slug.as_ref().unwrap_or(&"team-slug".to_string()),
             self.slug
