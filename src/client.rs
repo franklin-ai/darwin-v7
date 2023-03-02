@@ -56,6 +56,22 @@ impl RawClient {
             .send()
             .await
     }
+
+    async fn put<S: serde::Serialize + ?Sized>(
+        &self,
+        address: &str,
+        api_key: &str,
+        data: Option<&S>,
+    ) -> Result<reqwest::Response, reqwest::Error> {
+        let api_key = format!("ApiKey {}", api_key);
+        let request = self.client.put(address).header(AUTHORIZATION, api_key);
+
+        if let Some(payload) = data {
+            request.json(payload).send().await
+        } else {
+            request.send().await
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -108,6 +124,15 @@ impl V7Client {
     pub async fn get(&self, endpoint: &str) -> Result<reqwest::Response, reqwest::Error> {
         let endpoint = format!("{}/{}", self.api_endpoint, endpoint);
         self.client.get(&endpoint, &self.api_key).await
+    }
+
+    pub async fn put<S: serde::Serialize + ?Sized>(
+        &self,
+        endpoint: &str,
+        data: Option<&S>,
+    ) -> Result<reqwest::Response, reqwest::Error> {
+        let endpoint = format!("{}/{}", self.api_endpoint, endpoint);
+        self.client.put(&endpoint, &self.api_key, data).await
     }
 
     pub async fn post<S: serde::Serialize + ?Sized>(
@@ -241,6 +266,42 @@ mod tests {
 
         let status = client
             .post("testpost", &serde_json::json!({"id": "12345"}))
+            .await
+            .unwrap()
+            .status();
+        assert_eq!(status, 200);
+    }
+
+    #[tokio::test]
+    async fn test_basic_put_call() {
+        // Setup the mock endpoint
+        let mock_server = MockServer::start().await;
+
+        let api_key = "api-key-1234".to_string();
+        let payload = serde_json::json!({"id": "12345"});
+
+        Mock::given(method("PUT"))
+            .and(path("/testput"))
+            .and(header("accept", "application/json"))
+            .and(header("content-type", "application/json"))
+            .and(header(
+                "Authorization",
+                format!("ApiKey {}", api_key).as_str(),
+            ))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&mock_server)
+            .await;
+
+        // Setup the client
+        let client = V7Client::new(
+            mock_server.uri().to_string(),
+            api_key.clone(),
+            "some-team".to_string(),
+        )
+        .unwrap();
+
+        let status = client
+            .put::<String>("testput", None)
             .await
             .unwrap()
             .status();

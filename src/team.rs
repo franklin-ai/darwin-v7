@@ -1,12 +1,40 @@
-use anyhow::Context;
+use crate::expect_http_ok;
+use anyhow::{bail, Context, Result};
+use serde::{Deserialize, Serialize};
 use serde_yaml::Value;
-use std::path::PathBuf;
+use std::{fmt::Display, path::PathBuf};
+
+use crate::client::V7Client;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Team {
     slug: String,
     datasets_dir: Option<PathBuf>,
     api_key: Option<String>,
+}
+
+#[derive(Debug, Default, Serialize, Deserialize, PartialEq, Eq, Clone)]
+pub struct TeamMember {
+    pub id: u32,
+    pub email: Option<String>,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    pub role: Option<String>,
+    pub team_id: u32,
+    pub user_id: u32,
+}
+
+impl Display for TeamMember {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{{id-{}}}{} {} ({})",
+            self.user_id,
+            self.first_name.as_ref().unwrap_or(&String::new()),
+            self.last_name.as_ref().unwrap_or(&String::new()),
+            self.email.as_ref().unwrap_or(&String::new())
+        )
+    }
 }
 
 impl Team {
@@ -27,6 +55,12 @@ impl Team {
 
     pub fn api_key(&self) -> &Option<String> {
         &self.api_key
+    }
+
+    pub async fn list_memberships(client: &V7Client) -> Result<Vec<TeamMember>> {
+        let response = client.get("memberships").await?;
+
+        expect_http_ok!(response, Vec<TeamMember>)
     }
 }
 
