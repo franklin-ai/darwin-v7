@@ -173,13 +173,7 @@ impl Dataset {
 
         let response = client.post(&endpoint, &payload).await?;
 
-        let status = response.status();
-
-        if status != 200 {
-            bail!("Invalid status code {status}")
-        }
-
-        Ok(())
+        expect_http_ok!(response, ())
     }
 
     pub async fn list_exports(&self, client: &V7Client) -> Result<Vec<Export>> {
