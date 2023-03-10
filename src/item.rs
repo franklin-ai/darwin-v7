@@ -24,7 +24,7 @@ pub struct ImageLevel {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Levels {
-    pub image_levels: HashMap<String, ImageLevel>,
+    pub image_levels: HashMap<u32, ImageLevel>,
     pub base_key: String,
 }
 
@@ -84,21 +84,21 @@ impl<'de> Visitor<'de> for LevelVisitor {
     where
         M: MapAccess<'de>,
     {
-        let mut image_levels: HashMap<String, ImageLevel> = HashMap::new();
+        let mut image_levels: HashMap<u32, ImageLevel> = HashMap::new();
         let mut base_key = String::new();
 
         while let Some(k) = map.next_key::<&str>()? {
             if k == "base_key" {
                 base_key = map.next_value::<String>()?;
             } else {
-                let level_key = match k.parse::<usize>() {
+                let level_key = match k.parse::<u32>() {
                     Ok(val) => val,
                     Err(_) => return Err(serde::de::Error::custom(&format!("Invalid key: {}", k))),
                 };
 
                 let level: ImageLevel = map.next_value()?;
 
-                image_levels.insert(level_key.to_string(), level);
+                image_levels.insert(level_key, level);
             }
         }
 
@@ -118,7 +118,7 @@ impl Dummy<fake::Faker> for Levels {
         for lvl in 1..max_levels {
             let img_level: ImageLevel = Faker.fake_with_rng(rng);
             let lvl = lvl - 1;
-            image_levels.insert(lvl.to_string(), img_level);
+            image_levels.insert(lvl, img_level);
         }
 
         Self {
@@ -136,10 +136,6 @@ pub struct Image {
     pub width: Option<u32>,
     pub id: u32,
     pub key: Option<String>,
-    // Levels can either be a hashmap of levels, sometimes
-    // there is a key "base_key" that has a string value
-    // not a Level struct
-    // TODO: manage this better
     pub levels: Option<Levels>,
     pub original_filename: Option<String>,
     pub thumbnail_url: Option<String>,
@@ -224,6 +220,25 @@ impl TryFrom<&str> for DatasetItemStatus {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+pub struct DataPayloadLevel {
+    pub levels: HashMap<u32, ImageLevel>,
+    pub base_key: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+pub struct AddDataPayload {
+    #[serde(rename = "type")]
+    pub item_type: DatasetItemTypes, // This can probably be an enum
+    pub filename: String,
+    pub thumbnail_key: String,
+    pub path: String,
+    pub key: String,
+    pub width: u32,
+    pub height: u32,
+    pub metadata: DataPayloadLevel,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
 pub struct DatasetItem {
     pub archived: bool,
     pub archived_reason: Option<String>,
@@ -292,11 +307,7 @@ mod test_serde {
 
         assert_eq!(image_level.base_key, "some-base-key.jpg".to_string());
         assert_eq!(
-            image_level
-                .image_levels
-                .get(&"0".to_string())
-                .unwrap()
-                .format,
+            image_level.image_levels.get(&0).unwrap().format,
             "png".to_string()
         );
 
@@ -434,13 +445,13 @@ mod test_serde {
             .unwrap()
             .stages
             .keys()
-            .map(|x| x.to_string())
-            .collect::<Vec<String>>()
-            .contains(&"1".to_string()));
+            .map(|x| x.clone())
+            .collect::<Vec<u32>>()
+            .contains(&1));
 
         let level_0 = ser_item.dataset_image.image.levels.unwrap();
         assert_eq!(
-            level_0.image_levels.get("0").unwrap().format,
+            level_0.image_levels.get(&0).unwrap().format,
             "png".to_string()
         );
         assert_eq!(level_0.base_key, "some-base-key.jpg".to_string());
