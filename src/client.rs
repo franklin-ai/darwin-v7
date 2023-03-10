@@ -122,7 +122,7 @@ impl V7Client {
     }
 
     pub async fn get(&self, endpoint: &str) -> Result<reqwest::Response, reqwest::Error> {
-        let endpoint = format!("{}/{}", self.api_endpoint, endpoint);
+        let endpoint = format!("{}{}", self.api_endpoint, endpoint);
         self.client.get(&endpoint, &self.api_key).await
     }
 
@@ -131,7 +131,7 @@ impl V7Client {
         endpoint: &str,
         data: Option<&S>,
     ) -> Result<reqwest::Response, reqwest::Error> {
-        let endpoint = format!("{}/{}", self.api_endpoint, endpoint);
+        let endpoint = format!("{}{}", self.api_endpoint, endpoint);
         self.client.put(&endpoint, &self.api_key, data).await
     }
 
@@ -140,7 +140,7 @@ impl V7Client {
         endpoint: &str,
         data: &S,
     ) -> Result<reqwest::Response, reqwest::Error> {
-        let endpoint = format!("{}/{}", self.api_endpoint, endpoint);
+        let endpoint = format!("{}{}", self.api_endpoint, endpoint);
         self.client.post(&endpoint, &self.api_key, data).await
     }
 }
