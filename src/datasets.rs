@@ -1,13 +1,14 @@
 use crate::client::V7Client;
 use crate::expect_http_ok;
 use crate::filter::Filter;
-use crate::item::DatasetItem;
+use crate::item::{AddDataPayload, DatasetItem};
 use anyhow::{bail, Context, Result};
 use fake::{Dummy, Fake};
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 use std::collections::HashMap;
 use std::fmt::Display;
+use std::io::{Read, Write};
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
 pub struct AnnotationHotKeys {
@@ -95,7 +96,63 @@ struct DatasetName {
     pub name: String,
 }
 
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+struct AddDataItemsPayload {
+    pub items: Vec<AddDataPayload>,
+    pub storage_name: String,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+pub struct ResponseItem {
+    pub dataset_item_id: u64,
+    pub filename: String,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+pub struct AddDataItemsResponse {
+    pub blocked_items: Vec<ResponseItem>,
+    pub items: Vec<ResponseItem>,
+}
+
 impl Dataset {
+    pub async fn archive_all_files(&self, client: &V7Client) -> Result<()> {
+        let item_ids: Vec<u32> = self
+            .list_dataset_items(client)
+            .await?
+            .iter()
+            .filter(|x| !x.archived)
+            .map(|x| x.id.clone())
+            .collect();
+        let mut filter = Filter::default();
+        filter.dataset_item_ids = Some(item_ids);
+
+        self.archive_items(client, &filter).await
+    }
+
+    /// The docs say a reason is required, but the call actually fails if it is provided
+    /// https://docs.v7labs.com/v1.0/reference/archive
+    pub async fn archive_items(&self, client: &V7Client, filter: &Filter) -> Result<()> {
+        #[derive(Serialize, Deserialize)]
+        struct Payload {
+            pub filter: Filter,
+        }
+
+        let payload = Payload {
+            filter: filter.clone(),
+        };
+
+        let endpoint = &format!("datasets/{}/items/archive", self.id);
+        let response = client.put(endpoint, Some(&payload)).await?;
+
+        let status = response.status();
+
+        // 204 is correct operation for this endpoint
+        if status != 204 {
+            bail!("Invalid status code {status}")
+        }
+        Ok(())
+    }
+
     pub async fn assign_items(
         &self,
         client: &V7Client,
@@ -127,10 +184,50 @@ impl Dataset {
         Ok(())
     }
 
-    pub async fn create_dataset(client: &V7Client, name: String) -> Result<Dataset> {
-        let response = client.post("datasets", &DatasetName { name }).await?;
+    pub async fn create_dataset(client: &V7Client, name: &String) -> Result<Dataset> {
+        let response = client
+            .post("datasets", &DatasetName { name: name.clone() })
+            .await?;
 
         expect_http_ok!(response, Dataset)
+    }
+
+    pub async fn add_data_to_dataset(
+        &self,
+        client: &V7Client,
+        data: Vec<AddDataPayload>,
+        external_storage: String,
+    ) -> Result<AddDataItemsResponse> {
+        let api_payload = AddDataItemsPayload {
+            items: data,
+            storage_name: external_storage,
+        };
+
+        let mut file = std::fs::File::open("/home/ben/Workspace/franklin-datalake/src/labelling-operations/datalake-labelops-management-cli/old_payload.json")?;
+        let mut buffer = String::new();
+        file.read_to_string(&mut buffer)?;
+
+        print!("{}", buffer);
+
+        let api_payload: AddDataItemsPayload = serde_json::from_str(buffer.as_str())?;
+
+        // let mut file = std::fs::File::create("payload.json")?;
+        // let log: String = serde_json::to_string_pretty(&api_payload)?;
+        // file.write_all(log.as_bytes())?;
+
+        let endpoint = format!(
+            "teams/{}/datasets/{}/data",
+            self.team_slug
+                .as_ref()
+                .context("Dataset is missing team slug")?,
+            self.slug
+        );
+
+        let response = client.put(&endpoint, Some(&api_payload)).await?;
+
+        println!("{:#?}", response);
+
+        expect_http_ok!(response, AddDataItemsResponse)
     }
 
     pub async fn archive_dataset(&self, client: &V7Client) -> Result<Dataset> {
