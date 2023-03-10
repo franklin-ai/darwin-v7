@@ -88,6 +88,36 @@ impl TryFrom<(&Value, &Value)> for Team {
     }
 }
 
+pub mod helpers {
+    use anyhow::Result;
+
+    use crate::client::V7Client;
+
+    use super::{Team, TeamMember};
+
+    pub async fn find_team_members<F>(client: &V7Client, func: F) -> Result<Vec<TeamMember>>
+    where
+        F: Fn(&TeamMember) -> bool,
+    {
+        Ok(Team::list_memberships(client)
+            .await?
+            .iter()
+            .filter(|x| func(*x))
+            .map(|x| x.clone())
+            .collect::<Vec<TeamMember>>())
+    }
+
+    pub async fn find_team_members_by_email(
+        client: &V7Client,
+        email: &str,
+    ) -> Result<Vec<TeamMember>> {
+        find_team_members(client, |x| -> bool {
+            x.email.as_ref().unwrap_or(&String::new()).contains(email)
+        })
+        .await
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
