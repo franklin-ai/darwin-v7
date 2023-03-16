@@ -1,5 +1,5 @@
 use crate::workflow::Workflow;
-use anyhow::bail;
+use anyhow::{bail, Result};
 use fake::{Dummy, Fake, Faker};
 use serde::ser::SerializeMap;
 use serde::{de::MapAccess, de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
@@ -15,11 +15,11 @@ use std::fmt::{self, Display};
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
 pub struct ImageLevel {
     pub format: String,
-    pub pixel_ratio: Option<u16>,
-    pub tile_height: Option<u32>,
-    pub tile_width: Option<u32>,
-    pub x_tiles: Option<u32>,
-    pub y_tiles: Option<u32>,
+    pub pixel_ratio: u16,
+    pub tile_height: u32,
+    pub tile_width: u32,
+    pub x_tiles: u32,
+    pub y_tiles: u32,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -221,7 +221,7 @@ impl TryFrom<&str> for DatasetItemStatus {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
 pub struct DataPayloadLevel {
-    pub levels: HashMap<u32, ImageLevel>,
+    pub levels: HashMap<usize, ImageLevel>,
     pub base_key: String,
 }
 

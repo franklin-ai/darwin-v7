@@ -1,8 +1,9 @@
 use crate::config::Config;
 use anyhow::{Context, Result};
+use async_trait::async_trait;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct RawClient {
     client: reqwest::Client,
 }
@@ -74,12 +75,27 @@ impl RawClient {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct V7Client {
     api_endpoint: String,
     api_key: String,
     team: String,
     client: RawClient,
+}
+
+#[async_trait]
+pub trait V7Methods {
+    async fn get(&self, endpoint: &str) -> Result<reqwest::Response, reqwest::Error>;
+    async fn put<S: serde::Serialize + ?Sized + std::marker::Sync>(
+        &self,
+        endpoint: &str,
+        data: Option<&S>,
+    ) -> Result<reqwest::Response, reqwest::Error>;
+    async fn post<S: serde::Serialize + ?Sized + std::marker::Sync>(
+        &self,
+        endpoint: &str,
+        data: &S,
+    ) -> Result<reqwest::Response, reqwest::Error>;
 }
 
 impl V7Client {
@@ -120,13 +136,16 @@ impl V7Client {
     pub fn team(&self) -> &String {
         &self.team
     }
+}
 
-    pub async fn get(&self, endpoint: &str) -> Result<reqwest::Response, reqwest::Error> {
+#[async_trait]
+impl V7Methods for V7Client {
+    async fn get(&self, endpoint: &str) -> Result<reqwest::Response, reqwest::Error> {
         let endpoint = format!("{}{}", self.api_endpoint, endpoint);
         self.client.get(&endpoint, &self.api_key).await
     }
 
-    pub async fn put<S: serde::Serialize + ?Sized>(
+    async fn put<S: serde::Serialize + ?Sized + std::marker::Sync>(
         &self,
         endpoint: &str,
         data: Option<&S>,
@@ -135,7 +154,7 @@ impl V7Client {
         self.client.put(&endpoint, &self.api_key, data).await
     }
 
-    pub async fn post<S: serde::Serialize + ?Sized>(
+    async fn post<S: serde::Serialize + ?Sized + std::marker::Sync>(
         &self,
         endpoint: &str,
         data: &S,
@@ -278,7 +297,7 @@ mod tests {
         let mock_server = MockServer::start().await;
 
         let api_key = "api-key-1234".to_string();
-        let payload = serde_json::json!({"id": "12345"});
+        // let payload = serde_json::json!({"id": "12345"});
 
         Mock::given(method("PUT"))
             .and(path("/testput"))
