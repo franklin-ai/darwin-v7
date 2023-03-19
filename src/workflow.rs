@@ -80,7 +80,7 @@ pub struct WorkflowStageTemplate {
     pub metadata: TemplateMetadata,
     pub name: Option<String>,
     pub workflow_stage_template_assignees: Vec<TemplateAssignee>,
-    pub stage_number: Option<u32>,
+    pub stage_number: Option<usize>,
     #[serde(rename = "type")]
     pub stage_type: StageType,
     pub workflow_template_id: Option<u32>,

@@ -87,7 +87,7 @@ impl TryFrom<&str> for Config {
 
         for team in team_mapping.iter() {
             let team = Team::try_from(team)?;
-            teams.insert(team.slug().to_string(), team);
+            teams.insert(team.slug.to_string(), team);
         }
 
         Ok(Self {
@@ -127,7 +127,7 @@ teams:
 
         // Get the known default team
         let default_team = config.teams().get(config.default_team()).unwrap();
-        assert_eq!(default_team.slug(), "team-a");
+        assert_eq!(default_team.slug, "team-a");
 
         // Check the teams
         let team_keys: Vec<String> = config.teams().keys().map(|x| x.clone()).collect();
@@ -137,12 +137,12 @@ teams:
 
         // Check the default team
         let default_team = config.teams().get(config.default_team()).unwrap();
-        assert_eq!(default_team.slug(), "team-a");
+        assert_eq!(default_team.slug, "team-a");
 
         // Get the other team
         let other_team = config.teams().get("team-b").unwrap();
         assert_eq!(
-            other_team.api_key().as_ref().unwrap(),
+            other_team.api_key.as_ref().unwrap(),
             "b5509922-38e4-4ff9-b976-fbb42c077e45"
         );
     }
@@ -160,6 +160,6 @@ teams:
 
         // Get the known default team
         let default_team = config.teams().get(config.default_team()).unwrap();
-        assert_eq!(default_team.slug(), "team-a");
+        assert_eq!(default_team.slug, "team-a");
     }
 }

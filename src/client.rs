@@ -1,9 +1,9 @@
-use crate::config::Config;
+use crate::{config::Config, team::Team};
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 struct RawClient {
     client: reqwest::Client,
 }
@@ -58,6 +58,22 @@ impl RawClient {
             .await
     }
 
+    async fn delete<S: serde::Serialize + ?Sized>(
+        &self,
+        address: &str,
+        api_key: &str,
+        data: &S,
+    ) -> Result<reqwest::Response, reqwest::Error> {
+        let api_key = format!("ApiKey {}", api_key);
+
+        self.client
+            .delete(address)
+            .header(AUTHORIZATION, api_key)
+            .json(data)
+            .send()
+            .await
+    }
+
     async fn put<S: serde::Serialize + ?Sized>(
         &self,
         address: &str,
@@ -75,7 +91,7 @@ impl RawClient {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct V7Client {
     api_endpoint: String,
     api_key: String,
@@ -96,6 +112,13 @@ pub trait V7Methods {
         endpoint: &str,
         data: &S,
     ) -> Result<reqwest::Response, reqwest::Error>;
+    async fn delete<S: serde::Serialize + ?Sized + std::marker::Sync>(
+        &self,
+        endpoint: &str,
+        data: &S,
+    ) -> Result<reqwest::Response, reqwest::Error>;
+    fn team(&self) -> &String;
+    fn api_endpoint(&self) -> &str;
 }
 
 impl V7Client {
@@ -122,24 +145,33 @@ impl V7Client {
             .teams()
             .get(&client_team)
             .context("The requested team is not found in the config")?
-            .api_key()
+            .api_key
             .as_ref()
             .context("Api key not found in configuration")?;
 
         Self::new(api_endpoint, api_key.to_string(), client_team)
     }
 
-    pub fn api_endpoint(&self) -> &str {
-        &self.api_endpoint
-    }
-
-    pub fn team(&self) -> &String {
-        &self.team
+    pub fn generate_team(&self) -> Team {
+        Team {
+            slug: self.team.to_string(),
+            datasets_dir: None,
+            api_key: Some(self.api_key.to_string()),
+            team_id: None,
+        }
     }
 }
 
 #[async_trait]
 impl V7Methods for V7Client {
+    fn api_endpoint(&self) -> &str {
+        &self.api_endpoint
+    }
+
+    fn team(&self) -> &String {
+        &self.team
+    }
+
     async fn get(&self, endpoint: &str) -> Result<reqwest::Response, reqwest::Error> {
         let endpoint = format!("{}{}", self.api_endpoint, endpoint);
         self.client.get(&endpoint, &self.api_key).await
@@ -152,6 +184,17 @@ impl V7Methods for V7Client {
     ) -> Result<reqwest::Response, reqwest::Error> {
         let endpoint = format!("{}{}", self.api_endpoint, endpoint);
         self.client.put(&endpoint, &self.api_key, data).await
+    }
+
+    async fn delete<S: serde::Serialize + ?Sized + std::marker::Sync>(
+        &self,
+        endpoint: &str,
+        data: &S,
+    ) -> Result<reqwest::Response, reqwest::Error> {
+        let endpoint = format!("{}{}", self.api_endpoint, endpoint);
+        println!("{}", endpoint);
+        println!("{}", serde_json::to_string_pretty(data).unwrap());
+        self.client.delete(&endpoint, &self.api_key, data).await
     }
 
     async fn post<S: serde::Serialize + ?Sized + std::marker::Sync>(
@@ -181,13 +224,13 @@ mod tests {
         let api_key = "api-key".to_string();
 
         // Create the team HashMap
-        let test_team = Team::new(slug.clone(), None, Some(api_key));
+        let test_team = Team::new(slug.clone(), None, Some(api_key), None);
         let mut team_map = HashMap::new();
         team_map.insert(slug.clone(), test_team.clone());
 
         // Create a team missing an API
         let no_api = "team-noapi".to_string();
-        team_map.insert(no_api.clone(), Team::new(no_api, None, None));
+        team_map.insert(no_api.clone(), Team::new(no_api, None, None, None));
 
         // Finally create the config
         let test_config = Config::new(
@@ -206,7 +249,7 @@ mod tests {
         let client = V7Client::from_config(&test_config, None).unwrap();
 
         assert_eq!(client.api_endpoint(), api_endpoint);
-        assert_eq!(client.team(), test_team.slug());
+        assert_eq!(client.team().to_string(), test_team.slug);
     }
 
     #[test]

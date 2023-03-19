@@ -5,6 +5,7 @@ use crate::item::{AddDataPayload, DatasetItem};
 use crate::team::{AnnotationClass, TypeCount};
 use crate::workflow::WorkflowTemplate;
 use anyhow::{bail, Context, Result};
+use async_trait::async_trait;
 use fake::{Dummy, Fake};
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
@@ -164,29 +165,115 @@ struct SetStagePayload {
 }
 
 impl Dataset {
-    pub async fn archive_all_files<C>(&self, client: &C) -> Result<()>
+    #[allow(dead_code)]
+    pub async fn create_dataset<C>(client: &C, name: &str) -> Result<Dataset>
     where
         C: V7Methods,
     {
-        let item_ids: Vec<u32> = self
-            .list_dataset_items(client)
-            .await?
-            .iter()
-            .filter(|x| !x.archived)
-            .map(|x| x.id.clone())
-            .collect();
-        let mut filter = Filter::default();
-        filter.dataset_item_ids = Some(item_ids);
+        let response = client
+            .post(
+                "datasets",
+                &DatasetName {
+                    name: name.to_string(),
+                },
+            )
+            .await?;
 
-        self.archive_items(client, &filter).await
+        expect_http_ok!(response, Dataset)
     }
+}
+
+#[async_trait]
+pub trait DatasetArchiveMethods<C>
+where
+    C: V7Methods,
+{
+    // async fn archive_all_files(&self, client: &C) -> Result<()>;
+    async fn archive_items(&self, client: &C, filter: &Filter) -> Result<()>;
+    async fn archive_dataset(&self, client: &C) -> Result<Dataset>;
+}
+
+#[async_trait]
+pub trait DatasetDataMethods<C>
+where
+    C: V7Methods,
+{
+    async fn assign_items(&self, client: &C, assignee_id: &u32, filter: &Filter) -> Result<()>;
+    async fn add_data_to_dataset(
+        &self,
+        client: &C,
+        data: Vec<AddDataPayload>,
+        external_storage: String,
+    ) -> Result<AddDataItemsResponse>;
+}
+
+#[async_trait]
+pub trait DatasetExportMethods<C>
+where
+    C: V7Methods,
+{
+    async fn generate_export(
+        &self,
+        client: &C,
+        export_name: &String,
+        format: &ExportFormat,
+        include_authorship: bool,
+        include_export_token: bool,
+        filter: &Filter,
+    ) -> Result<()>;
+    async fn list_exports(&self, client: &C) -> Result<Vec<Export>>;
+}
+
+#[async_trait]
+pub trait DatasetDescribeMethods<C>
+where
+    C: V7Methods,
+{
+    async fn list_datasets(client: &C) -> Result<Vec<Dataset>>;
+    async fn list_dataset_items(&self, client: &C) -> Result<Vec<DatasetItem>>;
+    async fn show_dataset(client: &C, id: &u32) -> Result<Dataset>;
+}
+
+#[async_trait]
+pub trait DatasetWorkflowMethods<C>
+where
+    C: V7Methods,
+{
+    async fn reset_to_new(&self, client: &C, filter: &Filter) -> Result<()>;
+    async fn set_stage(&self, client: &C, stage_template_id: &u32, filter: &Filter) -> Result<()>;
+    async fn set_workflow(
+        &self,
+        client: &C,
+        workflow: &WorkflowTemplate,
+    ) -> Result<WorkflowTemplate>;
+    async fn set_default_workflow(
+        &self,
+        client: &C,
+        workflow: &WorkflowTemplate,
+    ) -> Result<Dataset>;
+}
+
+#[async_trait]
+impl<C> DatasetArchiveMethods<C> for Dataset
+where
+    C: V7Methods + std::marker::Sync,
+{
+    // async fn archive_all_files(&self, client: &C) -> Result<()> {
+    //     let item_ids: Vec<u32> = Dataset::list_dataset_items(client)
+    //         .await?
+    //         .iter()
+    //         .filter(|x| !x.archived)
+    //         .map(|x| x.id.clone())
+    //         .collect();
+    //     let mut filter = Filter::default();
+    //     filter.dataset_item_ids = Some(item_ids);
+
+    //     self.archive_items(client, &filter).await
+    // }
 
     /// The docs say a reason is required, but the call actually fails if it is provided
     /// https://docs.v7labs.com/v1.0/reference/archive
-    pub async fn archive_items<C>(&self, client: &C, filter: &Filter) -> Result<()>
-    where
-        C: V7Methods,
-    {
+    async fn archive_items(&self, client: &C, filter: &Filter) -> Result<()> {
         let payload = ArchiveItemPayload {
             filter: filter.clone(),
         };
@@ -203,15 +290,21 @@ impl Dataset {
         Ok(())
     }
 
-    pub async fn assign_items<C>(
-        &self,
-        client: &C,
-        assignee_id: &u32,
-        filter: &Filter,
-    ) -> Result<()>
-    where
-        C: V7Methods,
-    {
+    async fn archive_dataset(&self, client: &C) -> Result<Dataset> {
+        let response = client
+            .put::<String>(&format!("datasets/{}/archive", &self.id), None)
+            .await?;
+
+        expect_http_ok!(response, Dataset)
+    }
+}
+
+#[async_trait]
+impl<C> DatasetDataMethods<C> for Dataset
+where
+    C: V7Methods + std::marker::Sync,
+{
+    async fn assign_items(&self, client: &C, assignee_id: &u32, filter: &Filter) -> Result<()> {
         let payload = AssignItemPayload {
             assignee_id: *assignee_id,
             filter: filter.clone(),
@@ -231,26 +324,12 @@ impl Dataset {
         Ok(())
     }
 
-    pub async fn create_dataset<C>(client: &C, name: &String) -> Result<Dataset>
-    where
-        C: V7Methods,
-    {
-        let response = client
-            .post("datasets", &DatasetName { name: name.clone() })
-            .await?;
-
-        expect_http_ok!(response, Dataset)
-    }
-
-    pub async fn add_data_to_dataset<C>(
+    async fn add_data_to_dataset(
         &self,
         client: &C,
         data: Vec<AddDataPayload>,
         external_storage: String,
-    ) -> Result<AddDataItemsResponse>
-    where
-        C: V7Methods,
-    {
+    ) -> Result<AddDataItemsResponse> {
         let api_payload = AddDataItemsPayload {
             items: data,
             storage_name: external_storage,
@@ -268,19 +347,14 @@ impl Dataset {
 
         expect_http_ok!(response, AddDataItemsResponse)
     }
+}
 
-    pub async fn archive_dataset<C>(&self, client: &C) -> Result<Dataset>
-    where
-        C: V7Methods,
-    {
-        let response = client
-            .put::<String>(&format!("datasets/{}/archive", &self.id), None)
-            .await?;
-
-        expect_http_ok!(response, Dataset)
-    }
-
-    pub async fn generate_export<C>(
+#[async_trait]
+impl<C> DatasetExportMethods<C> for Dataset
+where
+    C: V7Methods + std::marker::Sync,
+{
+    async fn generate_export(
         &self,
         client: &C,
         export_name: &String,
@@ -288,10 +362,7 @@ impl Dataset {
         include_authorship: bool,
         include_export_token: bool,
         filter: &Filter,
-    ) -> Result<()>
-    where
-        C: V7Methods,
-    {
+    ) -> Result<()> {
         let endpoint = format!(
             "teams/{}/datasets/{}/exports",
             self.team_slug.as_ref().context("Missing team slug")?,
@@ -311,10 +382,7 @@ impl Dataset {
         expect_http_ok!(response, ())
     }
 
-    pub async fn list_exports<C>(&self, client: &C) -> Result<Vec<Export>>
-    where
-        C: V7Methods,
-    {
+    async fn list_exports(&self, client: &C) -> Result<Vec<Export>> {
         let endpoint = format!(
             "teams/{}/datasets/{}/exports",
             self.team_slug.as_ref().context("Missing team slug")?,
@@ -325,29 +393,38 @@ impl Dataset {
 
         expect_http_ok!(response, Vec<Export>)
     }
+}
 
-    pub async fn list_datasets<C>(client: &C) -> Result<Vec<Dataset>>
-    where
-        C: V7Methods,
-    {
+#[async_trait]
+impl<C> DatasetDescribeMethods<C> for Dataset
+where
+    C: V7Methods + std::marker::Sync,
+{
+    async fn list_datasets(client: &C) -> Result<Vec<Dataset>> {
         let response = client.get("datasets").await?;
 
         expect_http_ok!(response, Vec<Dataset>)
     }
 
-    pub async fn list_dataset_items<C>(&self, client: &C) -> Result<Vec<DatasetItem>>
-    where
-        C: V7Methods,
-    {
+    async fn list_dataset_items(&self, client: &C) -> Result<Vec<DatasetItem>> {
         let response = client.get(&format!("datasets/{}/items", self.id)).await?;
 
         expect_http_ok!(response, Vec<DatasetItem>)
     }
 
-    pub async fn reset_to_new<C>(&self, client: &C, filter: &Filter) -> Result<()>
-    where
-        C: V7Methods,
-    {
+    async fn show_dataset(client: &C, id: &u32) -> Result<Dataset> {
+        let response = client.get(&format!("datasets/{}", id)).await?;
+
+        expect_http_ok!(response, Dataset)
+    }
+}
+
+#[async_trait]
+impl<C> DatasetWorkflowMethods<C> for Dataset
+where
+    C: V7Methods + std::marker::Sync,
+{
+    async fn reset_to_new(&self, client: &C, filter: &Filter) -> Result<()> {
         let payload = ResetToNewPayload {
             filter: filter.clone(),
         };
@@ -369,15 +446,7 @@ impl Dataset {
         Ok(())
     }
 
-    pub async fn set_stage<C>(
-        &self,
-        client: &C,
-        stage_template_id: &u32,
-        filter: &Filter,
-    ) -> Result<()>
-    where
-        C: V7Methods,
-    {
+    async fn set_stage(&self, client: &C, stage_template_id: &u32, filter: &Filter) -> Result<()> {
         let payload = SetStagePayload {
             workflow_stage_template_id: *stage_template_id,
             filter: filter.clone(),
@@ -397,14 +466,11 @@ impl Dataset {
         Ok(())
     }
 
-    pub async fn set_workflow<C>(
+    async fn set_workflow(
         &self,
         client: &C,
         workflow: &WorkflowTemplate,
-    ) -> Result<WorkflowTemplate>
-    where
-        C: V7Methods,
-    {
+    ) -> Result<WorkflowTemplate> {
         let response = client
             .post(
                 &format!("datasets/{}/workflow_templates", self.id),
@@ -415,14 +481,11 @@ impl Dataset {
         expect_http_ok!(response, WorkflowTemplate)
     }
 
-    pub async fn set_default_workflow<C>(
+    async fn set_default_workflow(
         &self,
         client: &C,
         workflow: &WorkflowTemplate,
-    ) -> Result<Dataset>
-    where
-        C: V7Methods,
-    {
+    ) -> Result<Dataset> {
         let workflow_id = workflow.id.as_ref().context("Workflow id not provided")?;
 
         let endpoint = format!(
@@ -431,15 +494,6 @@ impl Dataset {
         );
         let payload: Option<&WorkflowTemplate> = None;
         let response = client.put(&endpoint, payload).await?;
-
-        expect_http_ok!(response, Dataset)
-    }
-
-    pub async fn show_dataset<C>(client: &C, id: &u32) -> Result<Dataset>
-    where
-        C: V7Methods,
-    {
-        let response = client.get(&format!("datasets/{}", id)).await?;
 
         expect_http_ok!(response, Dataset)
     }
