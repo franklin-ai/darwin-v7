@@ -31,7 +31,11 @@ impl RawClient {
         Ok(Self { client })
     }
 
-    async fn get(&self, address: &str, api_key: &str) -> Result<reqwest::Response, reqwest::Error> {
+    pub async fn get(
+        &self,
+        address: &str,
+        api_key: &str,
+    ) -> Result<reqwest::Response, reqwest::Error> {
         // Construct endpoint
         let api_key = format!("ApiKey {}", api_key);
 
@@ -42,7 +46,7 @@ impl RawClient {
             .await
     }
 
-    async fn post<S: serde::Serialize + ?Sized>(
+    pub async fn post<S: serde::Serialize + ?Sized>(
         &self,
         address: &str,
         api_key: &str,
@@ -58,23 +62,24 @@ impl RawClient {
             .await
     }
 
-    async fn delete<S: serde::Serialize + ?Sized>(
+    pub async fn delete<S: serde::Serialize + ?Sized>(
         &self,
         address: &str,
         api_key: &str,
-        data: &S,
+        data: Option<&S>,
     ) -> Result<reqwest::Response, reqwest::Error> {
         let api_key = format!("ApiKey {}", api_key);
 
-        self.client
-            .delete(address)
-            .header(AUTHORIZATION, api_key)
-            .json(data)
-            .send()
-            .await
+        let req = self.client.delete(address).header(AUTHORIZATION, api_key);
+
+        if let Some(payload) = data {
+            req.json(payload).send().await
+        } else {
+            req.send().await
+        }
     }
 
-    async fn put<S: serde::Serialize + ?Sized>(
+    pub async fn put<S: serde::Serialize + ?Sized>(
         &self,
         address: &str,
         api_key: &str,
@@ -115,7 +120,7 @@ pub trait V7Methods {
     async fn delete<S: serde::Serialize + ?Sized + std::marker::Sync>(
         &self,
         endpoint: &str,
-        data: &S,
+        data: Option<&S>,
     ) -> Result<reqwest::Response, reqwest::Error>;
     fn team(&self) -> &String;
     fn api_endpoint(&self) -> &str;
@@ -189,11 +194,9 @@ impl V7Methods for V7Client {
     async fn delete<S: serde::Serialize + ?Sized + std::marker::Sync>(
         &self,
         endpoint: &str,
-        data: &S,
+        data: Option<&S>,
     ) -> Result<reqwest::Response, reqwest::Error> {
         let endpoint = format!("{}{}", self.api_endpoint, endpoint);
-        println!("{}", endpoint);
-        println!("{}", serde_json::to_string_pretty(data).unwrap());
         self.client.delete(&endpoint, &self.api_key, data).await
     }
 
@@ -209,6 +212,7 @@ impl V7Methods for V7Client {
 
 #[cfg(test)]
 mod tests {
+    use serde::{Deserialize, Serialize};
     use std::collections::HashMap;
     use wiremock::matchers::{body_json, header, method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -267,7 +271,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_basic_get_call() {
+    async fn test_raw_client_get() {
         // Setup the mock endpoint
         let mock_server = MockServer::start().await;
 
@@ -287,23 +291,27 @@ mod tests {
 
         // Setup the client
         let client = V7Client::new(
-            mock_server.uri().to_string(),
-            api_key.clone(),
-            "some-team".to_string(),
+            format!("{}/", mock_server.uri()).to_string(),
+            api_key.to_string(),
+            String::new(),
         )
         .unwrap();
 
-        let status = client.get("status").await.unwrap().status();
-        assert_eq!(status, 200);
+        assert_eq!(client.get("status").await.unwrap().status(), 200);
     }
 
     #[tokio::test]
-    async fn test_basic_post_call() {
+    async fn test_raw_client_post() {
         // Setup the mock endpoint
         let mock_server = MockServer::start().await;
 
+        #[derive(Clone, Serialize, Deserialize)]
+        struct Payload {
+            pub id: u32,
+        }
+
         let api_key = "api-key-1234".to_string();
-        let payload = serde_json::json!({"id": "12345"});
+        let payload = Payload { id: 12345 };
 
         Mock::given(method("POST"))
             .and(path("/testpost"))
@@ -313,34 +321,60 @@ mod tests {
                 "Authorization",
                 format!("ApiKey {}", api_key).as_str(),
             ))
-            .and(body_json(payload))
+            .and(body_json(payload.clone()))
             .respond_with(ResponseTemplate::new(200))
             .mount(&mock_server)
             .await;
 
         // Setup the client
         let client = V7Client::new(
-            mock_server.uri().to_string(),
-            api_key.clone(),
-            "some-team".to_string(),
+            format!("{}/", mock_server.uri()).to_string(),
+            api_key.to_string(),
+            String::new(),
         )
         .unwrap();
 
-        let status = client
-            .post("testpost", &serde_json::json!({"id": "12345"}))
-            .await
-            .unwrap()
-            .status();
-        assert_eq!(status, 200);
+        let response = client.post("testpost", &payload).await.unwrap();
+        assert_eq!(response.status(), 200);
     }
 
     #[tokio::test]
-    async fn test_basic_put_call() {
+    async fn test_raw_client_delete() {
         // Setup the mock endpoint
         let mock_server = MockServer::start().await;
 
         let api_key = "api-key-1234".to_string();
-        // let payload = serde_json::json!({"id": "12345"});
+
+        Mock::given(method("DELETE"))
+            .and(path("/testdelete"))
+            .and(header("accept", "application/json"))
+            .and(header("content-type", "application/json"))
+            .and(header(
+                "Authorization",
+                format!("ApiKey {}", api_key).as_str(),
+            ))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&mock_server)
+            .await;
+
+        // Setup the client
+        let client = V7Client::new(
+            format!("{}/", mock_server.uri()).to_string(),
+            api_key.to_string(),
+            String::new(),
+        )
+        .unwrap();
+
+        let response = client.delete::<String>("testdelete", None).await.unwrap();
+        assert_eq!(response.status(), 200);
+    }
+
+    #[tokio::test]
+    async fn test_raw_client_put() {
+        // Setup the mock endpoint
+        let mock_server = MockServer::start().await;
+
+        let api_key = "api-key-1234".to_string();
 
         Mock::given(method("PUT"))
             .and(path("/testput"))
@@ -356,17 +390,12 @@ mod tests {
 
         // Setup the client
         let client = V7Client::new(
-            mock_server.uri().to_string(),
-            api_key.clone(),
-            "some-team".to_string(),
+            format!("{}/", mock_server.uri()).to_string(),
+            api_key.to_string(),
+            String::new(),
         )
         .unwrap();
-
-        let status = client
-            .put::<String>("testput", None)
-            .await
-            .unwrap()
-            .status();
-        assert_eq!(status, 200);
+        let response = client.put::<String>("testput", None).await.unwrap();
+        assert_eq!(response.status(), 200);
     }
 }

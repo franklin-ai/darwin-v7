@@ -526,7 +526,7 @@ mod test_client_calls {
         let mock_data: Vec<Dataset> = fake::vec![Dataset; 2];
 
         let client: V7Client = V7Client::new(
-            mock_server.uri().to_string(),
+            format!("{}/", mock_server.uri()).to_string(),
             "api-key".to_string(),
             "some-team".to_string(),
         )
@@ -557,7 +557,7 @@ mod test_client_calls {
             .await;
 
         let client: V7Client = V7Client::new(
-            mock_server.uri().to_string(),
+            format!("{}/", mock_server.uri()).to_string(),
             "api-key".to_string(),
             "some-team".to_string(),
         )
@@ -578,7 +578,7 @@ mod test_client_calls {
             .await;
 
         let client: V7Client = V7Client::new(
-            mock_server.uri().to_string(),
+            format!("{}/", mock_server.uri()).to_string(),
             "api-key".to_string(),
             "some-team".to_string(),
         )
@@ -599,7 +599,7 @@ mod test_client_calls {
         let mock_result_vec: Vec<DatasetItem> = fake::vec![DatasetItem; 2];
 
         let client: V7Client = V7Client::new(
-            mock_server.uri().to_string(),
+            format!("{}/", mock_server.uri()).to_string(),
             "api-key".to_string(),
             "some-team".to_string(),
         )
@@ -636,7 +636,7 @@ mod test_client_calls {
             .await;
 
         let client: V7Client = V7Client::new(
-            mock_server.uri().to_string(),
+            format!("{}/", mock_server.uri()).to_string(),
             "api-key".to_string(),
             "some-team".to_string(),
         )

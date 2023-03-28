@@ -60,11 +60,11 @@ where
         client: &C,
         class: &AnnotationClass,
     ) -> Result<AnnotationClass>;
-    async fn delete_annotation_classes(
-        &self,
-        client: &C,
-        classes: &[AnnotationClass],
-    ) -> Result<()>;
+    // async fn delete_annotation_classes(
+    //     &self,
+    //     client: &C,
+    //     classes: &[AnnotationClass],
+    // ) -> Result<()>;
 }
 
 impl Team {
@@ -129,32 +129,32 @@ where
 
         expect_http_ok!(response, AnnotationClass)
     }
-    async fn delete_annotation_classes(&self, client: &C, classes: &[AnnotationClass]) -> Result<()>
-    where
-        C: V7Methods,
-    {
-        let endpoint = format!(
-            "teams/{}/delete_classes",
-            self.team_id.context("Missing team id")?
-        );
+    // async fn delete_annotation_classes(&self, client: &C, classes: &[AnnotationClass]) -> Result<()>
+    // where
+    //     C: V7Methods,
+    // {
+    //     let endpoint = format!(
+    //         "teams/{}/delete_classes",
+    //         self.team_id.context("Missing team id")?
+    //     );
 
-        let mut payload = DeleteClassesPayload::default();
-        for class in classes.iter() {
-            payload.annotation_class_ids.push(class.id.context(format!(
-                "Class {} missing id",
-                class.name.clone().unwrap_or(String::new())
-            ))?);
-        }
+    //     let mut payload = DeleteClassesPayload::default();
+    //     for class in classes.iter() {
+    //         payload.annotation_class_ids.push(class.id.context(format!(
+    //             "Class {} missing id",
+    //             class.name.clone().unwrap_or(String::new())
+    //         ))?);
+    //     }
 
-        let response = client.delete(&endpoint, &payload).await?;
+    //     let response = client.delete(&endpoint, &payload).await?;
 
-        let status = response.status();
-        if status != 204 {
-            bail!("Unable to delete classes with status code {}", status);
-        }
+    //     let status = response.status();
+    //     if status != 204 {
+    //         bail!("Unable to delete classes with status code {}", status);
+    //     }
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
@@ -299,6 +299,28 @@ impl AnnotationClass {
         let response = client.put(&endpoint, Some(&self)).await?;
 
         expect_http_ok!(response, AnnotationClass)
+    }
+
+    pub async fn delete<C>(&self, client: &C) -> Result<()>
+    where
+        C: V7Methods,
+    {
+        let endpoint = format!(
+            "annotation_classes/{}",
+            self.id.context("Annotation class is missing an id")?
+        );
+
+        let response = client.delete::<AnnotationClass>(&endpoint, None).await?;
+
+        if response.status() != 204 {
+            bail!(format!(
+                "Invalid status code {} {}",
+                response.status(),
+                response.text().await?
+            ));
+        }
+
+        Ok(())
     }
 }
 
