@@ -1,8 +1,11 @@
-use crate::client::V7Client;
+use crate::client::V7Methods;
 use crate::expect_http_ok;
 use crate::filter::Filter;
-use crate::item::DatasetItem;
+use crate::item::{AddDataPayload, DatasetItem};
+use crate::team::{AnnotationClass, TypeCount};
+use crate::workflow::WorkflowTemplate;
 use anyhow::{bail, Context, Result};
+use async_trait::async_trait;
 use fake::{Dummy, Fake};
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
@@ -63,23 +66,10 @@ pub struct Dataset {
     pub work_prioritization: Option<String>,
 }
 
-// TODO: Fix this when working on the annotation aspects of the APi
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
-pub struct AnnotationClass {
-    pub id: u32,
-    pub name: String,
-}
-
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
-pub struct AnnotationType {
-    pub id: u32,
-    pub count: u32,
-}
-
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
 pub struct ExportMetadata {
     pub annotation_classes: Vec<AnnotationClass>,
-    pub annotation_types: Vec<AnnotationType>,
+    pub annotation_types: Vec<TypeCount>,
 }
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
 pub struct Export {
@@ -91,24 +81,231 @@ pub struct Export {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum ExportFormat {
+    #[default]
+    Json,
+    Xml,
+    Coco,
+    Cvat,
+    #[serde(rename = "pascal_voc")]
+    PascalVoc,
+    #[serde(rename = "semantic-mask")]
+    SemanticMask,
+    #[serde(rename = "instance-mask")]
+    InstanceMask,
+}
+
+impl From<ExportFormat> for &str {
+    fn from(value: ExportFormat) -> Self {
+        match value {
+            ExportFormat::Json => "json",
+            ExportFormat::Xml => "xml",
+            ExportFormat::Coco => "coco",
+            ExportFormat::Cvat => "cvat",
+            ExportFormat::PascalVoc => "pascal_voc",
+            ExportFormat::SemanticMask => "semantic-mask",
+            ExportFormat::InstanceMask => "instance-mask",
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
 struct DatasetName {
     pub name: String,
 }
 
-impl Dataset {
-    pub async fn assign_items(
-        &self,
-        client: &V7Client,
-        assignee_id: &u32,
-        filter: &Filter,
-    ) -> Result<()> {
-        #[derive(Serialize, Deserialize)]
-        struct Payload {
-            pub assignee_id: u32,
-            pub filter: Filter,
-        }
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+struct AddDataItemsPayload {
+    pub items: Vec<AddDataPayload>,
+    pub storage_name: String,
+}
 
-        let payload = Payload {
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+pub struct ResponseItem {
+    pub dataset_item_id: u64,
+    pub filename: String,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+pub struct AddDataItemsResponse {
+    pub blocked_items: Vec<ResponseItem>,
+    pub items: Vec<ResponseItem>,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+struct ArchiveItemPayload {
+    pub filter: Filter,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+struct AssignItemPayload {
+    pub assignee_id: u32,
+    pub filter: Filter,
+}
+
+#[derive(Serialize, Deserialize)]
+struct GenerateExportPayload {
+    pub name: String,
+    pub format: String,
+    pub include_authorship: bool,
+    pub include_export_token: bool,
+    pub filter: Filter,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ResetToNewPayload {
+    pub filter: Filter,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct SetStagePayload {
+    pub workflow_stage_template_id: u32,
+    pub filter: Filter,
+}
+
+impl Dataset {
+    #[allow(dead_code)]
+    pub async fn create_dataset<C>(client: &C, name: &str) -> Result<Dataset>
+    where
+        C: V7Methods,
+    {
+        let response = client
+            .post(
+                "datasets",
+                &DatasetName {
+                    name: name.to_string(),
+                },
+            )
+            .await?;
+
+        expect_http_ok!(response, Dataset)
+    }
+}
+
+#[async_trait]
+pub trait DatasetArchiveMethods<C>
+where
+    C: V7Methods,
+{
+    // async fn archive_all_files(&self, client: &C) -> Result<()>;
+    async fn archive_items(&self, client: &C, filter: &Filter) -> Result<()>;
+    async fn archive_dataset(&self, client: &C) -> Result<Dataset>;
+}
+
+#[async_trait]
+pub trait DatasetDataMethods<C>
+where
+    C: V7Methods,
+{
+    async fn assign_items(&self, client: &C, assignee_id: &u32, filter: &Filter) -> Result<()>;
+    async fn add_data_to_dataset(
+        &self,
+        client: &C,
+        data: Vec<AddDataPayload>,
+        external_storage: String,
+    ) -> Result<AddDataItemsResponse>;
+}
+
+#[async_trait]
+pub trait DatasetExportMethods<C>
+where
+    C: V7Methods,
+{
+    async fn generate_export(
+        &self,
+        client: &C,
+        export_name: &'life2 str,
+        format: &ExportFormat,
+        include_authorship: bool,
+        include_export_token: bool,
+        filter: &Filter,
+    ) -> Result<()>;
+    async fn list_exports(&self, client: &C) -> Result<Vec<Export>>;
+}
+
+#[async_trait]
+pub trait DatasetDescribeMethods<C>
+where
+    C: V7Methods,
+{
+    async fn list_datasets(client: &C) -> Result<Vec<Dataset>>;
+    async fn list_dataset_items(&self, client: &C) -> Result<Vec<DatasetItem>>;
+    async fn show_dataset(client: &C, id: &u32) -> Result<Dataset>;
+}
+
+#[async_trait]
+pub trait DatasetWorkflowMethods<C>
+where
+    C: V7Methods,
+{
+    async fn reset_to_new(&self, client: &C, filter: &Filter) -> Result<()>;
+    async fn set_stage(&self, client: &C, stage_template_id: &u32, filter: &Filter) -> Result<()>;
+    async fn set_workflow(
+        &self,
+        client: &C,
+        workflow: &WorkflowTemplate,
+    ) -> Result<WorkflowTemplate>;
+    async fn set_default_workflow(
+        &self,
+        client: &C,
+        workflow: &WorkflowTemplate,
+    ) -> Result<Dataset>;
+}
+
+#[async_trait]
+impl<C> DatasetArchiveMethods<C> for Dataset
+where
+    C: V7Methods + std::marker::Sync,
+{
+    // async fn archive_all_files(&self, client: &C) -> Result<()> {
+    //     let item_ids: Vec<u32> = Dataset::list_dataset_items(client)
+    //         .await?
+    //         .iter()
+    //         .filter(|x| !x.archived)
+    //         .map(|x| x.id.clone())
+    //         .collect();
+    //     let mut filter = Filter::default();
+    //     filter.dataset_item_ids = Some(item_ids);
+
+    //     self.archive_items(client, &filter).await
+    // }
+
+    /// The docs say a reason is required, but the call actually fails if it is provided
+    /// https://docs.v7labs.com/v1.0/reference/archive
+    async fn archive_items(&self, client: &C, filter: &Filter) -> Result<()> {
+        let payload = ArchiveItemPayload {
+            filter: filter.clone(),
+        };
+
+        let endpoint = &format!("datasets/{}/items/archive", self.id);
+        let response = client.put(endpoint, Some(&payload)).await?;
+
+        let status = response.status();
+
+        // 204 is correct operation for this endpoint
+        if status != 204 {
+            bail!("Invalid status code {status}")
+        }
+        Ok(())
+    }
+
+    async fn archive_dataset(&self, client: &C) -> Result<Dataset> {
+        let response = client
+            .put::<String>(&format!("datasets/{}/archive", &self.id), None)
+            .await?;
+
+        expect_http_ok!(response, Dataset)
+    }
+}
+
+#[async_trait]
+impl<C> DatasetDataMethods<C> for Dataset
+where
+    C: V7Methods + std::marker::Sync,
+{
+    async fn assign_items(&self, client: &C, assignee_id: &u32, filter: &Filter) -> Result<()> {
+        let payload = AssignItemPayload {
             assignee_id: *assignee_id,
             filter: filter.clone(),
         };
@@ -127,24 +324,43 @@ impl Dataset {
         Ok(())
     }
 
-    pub async fn create_dataset(client: &V7Client, name: String) -> Result<Dataset> {
-        let response = client.post("datasets", &DatasetName { name }).await?;
-
-        expect_http_ok!(response, Dataset)
-    }
-
-    pub async fn archive_dataset(&self, client: &V7Client) -> Result<Dataset> {
-        let response = client
-            .put::<String>(&format!("datasets/{}/archive", &self.id), None)
-            .await?;
-
-        expect_http_ok!(response, Dataset)
-    }
-
-    pub async fn generate_export(
+    async fn add_data_to_dataset(
         &self,
-        client: &V7Client,
-        export_name: &String,
+        client: &C,
+        data: Vec<AddDataPayload>,
+        external_storage: String,
+    ) -> Result<AddDataItemsResponse> {
+        let api_payload = AddDataItemsPayload {
+            items: data,
+            storage_name: external_storage,
+        };
+
+        let endpoint = format!(
+            "teams/{}/datasets/{}/data",
+            self.team_slug
+                .as_ref()
+                .context("Dataset is missing team slug")?,
+            self.slug
+        );
+
+        let response = client.put(&endpoint, Some(&api_payload)).await?;
+
+        expect_http_ok!(response, AddDataItemsResponse)
+    }
+}
+
+#[async_trait]
+impl<C> DatasetExportMethods<C> for Dataset
+where
+    C: V7Methods + std::marker::Sync,
+{
+    async fn generate_export(
+        &self,
+        client: &C,
+        export_name: &'life2 str,
+        format: &ExportFormat,
+        include_authorship: bool,
+        include_export_token: bool,
         filter: &Filter,
     ) -> Result<()> {
         let endpoint = format!(
@@ -153,21 +369,11 @@ impl Dataset {
             self.slug
         );
 
-        // TODO: pass these through to method
-        #[derive(Serialize, Deserialize)]
-        struct Payload {
-            pub name: String,
-            pub format: String,
-            pub include_authorship: bool,
-            pub include_export_token: bool,
-            pub filter: Filter,
-        }
-
-        let payload = Payload {
+        let payload = GenerateExportPayload {
             name: export_name.to_string(),
-            format: "json".to_string(),
-            include_authorship: true,
-            include_export_token: true,
+            format: Into::<&str>::into(format.clone()).to_string(),
+            include_authorship,
+            include_export_token,
             filter: filter.clone(),
         };
 
@@ -176,7 +382,7 @@ impl Dataset {
         expect_http_ok!(response, ())
     }
 
-    pub async fn list_exports(&self, client: &V7Client) -> Result<Vec<Export>> {
+    async fn list_exports(&self, client: &C) -> Result<Vec<Export>> {
         let endpoint = format!(
             "teams/{}/datasets/{}/exports",
             self.team_slug.as_ref().context("Missing team slug")?,
@@ -187,28 +393,62 @@ impl Dataset {
 
         expect_http_ok!(response, Vec<Export>)
     }
+}
 
-    pub async fn list_datasets(client: &V7Client) -> Result<Vec<Dataset>> {
+#[async_trait]
+impl<C> DatasetDescribeMethods<C> for Dataset
+where
+    C: V7Methods + std::marker::Sync,
+{
+    async fn list_datasets(client: &C) -> Result<Vec<Dataset>> {
         let response = client.get("datasets").await?;
 
         expect_http_ok!(response, Vec<Dataset>)
     }
 
-    pub async fn list_dataset_items(&self, client: &V7Client) -> Result<Vec<DatasetItem>> {
+    async fn list_dataset_items(&self, client: &C) -> Result<Vec<DatasetItem>> {
         let response = client.get(&format!("datasets/{}/items", self.id)).await?;
 
         expect_http_ok!(response, Vec<DatasetItem>)
     }
 
-    pub async fn set_stage(&self, client: &V7Client, stage: &u32, filter: &Filter) -> Result<()> {
-        #[derive(Debug, Serialize, Deserialize)]
-        struct Payload {
-            pub workflow_stage_template_id: u32,
-            pub filter: Filter,
+    async fn show_dataset(client: &C, id: &u32) -> Result<Dataset> {
+        let response = client.get(&format!("datasets/{}", id)).await?;
+
+        expect_http_ok!(response, Dataset)
+    }
+}
+
+#[async_trait]
+impl<C> DatasetWorkflowMethods<C> for Dataset
+where
+    C: V7Methods + std::marker::Sync,
+{
+    async fn reset_to_new(&self, client: &C, filter: &Filter) -> Result<()> {
+        let payload = ResetToNewPayload {
+            filter: filter.clone(),
+        };
+
+        let response = client
+            .put(
+                &format!("datasets/{}/items/move_to_new", self.id),
+                Some(&payload),
+            )
+            .await?;
+
+        let status = response.status();
+
+        // 204 is correct operation for this endpoint
+        if status != 204 {
+            bail!("Invalid status code {status}")
         }
 
-        let payload = Payload {
-            workflow_stage_template_id: *stage,
+        Ok(())
+    }
+
+    async fn set_stage(&self, client: &C, stage_template_id: &u32, filter: &Filter) -> Result<()> {
+        let payload = SetStagePayload {
+            workflow_stage_template_id: *stage_template_id,
             filter: filter.clone(),
         };
 
@@ -226,8 +466,34 @@ impl Dataset {
         Ok(())
     }
 
-    pub async fn show_dataset(client: &V7Client, id: &u32) -> Result<Dataset> {
-        let response = client.get(&format!("datasets/{}", id)).await?;
+    async fn set_workflow(
+        &self,
+        client: &C,
+        workflow: &WorkflowTemplate,
+    ) -> Result<WorkflowTemplate> {
+        let response = client
+            .post(
+                &format!("datasets/{}/workflow_templates", self.id),
+                workflow,
+            )
+            .await?;
+
+        expect_http_ok!(response, WorkflowTemplate)
+    }
+
+    async fn set_default_workflow(
+        &self,
+        client: &C,
+        workflow: &WorkflowTemplate,
+    ) -> Result<Dataset> {
+        let workflow_id = workflow.id.as_ref().context("Workflow id not provided")?;
+
+        let endpoint = format!(
+            "datasets/{}/default_workflow_template/{}",
+            self.id, workflow_id
+        );
+        let payload: Option<&WorkflowTemplate> = None;
+        let response = client.put(&endpoint, payload).await?;
 
         expect_http_ok!(response, Dataset)
     }
@@ -260,7 +526,7 @@ mod test_client_calls {
         let mock_data: Vec<Dataset> = fake::vec![Dataset; 2];
 
         let client: V7Client = V7Client::new(
-            mock_server.uri().to_string(),
+            format!("{}/", mock_server.uri()).to_string(),
             "api-key".to_string(),
             "some-team".to_string(),
         )
@@ -291,7 +557,7 @@ mod test_client_calls {
             .await;
 
         let client: V7Client = V7Client::new(
-            mock_server.uri().to_string(),
+            format!("{}/", mock_server.uri()).to_string(),
             "api-key".to_string(),
             "some-team".to_string(),
         )
@@ -312,7 +578,7 @@ mod test_client_calls {
             .await;
 
         let client: V7Client = V7Client::new(
-            mock_server.uri().to_string(),
+            format!("{}/", mock_server.uri()).to_string(),
             "api-key".to_string(),
             "some-team".to_string(),
         )
@@ -333,7 +599,7 @@ mod test_client_calls {
         let mock_result_vec: Vec<DatasetItem> = fake::vec![DatasetItem; 2];
 
         let client: V7Client = V7Client::new(
-            mock_server.uri().to_string(),
+            format!("{}/", mock_server.uri()).to_string(),
             "api-key".to_string(),
             "some-team".to_string(),
         )
@@ -370,7 +636,7 @@ mod test_client_calls {
             .await;
 
         let client: V7Client = V7Client::new(
-            mock_server.uri().to_string(),
+            format!("{}/", mock_server.uri()).to_string(),
             "api-key".to_string(),
             "some-team".to_string(),
         )

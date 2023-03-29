@@ -1,6 +1,7 @@
-use crate::client::V7Client;
+use crate::classes::BoundingBox;
+use crate::client::V7Methods;
 use crate::expect_http_ok;
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 use fake::{Dummy, Fake};
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
@@ -38,6 +39,7 @@ pub struct TemplateMetadata {
     pub base_sampling_rate: Option<f64>,
     pub parallel: Option<u32>,
     pub user_sampling_rate: Option<f64>,
+    pub readonly: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
@@ -74,11 +76,11 @@ pub struct TemplateAssignee {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
 pub struct WorkflowStageTemplate {
-    pub id: u32,
+    pub id: Option<u32>,
     pub metadata: TemplateMetadata,
     pub name: Option<String>,
     pub workflow_stage_template_assignees: Vec<TemplateAssignee>,
-    pub stage_number: Option<u32>,
+    pub stage_number: Option<usize>,
     #[serde(rename = "type")]
     pub stage_type: StageType,
     pub workflow_template_id: Option<u32>,
@@ -98,9 +100,33 @@ pub struct Workflow {
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
 pub struct WorkflowTemplate {
     pub dataset_id: u32,
-    pub id: u32,
+    pub id: Option<u32>,
     pub name: Option<String>,
     pub workflow_stage_templates: Vec<WorkflowStageTemplate>,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+pub struct WorkflowBody {
+    pub body: String,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+pub struct LocatedWorkflowComments {
+    pub bounding_box: BoundingBox,
+    pub workflow_comments: Vec<WorkflowBody>,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+pub struct WorkflowCommentThread {
+    pub author_id: u32,
+    pub bounding_box: BoundingBox,
+    pub comment_count: u32,
+    pub frame_index: Option<u32>,
+    pub id: u32,
+    pub inserted_at: String,
+    pub resolved: bool,
+    pub updated_at: String,
+    pub workflow_id: u32,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
@@ -109,7 +135,10 @@ struct UserId {
 }
 
 impl Workflow {
-    pub async fn assign(&self, client: &V7Client, user_id: &u32) -> Result<Workflow> {
+    pub async fn assign<C>(&self, client: &C, user_id: &u32) -> Result<Workflow>
+    where
+        C: V7Methods,
+    {
         let user = UserId { user_id: *user_id };
 
         let response = client
@@ -118,10 +147,32 @@ impl Workflow {
 
         expect_http_ok!(response, Workflow)
     }
+
+    /// Warning undocumented
+    pub async fn add_comment<C>(
+        &self,
+        client: &C,
+        comments: &LocatedWorkflowComments,
+    ) -> Result<WorkflowCommentThread>
+    where
+        C: V7Methods,
+    {
+        let response = client
+            .post(
+                &format!("workflows/{}/workflow_comment_threads", self.id),
+                comments,
+            )
+            .await?;
+
+        expect_http_ok!(response, WorkflowCommentThread)
+    }
 }
 
 impl WorkflowTemplate {
-    pub async fn get(client: &V7Client, id: &u32) -> Result<WorkflowTemplate> {
+    pub async fn get<C>(client: &C, id: &u32) -> Result<WorkflowTemplate>
+    where
+        C: V7Methods,
+    {
         let response = client.get(&format!("workflow_templates/{}", id)).await?;
 
         expect_http_ok!(response, WorkflowTemplate)
@@ -129,12 +180,16 @@ impl WorkflowTemplate {
 }
 
 impl WorkflowStageTemplate {
-    pub async fn assign(&self, client: &V7Client) -> Result<WorkflowStageTemplate> {
+    pub async fn assign<C>(&self, client: &C) -> Result<WorkflowStageTemplate>
+    where
+        C: V7Methods,
+    {
+        let id = self
+            .id
+            .as_ref()
+            .context("WorkflowStageTemplate id not specified")?;
         let response = client
-            .put(
-                &format!("workflow_stage_templates/{}", self.id),
-                Some(&self),
-            )
+            .put(&format!("workflow_stage_templates/{}", id), Some(&self))
             .await?;
 
         expect_http_ok!(response, WorkflowStageTemplate)
