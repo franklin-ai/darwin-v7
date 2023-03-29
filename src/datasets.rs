@@ -96,9 +96,9 @@ pub enum ExportFormat {
     InstanceMask,
 }
 
-impl<'a> Into<&'a str> for ExportFormat {
-    fn into(self) -> &'a str {
-        match self {
+impl From<ExportFormat> for &str {
+    fn from(value: ExportFormat) -> Self {
+        match value {
             ExportFormat::Json => "json",
             ExportFormat::Xml => "xml",
             ExportFormat::Coco => "coco",
@@ -215,7 +215,7 @@ where
     async fn generate_export(
         &self,
         client: &C,
-        export_name: &String,
+        export_name: &'life2 str,
         format: &ExportFormat,
         include_authorship: bool,
         include_export_token: bool,
@@ -357,7 +357,7 @@ where
     async fn generate_export(
         &self,
         client: &C,
-        export_name: &String,
+        export_name: &'life2 str,
         format: &ExportFormat,
         include_authorship: bool,
         include_export_token: bool,
@@ -372,8 +372,8 @@ where
         let payload = GenerateExportPayload {
             name: export_name.to_string(),
             format: Into::<&str>::into(format.clone()).to_string(),
-            include_authorship: include_authorship,
-            include_export_token: include_export_token,
+            include_authorship,
+            include_export_token,
             filter: filter.clone(),
         };
 

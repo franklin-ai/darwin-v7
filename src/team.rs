@@ -218,9 +218,9 @@ pub enum AnnotationType {
 // ellipse: 60
 // cuboid: 8
 
-impl Into<u32> for AnnotationType {
-    fn into(self) -> u32 {
-        match self {
+impl From<AnnotationType> for u32 {
+    fn from(value: AnnotationType) -> u32 {
+        match value {
             AnnotationType::Attributes => 5,
             AnnotationType::AutoAnnotate => todo!(),
             AnnotationType::BoundingBox => 2,
@@ -377,8 +377,8 @@ pub mod helpers {
         Ok(Team::list_memberships(client)
             .await?
             .iter()
-            .filter(|x| func(*x))
-            .map(|x| x.clone())
+            .filter(|x| func(x))
+            .cloned()
             .collect::<Vec<TeamMember>>())
     }
 
