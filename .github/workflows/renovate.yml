@@ -1,0 +1,32 @@
+on:
+  workflow_dispatch:
+  schedule:
+    # every day at 2:30AM
+    - cron: "30 14 * * *"
+
+name: Renovate
+
+jobs:
+  check_dependencies:
+    name: Check dependencies
+    runs-on: ubuntu-20.04
+    steps:
+      - name: GitHub App token
+        id: get_token
+        uses: tibdex/github-app-token@v1.8.0
+        with:
+          private_key: ${{ secrets.RENOVATE_KEY }}
+          app_id: ${{ secrets.RENOVATE_APP_ID }}
+
+      - uses: actions/checkout@v3
+
+      - name: Set up Git credential helper and add Cloudsmith credentials
+        run: |
+          git config --global credential.helper store
+          echo "https://${{ secrets.ROSALIND_CLOUDSMITH_USERNAME }}:${{ secrets.ROSALIND_CLOUDSMITH_API }}@dl.cloudsmith.io" > ~/.git-credentials
+        shell: bash
+
+      - name: Run Self-hosted Renovate
+        run: |
+          cd renovate && npm ci && npm run renovate -- --token ${{ steps.get_token.outputs.token }}
+        shell: bash
