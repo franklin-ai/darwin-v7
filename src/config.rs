@@ -105,7 +105,7 @@ mod tests {
     use std::io::Write;
     use tempfile::NamedTempFile;
 
-    const CONFIG_STR: &'static str = "global:
+    const CONFIG_STR: &str = "global:
   api_endpoint: https://darwin.v7labs.com/api/
   base_url: https://darwin.v7labs.com
   default_team: team-a
@@ -130,7 +130,7 @@ teams:
         assert_eq!(default_team.slug, "team-a");
 
         // Check the teams
-        let team_keys: Vec<String> = config.teams().keys().map(|x| x.clone()).collect();
+        let team_keys: Vec<String> = config.teams().keys().cloned().collect();
         assert_eq!(team_keys.len(), 2);
         assert!(team_keys.contains(&"team-a".to_string()));
         assert!(team_keys.contains(&"team-b".to_string()));

@@ -1,7 +1,7 @@
-use fake::{Dummy, Fake};
+use fake::Dummy;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct Filter {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub annotation_class_ids: Option<Vec<u32>>,
@@ -101,8 +101,7 @@ mod test_serde {
 
     #[test]
     fn test_simple_serde() {
-        let mut filter = Filter::default();
-        filter.select_all = true;
+        let mut filter = Filter { select_all: true, ..Default::default() };
         let val: Vec<u32> = vec![1, 2, 3, 4];
         filter.annotation_class_ids = Some(val);
 

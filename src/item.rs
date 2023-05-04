@@ -12,7 +12,7 @@ use std::fmt::{self, Display};
 // value.  There is a high degree of variability as to when and why
 // a null may be provided in the JSON payload.
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct ImageLevel {
     pub format: String,
     pub pixel_ratio: u16,
@@ -22,7 +22,7 @@ pub struct ImageLevel {
     pub y_tiles: u32,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Levels {
     pub image_levels: HashMap<u32, ImageLevel>,
     pub base_key: String,
@@ -128,7 +128,7 @@ impl Dummy<fake::Faker> for Levels {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct Image {
     pub external: Option<bool>,
     pub format: Option<String>,
@@ -143,7 +143,7 @@ pub struct Image {
     pub url: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct DatasetImage {
     pub dataset_id: u32,
     pub dataset_video_id: Option<u32>,
@@ -154,10 +154,10 @@ pub struct DatasetImage {
 }
 
 // TODO: Define this struct
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct DatasetVideo {}
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum DatasetItemTypes {
     Image,
@@ -173,7 +173,7 @@ impl Display for DatasetItemTypes {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum DatasetItemStatus {
     Annotate,
@@ -219,13 +219,13 @@ impl TryFrom<&str> for DatasetItemStatus {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct DataPayloadLevel {
     pub levels: HashMap<usize, ImageLevel>,
     pub base_key: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct AddDataPayload {
     #[serde(rename = "type")]
     pub item_type: DatasetItemTypes, // This can probably be an enum
@@ -238,7 +238,7 @@ pub struct AddDataPayload {
     pub metadata: DataPayloadLevel,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
 pub struct DatasetItem {
     pub archived: bool,
     pub archived_reason: Option<String>,
@@ -316,7 +316,7 @@ mod test_serde {
 
         assert_eq!(
             &image_level_deser,
-            &contents.replace("\n", "").replace(' ', "")
+            &contents.replace(['\n', ' '], "")
         );
     }
 
@@ -445,9 +445,8 @@ mod test_serde {
             .unwrap()
             .stages
             .keys()
-            .map(|x| x.clone())
-            .collect::<Vec<u32>>()
-            .contains(&1));
+            .copied()
+            .any(|x| x == 1));
 
         let level_0 = ser_item.dataset_image.image.levels.unwrap();
         assert_eq!(
