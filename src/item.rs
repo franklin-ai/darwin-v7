@@ -314,10 +314,7 @@ mod test_serde {
         // Test deserialization
         let image_level_deser = serde_json::to_string(&image_level).unwrap();
 
-        assert_eq!(
-            &image_level_deser,
-            &contents.replace(['\n', ' '], "")
-        );
+        assert_eq!(&image_level_deser, &contents.replace(['\n', ' '], ""));
     }
 
     #[test]

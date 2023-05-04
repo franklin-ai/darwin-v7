@@ -101,7 +101,10 @@ mod test_serde {
 
     #[test]
     fn test_simple_serde() {
-        let mut filter = Filter { select_all: true, ..Default::default() };
+        let mut filter = Filter {
+            select_all: true,
+            ..Default::default()
+        };
         let val: Vec<u32> = vec![1, 2, 3, 4];
         filter.annotation_class_ids = Some(val);
 

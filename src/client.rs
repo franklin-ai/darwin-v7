@@ -237,12 +237,7 @@ mod tests {
         team_map.insert(no_api.clone(), Team::new(no_api, None, None, None));
 
         // Finally create the config
-        let test_config = Config::new(
-            base_url,
-            api_endpoint.clone(),
-            slug,
-            team_map,
-        );
+        let test_config = Config::new(base_url, api_endpoint.clone(), slug, team_map);
 
         (api_endpoint, test_config, test_team)
     }
