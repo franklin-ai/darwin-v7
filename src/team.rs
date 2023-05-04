@@ -1,7 +1,7 @@
 use crate::expect_http_ok;
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
-use fake::{Dummy, Fake};
+use fake::Dummy;
 use serde::{Deserialize, Serialize};
 use serde_yaml::Value;
 use std::collections::HashMap;
@@ -157,13 +157,13 @@ where
     // }
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct MetadataSkeleton {
     #[serde(rename = "_type")]
     pub skeleton_type: String,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct AnnotationClassMetadata {
     #[serde(rename = "_color")]
     pub color: String,
@@ -173,7 +173,7 @@ pub struct AnnotationClassMetadata {
     pub measures: Option<HashMap<String, String>>, // TODO find out what this type actually is
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum AnnotationType {
     Attributes,
@@ -240,12 +240,12 @@ impl From<AnnotationType> for u32 {
     }
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct AnnotationDataset {
     pub id: u32,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct AnnotationClass {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub annotation_class_image_url: Option<String>,
@@ -324,14 +324,14 @@ impl AnnotationClass {
     }
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct TypeCount {
     pub count: u32,
     pub id: Option<u32>,
     pub name: Option<String>,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct TeamAnnotationClasses {
     pub annotation_classes: Vec<AnnotationClass>,
     pub type_counts: Vec<TypeCount>,

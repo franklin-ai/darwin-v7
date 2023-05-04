@@ -143,7 +143,7 @@ impl V7Client {
         let api_endpoint = config.api_endpoint().to_string();
 
         // The team if not provided use the default
-        let client_team = team.unwrap_or(config.default_team()).to_string();
+        let client_team = team.unwrap_or_else(|| config.default_team()).to_string();
 
         // Get the api key for the default team
         let api_key = &config
@@ -237,12 +237,7 @@ mod tests {
         team_map.insert(no_api.clone(), Team::new(no_api, None, None, None));
 
         // Finally create the config
-        let test_config = Config::new(
-            base_url.clone(),
-            api_endpoint.clone(),
-            slug.clone(),
-            team_map,
-        );
+        let test_config = Config::new(base_url, api_endpoint.clone(), slug, team_map);
 
         (api_endpoint, test_config, test_team)
     }
@@ -291,7 +286,7 @@ mod tests {
 
         // Setup the client
         let client = V7Client::new(
-            format!("{}/", mock_server.uri()).to_string(),
+            format!("{}/", mock_server.uri()),
             api_key.to_string(),
             String::new(),
         )
@@ -328,7 +323,7 @@ mod tests {
 
         // Setup the client
         let client = V7Client::new(
-            format!("{}/", mock_server.uri()).to_string(),
+            format!("{}/", mock_server.uri()),
             api_key.to_string(),
             String::new(),
         )
@@ -359,7 +354,7 @@ mod tests {
 
         // Setup the client
         let client = V7Client::new(
-            format!("{}/", mock_server.uri()).to_string(),
+            format!("{}/", mock_server.uri()),
             api_key.to_string(),
             String::new(),
         )
@@ -390,7 +385,7 @@ mod tests {
 
         // Setup the client
         let client = V7Client::new(
-            format!("{}/", mock_server.uri()).to_string(),
+            format!("{}/", mock_server.uri()),
             api_key.to_string(),
             String::new(),
         )
