@@ -164,6 +164,40 @@ struct SetStagePayload {
     pub filter: Filter,
 }
 
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+pub struct ItemReport {
+    /// Original filename of the item
+    pub filename: String,
+    /// Timestamp of when item was added to the dataset
+    pub uploaded_date: String,
+    /// Current status of the dataset
+    pub status: String,
+    /// Timestamp of when item was first entered into a workflow
+    pub workflow_start_date: String,
+    /// Timestamp of when work on the item was completed. null if in progress
+    pub workflow_complete_date: String,
+    /// For playback videos, the number of frames in the video
+    pub number_of_frames: String,
+    /// Path the item was assigned in the dataset
+    pub folder: String,
+    /// Total duration of work perform by annotators
+    pub time_spent_annotating_sec: f32,
+    /// Total duration of work perform by reviewers
+    pub time_spent_reviewing_sec: f32,
+    /// Total duration of automation actions performed in annotate stages
+    pub automation_time_annotating_sec: f32,
+    /// Total duration of automation actions performed in review stages
+    pub automation_time_reviewing_sec: f32,
+    /// Emails of all annotators who performed work on this item, joined by semicolon
+    pub annotators: String,
+    /// Emails of all reviewers who performed work on this item, joined by semicolon
+    pub reviewers: String,
+    /// True if item was every rejected in any review stage
+    pub was_rejected_in_review: String,
+    /// Darwin Workview URL for the item
+    pub url: String,
+}
+
 impl Dataset {
     #[allow(dead_code)]
     pub async fn create_dataset<C>(client: &C, name: &str) -> Result<Dataset>
@@ -251,6 +285,14 @@ where
         client: &C,
         workflow: &WorkflowTemplate,
     ) -> Result<Dataset>;
+}
+
+#[async_trait]
+pub trait DatasetItemReportMethods<C>
+where
+    C: V7Methods,
+{
+    async fn get_item_reports(&self, client: &C) -> Result<Vec<ItemReport>>;
 }
 
 #[async_trait]
@@ -496,6 +538,22 @@ where
         let response = client.put(&endpoint, payload).await?;
 
         expect_http_ok!(response, Dataset)
+    }
+}
+
+#[async_trait]
+impl<C> DatasetItemReportMethods<C> for Dataset
+where
+    C: V7Methods + std::marker::Sync,
+{
+    async fn get_item_reports(&self, client: &C) -> Result<Vec<ItemReport>> {
+        let endpoint = format!(
+            "teams/{}/datasets/{}/item_reports",
+            self.team_slug.as_ref().context("Missing team slug")?,
+            self.slug
+        );
+        let response = client.get(&endpoint).await?;
+        expect_http_ok!(response, Vec<ItemReport>)
     }
 }
 
