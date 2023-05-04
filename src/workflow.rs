@@ -2,13 +2,13 @@ use crate::classes::BoundingBox;
 use crate::client::V7Methods;
 use crate::expect_http_ok;
 use anyhow::{bail, Context, Result};
-use fake::{Dummy, Fake};
+use fake::Dummy;
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 use std::collections::HashMap;
 use std::fmt::{self, Display};
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum StageType {
     Annotate,
@@ -33,7 +33,7 @@ impl Display for StageType {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
 pub struct TemplateMetadata {
     pub assignable_to: Option<String>,
     pub base_sampling_rate: Option<f64>,
@@ -42,7 +42,7 @@ pub struct TemplateMetadata {
     pub readonly: Option<bool>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct MetaData {
     pub ready_for_completion: Option<bool>,
     pub previous_stage_number: Option<u32>,
@@ -50,7 +50,7 @@ pub struct MetaData {
     pub review_status_modified_at: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
 pub struct Stage {
     pub assignee_id: Option<u32>,
     pub completed: Option<bool>,
@@ -68,13 +68,13 @@ pub struct Stage {
     pub workflow_stage_template_id: u32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
 pub struct TemplateAssignee {
     pub assignee_id: u32,
     pub sampling_rate: f64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
 pub struct WorkflowStageTemplate {
     pub id: Option<u32>,
     pub metadata: TemplateMetadata,
@@ -86,7 +86,7 @@ pub struct WorkflowStageTemplate {
     pub workflow_template_id: Option<u32>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
 pub struct Workflow {
     pub current_stage_number: u32,
     pub current_workflow_stage_template_id: u32,
@@ -97,7 +97,7 @@ pub struct Workflow {
     pub workflow_template_id: u32,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy)]
 pub struct WorkflowTemplate {
     pub dataset_id: u32,
     pub id: Option<u32>,
@@ -105,18 +105,18 @@ pub struct WorkflowTemplate {
     pub workflow_stage_templates: Vec<WorkflowStageTemplate>,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct WorkflowBody {
     pub body: String,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct LocatedWorkflowComments {
     pub bounding_box: BoundingBox,
     pub workflow_comments: Vec<WorkflowBody>,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct WorkflowCommentThread {
     pub author_id: u32,
     pub bounding_box: BoundingBox,
@@ -129,7 +129,7 @@ pub struct WorkflowCommentThread {
     pub workflow_id: u32,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 struct UserId {
     pub user_id: u32,
 }

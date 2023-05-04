@@ -6,18 +6,18 @@ use crate::team::{AnnotationClass, TypeCount};
 use crate::workflow::WorkflowTemplate;
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
-use fake::{Dummy, Fake};
+use fake::Dummy;
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 use std::collections::HashMap;
 use std::fmt::Display;
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct AnnotationHotKeys {
     pub key: String,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy)]
 pub struct Dataset {
     pub active: Option<bool>,
     pub archived: Option<bool>,
@@ -66,12 +66,12 @@ pub struct Dataset {
     pub work_prioritization: Option<String>,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct ExportMetadata {
     pub annotation_classes: Vec<AnnotationClass>,
     pub annotation_types: Vec<TypeCount>,
 }
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct Export {
     pub download_url: String,
     pub format: String,
@@ -80,7 +80,7 @@ pub struct Export {
     pub metadata: ExportMetadata,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum ExportFormat {
     #[default]
@@ -110,35 +110,35 @@ impl From<ExportFormat> for &str {
     }
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 struct DatasetName {
     pub name: String,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 struct AddDataItemsPayload {
     pub items: Vec<AddDataPayload>,
     pub storage_name: String,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct ResponseItem {
     pub dataset_item_id: u64,
     pub filename: String,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct AddDataItemsResponse {
     pub blocked_items: Vec<ResponseItem>,
     pub items: Vec<ResponseItem>,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 struct ArchiveItemPayload {
     pub filter: Filter,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 struct AssignItemPayload {
     pub assignee_id: u32,
     pub filter: Filter,
@@ -516,7 +516,7 @@ mod test_client_calls {
 
     use super::*;
     use crate::client::V7Client;
-    use fake::Faker;
+    use fake::{Fake, Faker};
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -526,7 +526,7 @@ mod test_client_calls {
         let mock_data: Vec<Dataset> = fake::vec![Dataset; 2];
 
         let client: V7Client = V7Client::new(
-            format!("{}/", mock_server.uri()).to_string(),
+            format!("{}/", mock_server.uri()),
             "api-key".to_string(),
             "some-team".to_string(),
         )
@@ -557,7 +557,7 @@ mod test_client_calls {
             .await;
 
         let client: V7Client = V7Client::new(
-            format!("{}/", mock_server.uri()).to_string(),
+            format!("{}/", mock_server.uri()),
             "api-key".to_string(),
             "some-team".to_string(),
         )
@@ -578,7 +578,7 @@ mod test_client_calls {
             .await;
 
         let client: V7Client = V7Client::new(
-            format!("{}/", mock_server.uri()).to_string(),
+            format!("{}/", mock_server.uri()),
             "api-key".to_string(),
             "some-team".to_string(),
         )
@@ -599,7 +599,7 @@ mod test_client_calls {
         let mock_result_vec: Vec<DatasetItem> = fake::vec![DatasetItem; 2];
 
         let client: V7Client = V7Client::new(
-            format!("{}/", mock_server.uri()).to_string(),
+            format!("{}/", mock_server.uri()),
             "api-key".to_string(),
             "some-team".to_string(),
         )
@@ -636,7 +636,7 @@ mod test_client_calls {
             .await;
 
         let client: V7Client = V7Client::new(
-            format!("{}/", mock_server.uri()).to_string(),
+            format!("{}/", mock_server.uri()),
             "api-key".to_string(),
             "some-team".to_string(),
         )
