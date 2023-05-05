@@ -1,9 +1,9 @@
-#[allow(unused_imports)]
-use fake::{Dummy, Fake};
 use crate::classes::BoundingBox;
 use crate::client::V7Methods;
 use crate::expect_http_ok;
 use anyhow::{bail, Context, Result};
+#[allow(unused_imports)]
+use fake::{Dummy, Fake};
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 use std::collections::HashMap;
