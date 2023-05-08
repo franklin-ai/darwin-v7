@@ -62,3 +62,22 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Cache Rust build artifacts
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            ~/.cargo/advisory-dbs/
+            ./target/
+          key: cargo-build-debug-${{ hashFiles('**/Cargo.*') }}
+          restore-keys: |
+            cargo-build-debug-

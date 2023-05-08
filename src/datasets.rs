@@ -6,7 +6,8 @@ use crate::team::{AnnotationClass, TypeCount};
 use crate::workflow::WorkflowTemplate;
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
-use fake::Dummy;
+#[allow(unused_imports)]
+use fake::{Dummy, Fake};
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 use std::collections::HashMap;

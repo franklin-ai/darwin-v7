@@ -1,7 +1,9 @@
+#[allow(unused_imports)]
+use fake::{Dummy, Fake};
+
 use crate::expect_http_ok;
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
-use fake::Dummy;
 use serde::{Deserialize, Serialize};
 use serde_yaml::Value;
 use std::collections::HashMap;
