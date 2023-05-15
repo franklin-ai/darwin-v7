@@ -1,8 +1,9 @@
+use crate::annotation::AnnotationClass;
 use crate::client::V7Methods;
 use crate::expect_http_ok;
 use crate::filter::Filter;
 use crate::item::{AddDataPayload, DatasetItem};
-use crate::team::{AnnotationClass, TypeCount};
+use crate::team::TypeCount;
 use crate::workflow::WorkflowTemplate;
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
@@ -67,12 +68,12 @@ pub struct Dataset {
     pub work_prioritization: Option<String>,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy)]
 pub struct ExportMetadata {
     pub annotation_classes: Vec<AnnotationClass>,
     pub annotation_types: Vec<TypeCount>,
 }
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy)]
 pub struct Export {
     pub download_url: String,
     pub format: String,
