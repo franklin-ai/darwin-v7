@@ -9,7 +9,7 @@ use strum_macros::{Display, EnumString};
 use crate::client::V7Methods;
 use crate::expect_http_ok;
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq, Default)]
 pub struct AnnotationClassMetadata {
     #[serde(rename = "_color")]
     pub color: String,
