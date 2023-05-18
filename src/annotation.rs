@@ -136,8 +136,12 @@ impl AnnotationType {
         let lower = value.to_lowercase();
         let lower = lower.as_str();
         let annotation = match lower {
-            "tag" => AnnotationType::Tag(Default::default()),
             "bounding_box" => AnnotationType::BoundingBox(Default::default()),
+            "keypoint" => AnnotationType::Keypoint(Default::default()),
+            "line" => AnnotationType::Line(Default::default()),
+            "polygon" => AnnotationType::Polygon(Default::default()),
+            "tag" => AnnotationType::Tag(Default::default()),
+            "text" => AnnotationType::Tag(Default::default()),
             _ => bail!(format!("{} is not a valid annotation type", value)),
         };
         Ok(annotation)
