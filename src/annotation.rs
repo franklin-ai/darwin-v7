@@ -131,6 +131,19 @@ impl From<AnnotationType> for u32 {
     }
 }
 
+impl AnnotationType {
+    pub fn try_from(value: &str) -> Result<Self> {
+        let lower = value.to_lowercase();
+        let lower = lower.as_str();
+        let annotation = match lower {
+            "tag" => AnnotationType::Tag(Default::default()),
+            "bounding_box" => AnnotationType::BoundingBox(Default::default()),
+            _ => bail!(format!("{} is not a valid annotation type", value)),
+        };
+        Ok(annotation)
+    }
+}
+
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct AnnotationDataset {
     pub id: u32,
