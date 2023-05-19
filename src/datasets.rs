@@ -75,11 +75,15 @@ pub struct ExportMetadata {
 }
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy)]
 pub struct Export {
-    pub download_url: String,
-    pub format: String,
+    pub name: String,
+    pub download_url: Option<String>,
+    pub format: ExportFormat,
     pub inserted_at: String,
     pub latest: bool,
+    #[serde(skip_serializing)]
     pub metadata: ExportMetadata,
+    pub status: Option<String>,
+    pub version: u16,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
@@ -152,7 +156,8 @@ struct GenerateExportPayload {
     pub format: String,
     pub include_authorship: bool,
     pub include_export_token: bool,
-    pub filter: Filter,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub filter: Option<Filter>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -255,7 +260,7 @@ where
         format: &ExportFormat,
         include_authorship: bool,
         include_export_token: bool,
-        filter: &Filter,
+        filter: Option<&Filter>,
     ) -> Result<()>;
     async fn list_exports(&self, client: &C) -> Result<Vec<Export>>;
 }
@@ -405,7 +410,7 @@ where
         format: &ExportFormat,
         include_authorship: bool,
         include_export_token: bool,
-        filter: &Filter,
+        filter: Option<&Filter>,
     ) -> Result<()> {
         let endpoint = format!(
             "teams/{}/datasets/{}/exports",
@@ -418,12 +423,20 @@ where
             format: Into::<&str>::into(format.clone()).to_string(),
             include_authorship,
             include_export_token,
-            filter: filter.clone(),
+            filter: filter.cloned(),
         };
 
         let response = client.post(&endpoint, &payload).await?;
 
-        expect_http_ok!(response, ())
+        if response.status() != 200 {
+            bail!(format!(
+                "Invalid status code {} {}",
+                response.status(),
+                response.text().await?
+            ))
+        }
+
+        Ok(())
     }
 
     async fn list_exports(&self, client: &C) -> Result<Vec<Export>> {
