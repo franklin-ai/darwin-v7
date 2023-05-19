@@ -168,7 +168,7 @@ pub struct AnnotationClass {
     pub annotation_class_image_url: Option<String>,
 
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub annotation_types: Vec<AnnotationType>,
+    pub annotation_types: Vec<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub annotation_type_ids: Option<Vec<u32>>,
