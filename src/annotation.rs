@@ -131,6 +131,32 @@ impl From<AnnotationType> for u32 {
     }
 }
 
+impl AnnotationType {
+    pub fn try_from(value: &str) -> Result<Self> {
+        let lower = value.to_lowercase();
+        let lower = lower.as_str();
+        let annotation = match lower {
+            "attributes" => AnnotationType::Attributes,
+            "auto_annotate" => AnnotationType::AutoAnnotate,
+            "bounding_box" => AnnotationType::BoundingBox(Default::default()),
+            "cuboid" => AnnotationType::Cuboid,
+            "directional_vector" => AnnotationType::DirectionalVector,
+            "ellipse" => AnnotationType::Ellipse,
+            "inference" => AnnotationType::Inference,
+            "instance_id" => AnnotationType::InstanceId,
+            "keypoint" => AnnotationType::Keypoint(Default::default()),
+            "line" => AnnotationType::Line(Default::default()),
+            "measures" => AnnotationType::Measures,
+            "polygon" => AnnotationType::Polygon(Default::default()),
+            "skeleton" => AnnotationType::Skeleton,
+            "tag" => AnnotationType::Tag(Default::default()),
+            "text" => AnnotationType::Tag(Default::default()),
+            _ => bail!(format!("{} is not a valid annotation type", value)),
+        };
+        Ok(annotation)
+    }
+}
+
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct AnnotationDataset {
     pub id: u32,
@@ -142,7 +168,7 @@ pub struct AnnotationClass {
     pub annotation_class_image_url: Option<String>,
 
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub annotation_types: Vec<AnnotationType>,
+    pub annotation_types: Vec<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub annotation_type_ids: Option<Vec<u32>>,
