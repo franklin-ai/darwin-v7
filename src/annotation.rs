@@ -37,6 +37,11 @@ pub struct Polygon {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, Default)]
+pub struct ComplexPolygon {
+    pub path: Vec<Vec<Keypoint>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, Default)]
 pub struct Keypoint {
     // The horizontal coordinate of the keypoint
     pub x: f32,
@@ -52,11 +57,6 @@ pub struct Text {
     pub text: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, Default)]
-pub struct Line {
-    pub path: Vec<Keypoint>,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, EnumString, Display)]
 #[serde(rename_all = "lowercase")]
 #[serde(untagged)]
@@ -67,6 +67,8 @@ pub enum AnnotationType {
     #[serde(rename = "bounding_box")]
     #[strum(serialize = "bounding_box")]
     BoundingBox(BoundingBox),
+    #[strum(serialize = "complex_polygon")]
+    ComplexPolygon(ComplexPolygon),
     Cuboid,
     #[serde(rename = "directional_vector")]
     DirectionalVector,
@@ -77,11 +79,11 @@ pub enum AnnotationType {
     InstanceId,
     #[strum(serialize = "keypoint")]
     Keypoint(Keypoint),
-    #[strum(serialize = "line")]
-    Line(Line),
+    Line,
     Measures,
     #[strum(serialize = "polygon")]
     Polygon(Polygon),
+
     Skeleton,
     #[strum(serialize = "tag")]
     Tag(Tag),
@@ -116,12 +118,13 @@ impl From<AnnotationType> for u32 {
             AnnotationType::AutoAnnotate => todo!(),
             AnnotationType::BoundingBox(_) => 2,
             AnnotationType::Cuboid => todo!(),
+            AnnotationType::ComplexPolygon(_) => todo!(),
             AnnotationType::DirectionalVector => todo!(),
             AnnotationType::Ellipse => todo!(),
             AnnotationType::Inference => todo!(),
             AnnotationType::InstanceId => todo!(),
             AnnotationType::Keypoint(_) => todo!(),
-            AnnotationType::Line(_) => 11,
+            AnnotationType::Line => 11,
             AnnotationType::Measures => todo!(),
             AnnotationType::Polygon(_) => 3,
             AnnotationType::Skeleton => 12,
@@ -140,12 +143,13 @@ impl AnnotationType {
             "auto_annotate" => AnnotationType::AutoAnnotate,
             "bounding_box" => AnnotationType::BoundingBox(Default::default()),
             "cuboid" => AnnotationType::Cuboid,
+            "complex_polygon" => AnnotationType::ComplexPolygon(Default::default()),
             "directional_vector" => AnnotationType::DirectionalVector,
             "ellipse" => AnnotationType::Ellipse,
             "inference" => AnnotationType::Inference,
             "instance_id" => AnnotationType::InstanceId,
             "keypoint" => AnnotationType::Keypoint(Default::default()),
-            "line" => AnnotationType::Line(Default::default()),
+            "line" => AnnotationType::Line,
             "measures" => AnnotationType::Measures,
             "polygon" => AnnotationType::Polygon(Default::default()),
             "skeleton" => AnnotationType::Skeleton,
