@@ -53,8 +53,7 @@ pub struct ImageAnnotation {
     #[serde(alias = "skeleton", alias = "tag")]
     pub annotation_type_1: Option<AnnotationType>,
 
-    #[serde(alias = "ellipse", alias = "line")]
-    #[serde(alias = "keypoint", alias = "polygon")]
+    #[serde(alias = "keypoint", alias = "polygon", alias = "complex_polygon")]
     pub annotation_type_2: Option<AnnotationType>,
 }
 
@@ -81,17 +80,23 @@ mod tests {
                     }
                   ],
                   "id": "fb81c35c-716a-413a-81e8-16ae9c054490",
-                  "line": {
-                      "path": [
-                          {
-                            "x": 103.92,
-                            "y": 196.48
-                          },
-                          {
-                            "x": 192.83,
-                            "y": 123.58
-                          }
-                        ]
+                  "bounding_box": {
+                    "h": 588.75,
+                    "w": 630.9500000000116,
+                    "x": 88527.01,
+                    "y": 11805.9
+                  },
+                  "complex_polygon": {
+                    "path": [
+                    [
+                      {
+                        "x": 89094.67,
+                        "y": 11924.8
+                      }], [
+                      {
+                        "x": 89094.67,
+                        "y": 11924.8
+                      }]]
                   },
                   "name": "something"
                 }
