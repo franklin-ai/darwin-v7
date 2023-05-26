@@ -38,7 +38,7 @@ pub struct Polygon {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, Default)]
 pub struct ComplexPolygon {
-    pub path: Vec<Vec<Keypoint>>,
+    pub path: Vec<Polygon>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, Default)]
