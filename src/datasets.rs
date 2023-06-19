@@ -80,7 +80,7 @@ pub struct Export {
     pub format: ExportFormat,
     pub inserted_at: String,
     pub latest: bool,
-    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
     pub metadata: ExportMetadata,
     pub status: Option<String>,
     pub version: u16,
