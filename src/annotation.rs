@@ -38,7 +38,7 @@ pub struct Polygon {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, Default)]
 pub struct ComplexPolygon {
-    pub path: Vec<Polygon>,
+    pub path: Vec<Vec<Keypoint>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, Default)]
@@ -67,6 +67,7 @@ pub enum AnnotationType {
     #[serde(rename = "bounding_box")]
     #[strum(serialize = "bounding_box")]
     BoundingBox(BoundingBox),
+    #[serde(rename = "complex_polygon")]
     #[strum(serialize = "complex_polygon")]
     ComplexPolygon(ComplexPolygon),
     Cuboid,
