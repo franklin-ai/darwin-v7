@@ -101,7 +101,13 @@ mod tests {
                   "name": "something"
                 }
         "#;
-        let _: ImageAnnotation = serde_json::from_str(raw_json)?;
+        let annotation: ImageAnnotation = serde_json::from_str(raw_json)?;
+        match annotation.annotation_type_2 {
+            Some(AnnotationType::ComplexPolygon(_)) => {}
+            _ => {
+                assert!(false);
+            }
+        };
         Ok(())
     }
 
