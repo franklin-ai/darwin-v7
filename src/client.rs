@@ -1,6 +1,7 @@
 use crate::{config::Config, team::Team};
 use anyhow::{Context, Result};
 use async_trait::async_trait;
+use log::debug;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 
 #[derive(Debug, Default, Clone)]
@@ -179,6 +180,7 @@ impl V7Methods for V7Client {
 
     async fn get(&self, endpoint: &str) -> Result<reqwest::Response, reqwest::Error> {
         let endpoint = format!("{}{}", self.api_endpoint, endpoint);
+        debug!("V7Client::get({endpoint})");
         self.client.get(&endpoint, &self.api_key).await
     }
 
@@ -188,6 +190,7 @@ impl V7Methods for V7Client {
         data: Option<&S>,
     ) -> Result<reqwest::Response, reqwest::Error> {
         let endpoint = format!("{}{}", self.api_endpoint, endpoint);
+        debug!("V7Client::put({endpoint})");
         self.client.put(&endpoint, &self.api_key, data).await
     }
 
@@ -197,6 +200,7 @@ impl V7Methods for V7Client {
         data: Option<&S>,
     ) -> Result<reqwest::Response, reqwest::Error> {
         let endpoint = format!("{}{}", self.api_endpoint, endpoint);
+        debug!("V7Client::delete({endpoint})");
         self.client.delete(&endpoint, &self.api_key, data).await
     }
 
@@ -206,6 +210,7 @@ impl V7Methods for V7Client {
         data: &S,
     ) -> Result<reqwest::Response, reqwest::Error> {
         let endpoint = format!("{}{}", self.api_endpoint, endpoint);
+        debug!("V7Client::post({endpoint})");
         self.client.post(&endpoint, &self.api_key, data).await
     }
 }

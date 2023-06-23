@@ -162,6 +162,8 @@ pub struct DatasetVideo {}
 pub enum DatasetItemTypes {
     Image,
     Video,
+    Pdf,
+    Dicom,
 }
 
 impl Display for DatasetItemTypes {
@@ -169,7 +171,15 @@ impl Display for DatasetItemTypes {
         match self {
             DatasetItemTypes::Image => write!(f, "Image"),
             DatasetItemTypes::Video => write!(f, "Video"),
+            DatasetItemTypes::Pdf => write!(f, "PDF"),
+            DatasetItemTypes::Dicom => write!(f, "DICOM"),
         }
+    }
+}
+
+impl Default for DatasetItemTypes {
+    fn default() -> Self {
+        DatasetItemTypes::Image
     }
 }
 
@@ -225,6 +235,7 @@ pub struct DataPayloadLevel {
     pub base_key: String,
 }
 
+#[deprecated = "V2 of the V7 API requires use of `register_existing_read`"]
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct AddDataPayload {
     #[serde(rename = "type")]
@@ -236,6 +247,44 @@ pub struct AddDataPayload {
     pub width: u32,
     pub height: u32,
     pub metadata: DataPayloadLevel,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct NewSimpleItem {
+    pub as_frames: bool,
+    pub extract_views: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fps: Option<String>, // is either a positive integer number or the string `native`
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
+    pub metadata: HashMap<String, String>,
+    pub name: String,
+    pub path: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub tags: Vec<String>, // TODO: https://docs.v7labs.com/reference/imports-upload tags in the json object can either be Vec<String> or HashMap<String, String>
+    #[serde(rename = "type")]
+    pub typ: DatasetItemTypes,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct RegisterNewItemOptions {
+    pub force_tiling: bool,
+    pub ignore_dicom_layout: bool,
+}
+
+impl Default for RegisterNewItemOptions {
+    fn default() -> Self {
+        Self {
+            force_tiling: false,
+            ignore_dicom_layout: true,
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct RegisterNewSimpleItemRequest {
+    pub dataset_slug: String,
+    pub items: Vec<NewSimpleItem>,
+    pub options: RegisterNewItemOptions,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy)]

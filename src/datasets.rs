@@ -240,12 +240,22 @@ where
     C: V7Methods,
 {
     async fn assign_items(&self, client: &C, assignee_id: &u32, filter: &Filter) -> Result<()>;
+    #[deprecated = "V2 of the V7 API requires use of `register_existing_read`"]
     async fn add_data_to_dataset(
         &self,
         client: &C,
         data: Vec<AddDataPayload>,
         external_storage: String,
     ) -> Result<AddDataItemsResponse>;
+}
+
+/// Dataset data methods for the V7 API version 2
+#[async_trait]
+pub trait DatasetDataMethodsV2<C>
+where
+    C: V7Methods,
+{
+    async fn register_existing_data_read(&self, client: &C, )
 }
 
 #[async_trait]
@@ -588,7 +598,7 @@ impl Display for Dataset {
 mod test_client_calls {
 
     use super::*;
-    use crate::client::V7Client;
+    use crate::client::{ApiVersion, V7Client};
     use fake::{Fake, Faker};
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -601,6 +611,7 @@ mod test_client_calls {
         let client: V7Client = V7Client::new(
             format!("{}/", mock_server.uri()),
             "api-key".to_string(),
+            ApiVersion::V2,
             "some-team".to_string(),
         )
         .unwrap();
@@ -632,6 +643,7 @@ mod test_client_calls {
         let client: V7Client = V7Client::new(
             format!("{}/", mock_server.uri()),
             "api-key".to_string(),
+            ApiVersion::V2,
             "some-team".to_string(),
         )
         .unwrap();
@@ -653,6 +665,7 @@ mod test_client_calls {
         let client: V7Client = V7Client::new(
             format!("{}/", mock_server.uri()),
             "api-key".to_string(),
+            ApiVersion::V2,
             "some-team".to_string(),
         )
         .unwrap();
@@ -674,6 +687,7 @@ mod test_client_calls {
         let client: V7Client = V7Client::new(
             format!("{}/", mock_server.uri()),
             "api-key".to_string(),
+            ApiVersion::V2,
             "some-team".to_string(),
         )
         .unwrap();
@@ -711,6 +725,7 @@ mod test_client_calls {
         let client: V7Client = V7Client::new(
             format!("{}/", mock_server.uri()),
             "api-key".to_string(),
+            ApiVersion::V2,
             "some-team".to_string(),
         )
         .unwrap();
