@@ -186,6 +186,12 @@ pub enum DatasetItemStatus {
     Uploading,
 }
 
+impl Default for DatasetItemStatus {
+    fn default() -> Self {
+        DatasetItemStatus::New
+    }
+}
+
 impl Display for DatasetItemStatus {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
