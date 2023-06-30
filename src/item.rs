@@ -173,23 +173,18 @@ impl Display for DatasetItemTypes {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum DatasetItemStatus {
     Annotate,
     Archived,
     Complete,
     Error,
+    #[default]
     New,
     Processing,
     Review,
     Uploading,
-}
-
-impl Default for DatasetItemStatus {
-    fn default() -> Self {
-        DatasetItemStatus::New
-    }
 }
 
 impl Display for DatasetItemStatus {
