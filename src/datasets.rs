@@ -2,13 +2,16 @@ use crate::annotation::AnnotationClass;
 use crate::client::V7Methods;
 use crate::expect_http_ok;
 use crate::filter::Filter;
-use crate::item::{AddDataPayload, DatasetItem};
+use crate::item::{AddDataPayload, DatasetItem, DatasetItemStatus};
 use crate::team::TypeCount;
 use crate::workflow::WorkflowTemplate;
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
+use csv_async::AsyncReaderBuilder;
 #[allow(unused_imports)]
 use fake::{Dummy, Fake};
+use futures::io::Cursor;
+use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 use std::collections::HashMap;
@@ -178,31 +181,49 @@ pub struct ItemReport {
     /// Timestamp of when item was added to the dataset
     pub uploaded_date: String,
     /// Current status of the dataset
-    pub status: String,
+    pub status: DatasetItemStatus,
     /// Timestamp of when item was first entered into a workflow
-    pub workflow_start_date: String,
+    pub workflow_start_date: Option<String>,
     /// Timestamp of when work on the item was completed. null if in progress
-    pub workflow_complete_date: String,
+    pub workflow_complete_date: Option<String>,
     /// For playback videos, the number of frames in the video
-    pub number_of_frames: String,
+    pub number_of_frames: Option<u32>,
     /// Path the item was assigned in the dataset
     pub folder: String,
     /// Total duration of work perform by annotators
-    pub time_spent_annotating_sec: f32,
+    pub time_spent_annotating_sec: u64,
     /// Total duration of work perform by reviewers
-    pub time_spent_reviewing_sec: f32,
+    pub time_spent_reviewing_sec: u64,
     /// Total duration of automation actions performed in annotate stages
-    pub automation_time_annotating_sec: f32,
+    pub automation_time_annotating_sec: u64,
     /// Total duration of automation actions performed in review stages
-    pub automation_time_reviewing_sec: f32,
+    pub automation_time_reviewing_sec: u64,
     /// Emails of all annotators who performed work on this item, joined by semicolon
     pub annotators: String,
     /// Emails of all reviewers who performed work on this item, joined by semicolon
     pub reviewers: String,
     /// True if item was every rejected in any review stage
-    pub was_rejected_in_review: String,
+    pub was_rejected_in_review: bool,
     /// Darwin Workview URL for the item
     pub url: String,
+}
+
+pub async fn item_reports_from_bytes(contents: &[u8]) -> Result<Vec<ItemReport>> {
+    let cursor = Cursor::new(contents);
+    let mut rdr = AsyncReaderBuilder::new()
+        .delimiter(b',')
+        .has_headers(true)
+        .create_deserializer(cursor);
+
+    let mut records = rdr.deserialize::<ItemReport>();
+    let mut results: Vec<ItemReport> = Vec::new();
+
+    while let Some(record) = records.next().await {
+        let record = record?;
+        results.push(record)
+    }
+
+    Ok(results)
 }
 
 impl Dataset {
@@ -568,7 +589,13 @@ where
             self.slug
         );
         let response = client.get(&endpoint).await?;
-        expect_http_ok!(response, Vec<ItemReport>)
+        let status = response.status();
+        let result = response.text().await?;
+        if status != 200 {
+            bail!(format!("Invalid status code {} {}", status, result))
+        } else {
+            item_reports_from_bytes(result.as_bytes()).await
+        }
     }
 }
 
@@ -719,5 +746,117 @@ mod test_client_calls {
             .list_dataset_items(&client)
             .await
             .expect_err("Invalid status code 412");
+    }
+
+    #[tokio::test]
+    async fn test_get_item_reports() {
+        let mock_server = MockServer::start().await;
+        let mock_data = "filename,uploaded_date,status,workflow_start_date,workflow_complete_date,number_of_frames,folder,time_spent_annotating_sec,time_spent_reviewing_sec,automation_time_annotating_sec,automation_time_reviewing_sec,annotators,reviewers,was_rejected_in_review,url
+somefilename,2023-05-10 14:15:27,complete,2023-05-10 14:16:17,2023-05-17 01:28:13,,/,320,1,2,3,kevin@mail.com,,false,https://darwin.v7labs.com/workview?dataset=123456&image=789";
+
+        let mut dataset: Dataset = Faker.fake();
+        let dataset_slug = dataset.slug.clone();
+        let team_slug = "some-team";
+        dataset.team_slug = Some(team_slug.to_string());
+
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/teams/{team_slug}/datasets/{dataset_slug}/item_reports",
+            )))
+            .respond_with(ResponseTemplate::new(200).set_body_string(mock_data.to_string()))
+            .mount(&mock_server)
+            .await;
+
+        let client: V7Client = V7Client::new(
+            format!("{}/", mock_server.uri()),
+            "api-key".to_string(),
+            "some-team".to_string(),
+        )
+        .unwrap();
+
+        let results = dataset.get_item_reports(&client).await.unwrap();
+
+        assert_eq!(results.len(), 1);
+
+        let result = results.first().unwrap();
+
+        assert_eq!(result.filename, "somefilename".to_string());
+    }
+
+    #[tokio::test]
+    async fn test_item_reports_from_bytes() {
+        let filename = "somefilename";
+        let uploaded_date = "2023-05-10 14:15:27";
+        let status = "complete";
+        let workflow_start_date = "2023-05-10 14:16:17";
+        let workflow_complete_date = "2023-05-17 01:28:13";
+        let number_of_frames = "";
+        let folder = "/";
+        let time_spent_annotating_sec = 320;
+        let time_spent_reviewing_sec = 1;
+        let automation_time_annotating_sec = 2;
+        let automation_time_reviewing_sec = 3;
+        let annotators = "kevin@mail.com";
+        let reviewers = "";
+        let was_rejected_in_review = false;
+        let url = "https://darwin.v7labs.com/workview?dataset=123456&image=789";
+
+        let mut content =
+            "filename,uploaded_date,status,workflow_start_date,workflow_complete_date,\
+        number_of_frames,folder,time_spent_annotating_sec,time_spent_reviewing_sec,\
+        automation_time_annotating_sec,automation_time_reviewing_sec,annotators,reviewers,\
+        was_rejected_in_review,url\n"
+                .to_string();
+        content.push_str(&format!(
+            "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
+            filename,
+            uploaded_date,
+            status,
+            workflow_start_date,
+            workflow_complete_date,
+            number_of_frames,
+            folder,
+            time_spent_annotating_sec,
+            time_spent_reviewing_sec,
+            automation_time_annotating_sec,
+            automation_time_reviewing_sec,
+            annotators,
+            reviewers,
+            was_rejected_in_review,
+            url
+        ));
+
+        let results = item_reports_from_bytes(content.as_bytes()).await.unwrap();
+        assert_eq!(results.len(), 1);
+
+        let result = results.first().unwrap();
+
+        assert_eq!(result.filename, filename.to_string());
+        assert_eq!(result.uploaded_date, uploaded_date.to_string());
+        assert_eq!(result.status, DatasetItemStatus::Complete);
+        assert_eq!(
+            result.workflow_start_date,
+            Some(workflow_start_date.to_string())
+        );
+        assert_eq!(
+            result.workflow_complete_date,
+            Some(workflow_complete_date.to_string())
+        );
+        assert_eq!(result.number_of_frames, None);
+        assert_eq!(result.folder, folder.to_string());
+        assert_eq!(result.time_spent_annotating_sec, time_spent_annotating_sec);
+        assert_eq!(result.time_spent_reviewing_sec, time_spent_reviewing_sec);
+        assert_eq!(
+            result.automation_time_annotating_sec,
+            automation_time_annotating_sec
+        );
+        assert_eq!(
+            result.automation_time_reviewing_sec,
+            automation_time_reviewing_sec
+        );
+        assert_eq!(result.annotators, annotators.to_string());
+        assert_eq!(result.reviewers, reviewers.to_string());
+        assert_eq!(result.was_rejected_in_review, was_rejected_in_review);
+        assert_eq!(result.url, url);
     }
 }

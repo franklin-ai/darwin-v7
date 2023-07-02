@@ -173,13 +173,14 @@ impl Display for DatasetItemTypes {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum DatasetItemStatus {
     Annotate,
     Archived,
     Complete,
     Error,
+    #[default]
     New,
     Processing,
     Review,
