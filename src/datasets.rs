@@ -2,7 +2,7 @@ use crate::annotation::AnnotationClass;
 use crate::client::V7Methods;
 use crate::expect_http_ok;
 use crate::filter::Filter;
-use crate::item::{AddDataPayload, DatasetItem};
+use crate::item::{AddDataPayload, DatasetItem, DatasetItemTypes, ExistingSimpleItem};
 use crate::team::TypeCount;
 use crate::workflow::WorkflowTemplate;
 use anyhow::{bail, Context, Result};
@@ -127,6 +127,17 @@ struct AddDataItemsPayload {
     pub storage_name: String,
 }
 
+/// Version 2.0 equivalent of `AddDataItemsPayload`
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct RegisterExistingItemPayload {
+    /// Slug name of the Dataset to upload images to
+    pub dataset_slug: String,
+    /// Registered S3 storage bucket
+    pub storage_slug: String,
+    /// Details about image file
+    pub items: Vec<ExistingSimpleItem>,
+}
+
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct ResponseItem {
     pub dataset_item_id: u64,
@@ -137,6 +148,31 @@ pub struct ResponseItem {
 pub struct AddDataItemsResponse {
     pub blocked_items: Vec<ResponseItem>,
     pub items: Vec<ResponseItem>,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct SlotItem {
+    pub file_name: String,
+    pub reason: String,
+    pub slot_name: String,
+    pub size_bytes: u64,
+    #[serde(rename = "type")]
+    pub item_type: DatasetItemTypes,
+    pub upload_id: String,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct RegistrationResponseItem {
+    pub id: String,
+    pub name: String,
+    pub path: String,
+    pub slots: Vec<SlotItem>,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct RegisterExistingItemResponse {
+    pub blocked_items: Vec<RegistrationResponseItem>,
+    pub items: Vec<RegistrationResponseItem>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
@@ -255,7 +291,12 @@ pub trait DatasetDataMethodsV2<C>
 where
     C: V7Methods,
 {
-    async fn register_existing_data_read(&self, client: &C, )
+    async fn register_items_to_dataset(
+        &self,
+        client: &C,
+        data: Vec<ExistingSimpleItem>,
+        external_storage: String,
+    ) -> Result<RegisterExistingItemResponse>;
 }
 
 #[async_trait]
@@ -405,6 +446,36 @@ where
         let response = client.put(&endpoint, Some(&api_payload)).await?;
 
         expect_http_ok!(response, AddDataItemsResponse)
+    }
+}
+
+#[async_trait]
+impl<C> DatasetDataMethodsV2<C> for Dataset
+    where
+        C: V7Methods + std::marker::Sync,
+{
+    async fn register_items_to_dataset(
+        &self,
+        client: &C,
+        data: Vec<ExistingSimpleItem>,
+        external_storage_slug: String,
+    ) -> Result<RegisterExistingItemResponse> {
+        let api_payload = RegisterExistingItemPayload {
+            dataset_slug: self.slug.to_string(),
+            storage_slug: external_storage_slug,
+            items: data,
+        };
+
+        let endpoint = format!(
+            "teams/{}/items/register_existing_readonly",
+            self.team_slug
+                .as_ref()
+                .context("Dataset is missing team slug")?
+        );
+
+        let response = client.put(&endpoint, Some(&api_payload)).await?;
+
+        expect_http_ok!(response, RegisterExistingItemResponse)
     }
 }
 
