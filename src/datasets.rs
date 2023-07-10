@@ -451,8 +451,8 @@ where
 
 #[async_trait]
 impl<C> DatasetDataMethodsV2<C> for Dataset
-    where
-        C: V7Methods + std::marker::Sync,
+where
+    C: V7Methods + std::marker::Sync,
 {
     async fn register_items_to_dataset(
         &self,
