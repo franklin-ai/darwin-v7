@@ -101,7 +101,7 @@ impl RawClient {
 pub enum ApiVersion {
     V1,
     #[default]
-    V2
+    V2,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -137,7 +137,12 @@ pub trait V7Methods {
 }
 
 impl V7Client {
-    pub fn new(api_endpoint: String, api_key: String, version: ApiVersion, team: String) -> Result<Self> {
+    pub fn new(
+        api_endpoint: String,
+        api_key: String,
+        version: ApiVersion,
+        team: String,
+    ) -> Result<Self> {
         let client = RawClient::new()?;
 
         Ok(V7Client {
@@ -149,7 +154,11 @@ impl V7Client {
         })
     }
 
-    pub fn from_config(config: &Config, team: Option<&String>, version: Option<ApiVersion>) -> Result<Self> {
+    pub fn from_config(
+        config: &Config,
+        team: Option<&String>,
+        version: Option<ApiVersion>,
+    ) -> Result<Self> {
         // The base endpoint
         let api_endpoint = config.api_endpoint().to_string();
 
@@ -307,7 +316,12 @@ mod tests {
             .await;
 
         // Setup the client
-        let client = V7Client::new(format!("{}/", mock_server.uri()), api_key.to_string(), ApiVersion::V2, String::new() )
+        let client = V7Client::new(
+            format!("{}/", mock_server.uri()),
+            api_key.to_string(),
+            ApiVersion::V2,
+            String::new(),
+        )
         .unwrap();
 
         assert_eq!(client.get("status").await.unwrap().status(), 200);
