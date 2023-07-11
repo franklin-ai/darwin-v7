@@ -157,9 +157,10 @@ pub struct DatasetImage {
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct DatasetVideo {}
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum DatasetItemTypes {
+    #[default]
     Image,
     Video,
     Pdf,
@@ -174,12 +175,6 @@ impl Display for DatasetItemTypes {
             DatasetItemTypes::Pdf => write!(f, "PDF"),
             DatasetItemTypes::Dicom => write!(f, "DICOM"),
         }
-    }
-}
-
-impl Default for DatasetItemTypes {
-    fn default() -> Self {
-        DatasetItemTypes::Image
     }
 }
 
