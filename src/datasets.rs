@@ -276,7 +276,7 @@ where
     C: V7Methods,
 {
     async fn assign_items(&self, client: &C, assignee_id: &u32, filter: &Filter) -> Result<()>;
-    #[deprecated = "V2 of the V7 API requires use of `register_existing_read`"]
+    #[deprecated = "V2 of the V7 API requires use of `register_items_to_dataset`"]
     async fn add_data_to_dataset(
         &self,
         client: &C,

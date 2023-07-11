@@ -98,9 +98,17 @@ impl RawClient {
 }
 
 #[derive(Debug, Default, Clone)]
+pub enum ApiVersion {
+    V1,
+    #[default]
+    V2
+}
+
+#[derive(Debug, Default, Clone)]
 pub struct V7Client {
     api_endpoint: String,
     api_key: String,
+    version: ApiVersion,
     team: String,
     client: RawClient,
 }
@@ -125,26 +133,31 @@ pub trait V7Methods {
     ) -> Result<reqwest::Response, reqwest::Error>;
     fn team(&self) -> &String;
     fn api_endpoint(&self) -> &str;
+    fn version(&self) -> &ApiVersion;
 }
 
 impl V7Client {
-    pub fn new(api_endpoint: String, api_key: String, team: String) -> Result<Self> {
+    pub fn new(api_endpoint: String, api_key: String, version: ApiVersion, team: String) -> Result<Self> {
         let client = RawClient::new()?;
 
         Ok(V7Client {
             api_endpoint,
             api_key,
+            version,
             team,
             client,
         })
     }
 
-    pub fn from_config(config: &Config, team: Option<&String>) -> Result<Self> {
+    pub fn from_config(config: &Config, team: Option<&String>, version: Option<ApiVersion>) -> Result<Self> {
         // The base endpoint
         let api_endpoint = config.api_endpoint().to_string();
 
         // The team if not provided use the default
         let client_team = team.unwrap_or_else(|| config.default_team()).to_string();
+
+        // API Version if not provided use the default
+        let version = version.unwrap_or_default();
 
         // Get the api key for the default team
         let api_key = &config
@@ -155,7 +168,7 @@ impl V7Client {
             .as_ref()
             .context("Api key not found in configuration")?;
 
-        Self::new(api_endpoint, api_key.to_string(), client_team)
+        Self::new(api_endpoint, api_key.to_string(), version, client_team)
     }
 
     pub fn generate_team(&self) -> Team {
@@ -176,6 +189,10 @@ impl V7Methods for V7Client {
 
     fn team(&self) -> &String {
         &self.team
+    }
+
+    fn version(&self) -> &ApiVersion {
+        &self.version
     }
 
     async fn get(&self, endpoint: &str) -> Result<reqwest::Response, reqwest::Error> {
@@ -250,7 +267,7 @@ mod tests {
     #[test]
     fn test_client_from_config() {
         let (api_endpoint, test_config, test_team) = basic_config();
-        let client = V7Client::from_config(&test_config, None).unwrap();
+        let client = V7Client::from_config(&test_config, None, Some(ApiVersion::V2)).unwrap();
 
         assert_eq!(client.api_endpoint(), api_endpoint);
         assert_eq!(client.team().to_string(), test_team.slug);
@@ -259,14 +276,14 @@ mod tests {
     #[test]
     fn test_client_wrong_team() {
         let (_api_endpoint, test_config, _test_team) = basic_config();
-        V7Client::from_config(&test_config, Some(&"team-kevin".to_string()))
+        V7Client::from_config(&test_config, Some(&"team-kevin".to_string()), None)
             .expect_err("The requested team is not found in the config");
     }
 
     #[test]
     fn test_client_missing_apikey() {
         let (_api_endpoint, test_config, _test_team) = basic_config();
-        V7Client::from_config(&test_config, Some(&"team-noapi".to_string()))
+        V7Client::from_config(&test_config, Some(&"team-noapi".to_string()), None)
             .expect_err("Api key not found in configuration");
     }
 
@@ -290,11 +307,7 @@ mod tests {
             .await;
 
         // Setup the client
-        let client = V7Client::new(
-            format!("{}/", mock_server.uri()),
-            api_key.to_string(),
-            String::new(),
-        )
+        let client = V7Client::new(format!("{}/", mock_server.uri()), api_key.to_string(), ApiVersion::V2, String::new() )
         .unwrap();
 
         assert_eq!(client.get("status").await.unwrap().status(), 200);
@@ -330,6 +343,7 @@ mod tests {
         let client = V7Client::new(
             format!("{}/", mock_server.uri()),
             api_key.to_string(),
+            ApiVersion::default(),
             String::new(),
         )
         .unwrap();
@@ -361,6 +375,7 @@ mod tests {
         let client = V7Client::new(
             format!("{}/", mock_server.uri()),
             api_key.to_string(),
+            ApiVersion::default(),
             String::new(),
         )
         .unwrap();
@@ -392,6 +407,7 @@ mod tests {
         let client = V7Client::new(
             format!("{}/", mock_server.uri()),
             api_key.to_string(),
+            ApiVersion::default(),
             String::new(),
         )
         .unwrap();

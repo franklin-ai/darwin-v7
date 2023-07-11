@@ -235,11 +235,11 @@ pub struct DataPayloadLevel {
     pub base_key: String,
 }
 
-#[deprecated = "V2 of the V7 API requires use of `register_existing_read`"]
+// #[deprecated = "V2 of the V7 API requires use of `ExistingSimpleItem`"]
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct AddDataPayload {
     #[serde(rename = "type")]
-    pub item_type: DatasetItemTypes, // This can probably be an enum
+    pub item_type: DatasetItemTypes,
     pub filename: String,
     pub thumbnail_key: String,
     pub path: String,
