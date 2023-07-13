@@ -165,6 +165,7 @@ pub enum DatasetItemTypes {
     Video,
     Pdf,
     Dicom,
+    TiledImage,
 }
 
 impl Display for DatasetItemTypes {
@@ -174,6 +175,7 @@ impl Display for DatasetItemTypes {
             DatasetItemTypes::Video => write!(f, "Video"),
             DatasetItemTypes::Pdf => write!(f, "PDF"),
             DatasetItemTypes::Dicom => write!(f, "DICOM"),
+            DatasetItemTypes::TiledImage => write!(f, "tiled_image"),
         }
     }
 }
