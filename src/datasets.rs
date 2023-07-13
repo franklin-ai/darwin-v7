@@ -473,7 +473,7 @@ where
                 .context("Dataset is missing team slug")?
         );
 
-        let response = client.put(&endpoint, Some(&api_payload)).await?;
+        let response = client.post(&endpoint, &api_payload).await?;
 
         expect_http_ok!(response, RegisterExistingItemResponse)
     }
