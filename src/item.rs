@@ -292,7 +292,7 @@ pub struct ImageSection {
     pub image_section_type: String,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct Slot {
     pub sections: Vec<ImageSection>,
     pub file_name: String,
@@ -305,7 +305,7 @@ pub struct Slot {
     pub metadata: DataPayloadLevel,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct ExistingSimpleItem {
     pub name: String,
     pub path: String,
