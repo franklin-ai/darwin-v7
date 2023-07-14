@@ -161,7 +161,8 @@ pub struct SlotResponse {
     pub as_frames: bool,
     pub extract_views: bool,
     pub file_name: String,
-    pub reason: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
     pub metadata: DataPayloadLevel,
     pub slot_name: String,
     pub size_bytes: u64,
