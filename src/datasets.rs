@@ -493,7 +493,7 @@ where
             items: data,
         };
         let endpoint = format!(
-            "v2/teams/{}/items/register_existing_readonly",
+            "teams/{}/items/register_existing_readonly",
             self.team_slug
                 .as_ref()
                 .context("Dataset is missing team slug")?

@@ -101,15 +101,14 @@ impl RawClient {
 pub struct V7Client {
     api_endpoint: String,
     api_key: String,
-    version: ApiVersion,
     team: String,
     client: RawClient,
 }
 
 #[derive(Debug, Default, Clone)]
 pub enum ApiVersion {
-    V1,
     #[default]
+    V1,
     V2,
 }
 
@@ -144,14 +143,13 @@ pub trait V7Methods {
     ) -> Result<reqwest::Response, reqwest::Error>;
     fn team(&self) -> &String;
     fn api_endpoint(&self) -> &str;
-    fn version(&self) -> &ApiVersion;
+    fn version(&self) -> ApiVersion;
 }
 
 impl V7Client {
     pub fn new(
         api_endpoint: String,
         api_key: String,
-        version: ApiVersion,
         team: String,
     ) -> Result<Self> {
         let client = RawClient::new()?;
@@ -159,7 +157,6 @@ impl V7Client {
         Ok(V7Client {
             api_endpoint,
             api_key,
-            version,
             team,
             client,
         })
@@ -168,16 +165,12 @@ impl V7Client {
     pub fn from_config(
         config: &Config,
         team: Option<&String>,
-        version: Option<ApiVersion>,
     ) -> Result<Self> {
         // The base endpoint
         let api_endpoint = config.api_endpoint().to_string();
 
         // The team if not provided use the default
         let client_team = team.unwrap_or_else(|| config.default_team()).to_string();
-
-        // API Version if not provided use the default
-        let version = version.unwrap_or_default();
 
         // Get the api key for the default team
         let api_key = &config
@@ -188,7 +181,7 @@ impl V7Client {
             .as_ref()
             .context("Api key not found in configuration")?;
 
-        Self::new(api_endpoint, api_key.to_string(), version, client_team)
+        Self::new(api_endpoint, api_key.to_string(), client_team)
     }
 
     pub fn generate_team(&self) -> Team {
@@ -199,7 +192,13 @@ impl V7Client {
             team_id: None,
         }
     }
+
+    pub fn v2(&self) -> Result<Self> {
+        let api_endpoint = format!("{}v2/", self.api_endpoint());
+        Self::new(api_endpoint, self.api_key.clone(), self.team.clone())
+    }
 }
+
 
 #[async_trait]
 impl V7Methods for V7Client {
@@ -211,8 +210,12 @@ impl V7Methods for V7Client {
         &self.team
     }
 
-    fn version(&self) -> &ApiVersion {
-        &self.version
+    fn version(&self) -> ApiVersion {
+        if self.api_endpoint.contains("v2") {
+            ApiVersion::V2
+        } else {
+            ApiVersion::V1
+        }
     }
 
     async fn get(&self, endpoint: &str) -> Result<reqwest::Response, reqwest::Error> {
@@ -330,7 +333,6 @@ mod tests {
         let client = V7Client::new(
             format!("{}/", mock_server.uri()),
             api_key.to_string(),
-            ApiVersion::V2,
             String::new(),
         )
         .unwrap();
@@ -368,7 +370,6 @@ mod tests {
         let client = V7Client::new(
             format!("{}/", mock_server.uri()),
             api_key.to_string(),
-            ApiVersion::default(),
             String::new(),
         )
         .unwrap();
@@ -400,7 +401,6 @@ mod tests {
         let client = V7Client::new(
             format!("{}/", mock_server.uri()),
             api_key.to_string(),
-            ApiVersion::default(),
             String::new(),
         )
         .unwrap();
@@ -432,7 +432,6 @@ mod tests {
         let client = V7Client::new(
             format!("{}/", mock_server.uri()),
             api_key.to_string(),
-            ApiVersion::default(),
             String::new(),
         )
         .unwrap();
