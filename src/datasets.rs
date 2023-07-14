@@ -488,6 +488,8 @@ where
             storage_slug: external_storage_slug,
             items: data,
         };
+        println!("Payload: {:?}", api_payload);
+
 
         let endpoint = format!(
             "v2/teams/{}/items/register_existing_readonly",
@@ -496,6 +498,7 @@ where
                 .context("Dataset is missing team slug")?
         );
 
+        println!("Endpoint: {}", endpoint);
         let response = client.post(&endpoint, &api_payload).await?;
 
         expect_http_ok!(response, RegisterExistingItemResponse)
