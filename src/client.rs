@@ -282,7 +282,7 @@ mod tests {
     #[test]
     fn test_client_from_config() {
         let (api_endpoint, test_config, test_team) = basic_config();
-        let client = V7Client::from_config(&test_config, None, Some(ApiVersion::V2)).unwrap();
+        let client = V7Client::from_config(&test_config, None).unwrap();
 
         assert_eq!(client.api_endpoint(), api_endpoint);
         assert_eq!(client.team().to_string(), test_team.slug);
@@ -291,14 +291,14 @@ mod tests {
     #[test]
     fn test_client_wrong_team() {
         let (_api_endpoint, test_config, _test_team) = basic_config();
-        V7Client::from_config(&test_config, Some(&"team-kevin".to_string()), None)
+        V7Client::from_config(&test_config, Some(&"team-kevin".to_string()))
             .expect_err("The requested team is not found in the config");
     }
 
     #[test]
     fn test_client_missing_apikey() {
         let (_api_endpoint, test_config, _test_team) = basic_config();
-        V7Client::from_config(&test_config, Some(&"team-noapi".to_string()), None)
+        V7Client::from_config(&test_config, Some(&"team-noapi".to_string()))
             .expect_err("Api key not found in configuration");
     }
 
