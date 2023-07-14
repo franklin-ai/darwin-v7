@@ -1,5 +1,5 @@
 use crate::annotation::AnnotationClass;
-use crate::client::V7Methods;
+use crate::client::{ApiVersion, V7Methods};
 use crate::expect_http_ok;
 use crate::filter::Filter;
 use crate::item::{
@@ -490,7 +490,7 @@ where
         };
 
         let endpoint = format!(
-            "teams/{}/items/register_existing_readonly",
+            "v2/teams/{}/items/register_existing_readonly",
             self.team_slug
                 .as_ref()
                 .context("Dataset is missing team slug")?
