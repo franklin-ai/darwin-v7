@@ -147,11 +147,7 @@ pub trait V7Methods {
 }
 
 impl V7Client {
-    pub fn new(
-        api_endpoint: String,
-        api_key: String,
-        team: String,
-    ) -> Result<Self> {
+    pub fn new(api_endpoint: String, api_key: String, team: String) -> Result<Self> {
         let client = RawClient::new()?;
 
         Ok(V7Client {
@@ -162,10 +158,7 @@ impl V7Client {
         })
     }
 
-    pub fn from_config(
-        config: &Config,
-        team: Option<&String>,
-    ) -> Result<Self> {
+    pub fn from_config(config: &Config, team: Option<&String>) -> Result<Self> {
         // The base endpoint
         let api_endpoint = config.api_endpoint().to_string();
 
@@ -198,7 +191,6 @@ impl V7Client {
         Self::new(api_endpoint, self.api_key.clone(), self.team.clone())
     }
 }
-
 
 #[async_trait]
 impl V7Methods for V7Client {
