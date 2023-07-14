@@ -713,7 +713,6 @@ mod test_client_calls {
         let client: V7Client = V7Client::new(
             format!("{}/", mock_server.uri()),
             "api-key".to_string(),
-            ApiVersion::V2,
             "some-team".to_string(),
         )
         .unwrap();
@@ -745,7 +744,6 @@ mod test_client_calls {
         let client: V7Client = V7Client::new(
             format!("{}/", mock_server.uri()),
             "api-key".to_string(),
-            ApiVersion::V2,
             "some-team".to_string(),
         )
         .unwrap();
@@ -767,7 +765,6 @@ mod test_client_calls {
         let client: V7Client = V7Client::new(
             format!("{}/", mock_server.uri()),
             "api-key".to_string(),
-            ApiVersion::V2,
             "some-team".to_string(),
         )
         .unwrap();
@@ -789,7 +786,6 @@ mod test_client_calls {
         let client: V7Client = V7Client::new(
             format!("{}/", mock_server.uri()),
             "api-key".to_string(),
-            ApiVersion::V2,
             "some-team".to_string(),
         )
         .unwrap();
@@ -827,7 +823,6 @@ mod test_client_calls {
         let client: V7Client = V7Client::new(
             format!("{}/", mock_server.uri()),
             "api-key".to_string(),
-            ApiVersion::V2,
             "some-team".to_string(),
         )
         .unwrap();
@@ -860,7 +855,6 @@ somefilename,2023-05-10 14:15:27,complete,2023-05-10 14:16:17,2023-05-17 01:28:1
         let client: V7Client = V7Client::new(
             format!("{}/", mock_server.uri()),
             "api-key".to_string(),
-            ApiVersion::V1,
             "some-team".to_string(),
         )
         .unwrap();
