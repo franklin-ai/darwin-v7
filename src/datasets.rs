@@ -1,9 +1,10 @@
 use crate::annotation::AnnotationClass;
-use crate::client::{ApiVersion, V7Methods};
+use crate::client::V7Methods;
 use crate::expect_http_ok;
 use crate::filter::Filter;
 use crate::item::{
-    AddDataPayload, DatasetItem, DatasetItemStatus, DatasetItemTypes, ExistingSimpleItem,
+    AddDataPayload, DataPayloadLevel, DatasetItem, DatasetItemStatus, DatasetItemTypes,
+    ExistingSimpleItem,
 };
 use crate::team::TypeCount;
 use crate::workflow::WorkflowTemplate;
@@ -155,15 +156,17 @@ pub struct AddDataItemsResponse {
     pub items: Vec<ResponseItem>,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
-pub struct SlotItem {
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct SlotResponse {
+    pub as_frames: bool,
+    pub extract_views: bool,
     pub file_name: String,
     pub reason: String,
+    pub metadata: DataPayloadLevel,
     pub slot_name: String,
     pub size_bytes: u64,
     #[serde(rename = "type")]
     pub item_type: DatasetItemTypes,
-    pub upload_id: String,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
@@ -171,7 +174,7 @@ pub struct RegistrationResponseItem {
     pub id: String,
     pub name: String,
     pub path: String,
-    pub slots: Vec<SlotItem>,
+    pub slots: Vec<SlotResponse>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
@@ -212,7 +215,7 @@ struct SetStagePayload {
     pub filter: Filter,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct ItemReport {
     /// Original filename of the item
     pub filename: String,
@@ -488,17 +491,12 @@ where
             storage_slug: external_storage_slug,
             items: data,
         };
-        println!("Payload: {:?}", api_payload);
-
-
         let endpoint = format!(
             "v2/teams/{}/items/register_existing_readonly",
             self.team_slug
                 .as_ref()
                 .context("Dataset is missing team slug")?
         );
-
-        println!("Endpoint: {}", endpoint);
         let response = client.post(&endpoint, &api_payload).await?;
 
         expect_http_ok!(response, RegisterExistingItemResponse)
