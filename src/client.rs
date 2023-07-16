@@ -143,7 +143,7 @@ pub trait V7Methods {
     ) -> Result<reqwest::Response, reqwest::Error>;
     fn team(&self) -> &String;
     fn api_endpoint(&self) -> &str;
-    fn version(&self) -> ApiVersion;
+    fn v2(&self) -> V7Client;
 }
 
 impl V7Client {
@@ -185,11 +185,6 @@ impl V7Client {
             team_id: None,
         }
     }
-
-    pub fn v2(&self) -> Result<Self> {
-        let api_endpoint = format!("{}v2/", self.api_endpoint());
-        Self::new(api_endpoint, self.api_key.clone(), self.team.clone())
-    }
 }
 
 #[async_trait]
@@ -202,11 +197,12 @@ impl V7Methods for V7Client {
         &self.team
     }
 
-    fn version(&self) -> ApiVersion {
-        if self.api_endpoint.contains("v2") {
-            ApiVersion::V2
-        } else {
-            ApiVersion::V1
+    fn v2(&self) -> V7Client {
+        V7Client {
+            api_endpoint: format!("{}v2/", self.api_endpoint()),
+            api_key: self.api_key.clone(),
+            team: self.team.clone(),
+            client: self.client.clone(),
         }
     }
 
@@ -429,5 +425,34 @@ mod tests {
         .unwrap();
         let response = client.put::<String>("testput", None).await.unwrap();
         assert_eq!(response.status(), 200);
+    }
+    #[tokio::test]
+    async fn test_v2_client_get() {
+        // Setup the mock endpoint
+        let mock_server = MockServer::start().await;
+
+        let api_key = "api-key-1234".to_string();
+
+        // Setup the client
+        let client = V7Client::new(
+            format!("{}/", mock_server.uri()),
+            api_key.to_string(),
+            String::new(),
+        )
+        .unwrap();
+
+        Mock::given(method("GET"))
+            .and(path("/v2/status"))
+            .and(header("accept", "application/json"))
+            .and(header("content-type", "application/json"))
+            .and(header(
+                "Authorization",
+                format!("ApiKey {}", api_key).as_str(),
+            ))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&mock_server)
+            .await;
+
+        assert_eq!(client.v2().get("status").await.unwrap().status(), 200);
     }
 }
