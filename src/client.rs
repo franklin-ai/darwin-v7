@@ -1,6 +1,7 @@
 use crate::{config::Config, team::Team};
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
+use log::debug;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 
 #[derive(Debug, Default, Clone)]
@@ -104,6 +105,24 @@ pub struct V7Client {
     client: RawClient,
 }
 
+#[derive(Debug, Default, Clone)]
+pub enum ApiVersion {
+    #[default]
+    V1,
+    V2,
+}
+
+impl ApiVersion {
+    pub fn try_from(version: &str) -> Result<Self> {
+        let api_version = match version {
+            "v1" => ApiVersion::V1,
+            "v2" => ApiVersion::V2,
+            _ => bail!(format!("Error: {} is not a valid API version", version)),
+        };
+        Ok(api_version)
+    }
+}
+
 #[async_trait]
 pub trait V7Methods {
     async fn get(&self, endpoint: &str) -> Result<reqwest::Response, reqwest::Error>;
@@ -179,6 +198,7 @@ impl V7Methods for V7Client {
 
     async fn get(&self, endpoint: &str) -> Result<reqwest::Response, reqwest::Error> {
         let endpoint = format!("{}{}", self.api_endpoint, endpoint);
+        debug!("V7Client::get({endpoint})");
         self.client.get(&endpoint, &self.api_key).await
     }
 
@@ -188,6 +208,7 @@ impl V7Methods for V7Client {
         data: Option<&S>,
     ) -> Result<reqwest::Response, reqwest::Error> {
         let endpoint = format!("{}{}", self.api_endpoint, endpoint);
+        debug!("V7Client::put({endpoint})");
         self.client.put(&endpoint, &self.api_key, data).await
     }
 
@@ -197,6 +218,7 @@ impl V7Methods for V7Client {
         data: Option<&S>,
     ) -> Result<reqwest::Response, reqwest::Error> {
         let endpoint = format!("{}{}", self.api_endpoint, endpoint);
+        debug!("V7Client::delete({endpoint})");
         self.client.delete(&endpoint, &self.api_key, data).await
     }
 
@@ -206,6 +228,7 @@ impl V7Methods for V7Client {
         data: &S,
     ) -> Result<reqwest::Response, reqwest::Error> {
         let endpoint = format!("{}{}", self.api_endpoint, endpoint);
+        debug!("V7Client::post({endpoint})");
         self.client.post(&endpoint, &self.api_key, data).await
     }
 }

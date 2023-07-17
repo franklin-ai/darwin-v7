@@ -157,11 +157,15 @@ pub struct DatasetImage {
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct DatasetVideo {}
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum DatasetItemTypes {
+    #[default]
     Image,
     Video,
+    Pdf,
+    Dicom,
+    TiledImage,
 }
 
 impl Display for DatasetItemTypes {
@@ -169,6 +173,9 @@ impl Display for DatasetItemTypes {
         match self {
             DatasetItemTypes::Image => write!(f, "Image"),
             DatasetItemTypes::Video => write!(f, "Video"),
+            DatasetItemTypes::Pdf => write!(f, "PDF"),
+            DatasetItemTypes::Dicom => write!(f, "DICOM"),
+            DatasetItemTypes::TiledImage => write!(f, "tiled_image"),
         }
     }
 }
@@ -229,7 +236,7 @@ pub struct DataPayloadLevel {
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct AddDataPayload {
     #[serde(rename = "type")]
-    pub item_type: DatasetItemTypes, // This can probably be an enum
+    pub item_type: DatasetItemTypes,
     pub filename: String,
     pub thumbnail_key: String,
     pub path: String,
@@ -237,6 +244,75 @@ pub struct AddDataPayload {
     pub width: u32,
     pub height: u32,
     pub metadata: DataPayloadLevel,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct NewSimpleItem {
+    pub as_frames: bool,
+    pub extract_views: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fps: Option<String>, // is either a positive integer number or the string `native`
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
+    pub metadata: HashMap<String, String>,
+    pub name: String,
+    pub path: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub tags: Vec<String>, // TODO: https://docs.v7labs.com/reference/imports-upload tags in the json object can either be Vec<String> or HashMap<String, String>
+    #[serde(rename = "type")]
+    pub typ: DatasetItemTypes,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct RegisterNewItemOptions {
+    pub force_tiling: bool,
+    pub ignore_dicom_layout: bool,
+}
+
+impl Default for RegisterNewItemOptions {
+    fn default() -> Self {
+        Self {
+            force_tiling: false,
+            ignore_dicom_layout: true,
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct RegisterNewSimpleItemRequest {
+    pub dataset_slug: String,
+    pub items: Vec<NewSimpleItem>,
+    pub options: RegisterNewItemOptions,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct ImageSection {
+    pub height: u32,
+    pub width: u32,
+    pub size_bytes: u32,
+    pub section_index: usize,
+    pub storage_hq_key: String,
+    #[serde(rename = "type")]
+    pub image_section_type: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct Slot {
+    pub sections: Vec<ImageSection>,
+    pub file_name: String,
+    pub size_bytes: u32,
+    pub slot_name: String,
+    pub storage_key: String,
+    pub storage_thumbnail_key: String,
+    #[serde(rename = "type")]
+    pub slot_type: DatasetItemTypes,
+    pub metadata: DataPayloadLevel,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct ExistingSimpleItem {
+    pub name: String,
+    pub path: String,
+    pub slots: Vec<Slot>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy)]

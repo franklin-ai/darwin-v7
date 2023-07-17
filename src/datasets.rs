@@ -2,7 +2,10 @@ use crate::annotation::AnnotationClass;
 use crate::client::V7Methods;
 use crate::expect_http_ok;
 use crate::filter::Filter;
-use crate::item::{AddDataPayload, DatasetItem, DatasetItemStatus};
+use crate::item::{
+    AddDataPayload, DataPayloadLevel, DatasetItem, DatasetItemStatus, DatasetItemTypes,
+    ExistingSimpleItem,
+};
 use crate::team::TypeCount;
 use crate::workflow::WorkflowTemplate;
 use anyhow::{bail, Context, Result};
@@ -130,6 +133,17 @@ struct AddDataItemsPayload {
     pub storage_name: String,
 }
 
+/// Version 2.0 equivalent of `AddDataItemsPayload`
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct RegisterExistingItemPayload {
+    /// Slug name of the Dataset to upload images to
+    pub dataset_slug: String,
+    /// Registered S3 storage bucket
+    pub storage_slug: String,
+    /// Details about image file
+    pub items: Vec<ExistingSimpleItem>,
+}
+
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct ResponseItem {
     pub dataset_item_id: u64,
@@ -140,6 +154,34 @@ pub struct ResponseItem {
 pub struct AddDataItemsResponse {
     pub blocked_items: Vec<ResponseItem>,
     pub items: Vec<ResponseItem>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct SlotResponse {
+    pub as_frames: bool,
+    pub extract_views: bool,
+    pub file_name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+    pub metadata: DataPayloadLevel,
+    pub slot_name: String,
+    pub size_bytes: u64,
+    #[serde(rename = "type")]
+    pub item_type: DatasetItemTypes,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct RegistrationResponseItem {
+    pub id: String,
+    pub name: String,
+    pub path: String,
+    pub slots: Vec<SlotResponse>,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct RegisterExistingItemResponse {
+    pub blocked_items: Vec<RegistrationResponseItem>,
+    pub items: Vec<RegistrationResponseItem>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
@@ -174,7 +216,7 @@ struct SetStagePayload {
     pub filter: Filter,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct ItemReport {
     /// Original filename of the item
     pub filename: String,
@@ -261,12 +303,19 @@ where
     C: V7Methods,
 {
     async fn assign_items(&self, client: &C, assignee_id: &u32, filter: &Filter) -> Result<()>;
+    #[deprecated = "V2 of the V7 API requires use of `register_items_to_dataset`"]
     async fn add_data_to_dataset(
         &self,
         client: &C,
         data: Vec<AddDataPayload>,
         external_storage: String,
     ) -> Result<AddDataItemsResponse>;
+    async fn register_items_to_dataset(
+        &self,
+        client: &C,
+        data: Vec<ExistingSimpleItem>,
+        external_storage: String,
+    ) -> Result<RegisterExistingItemResponse>;
 }
 
 #[async_trait]
@@ -416,6 +465,29 @@ where
         let response = client.put(&endpoint, Some(&api_payload)).await?;
 
         expect_http_ok!(response, AddDataItemsResponse)
+    }
+
+    // V7 Version 2
+    async fn register_items_to_dataset(
+        &self,
+        client: &C,
+        data: Vec<ExistingSimpleItem>,
+        external_storage_slug: String,
+    ) -> Result<RegisterExistingItemResponse> {
+        let api_payload = RegisterExistingItemPayload {
+            dataset_slug: self.slug.to_string(),
+            storage_slug: external_storage_slug,
+            items: data,
+        };
+        let endpoint = format!(
+            "v2/teams/{}/items/register_existing_readonly",
+            self.team_slug
+                .as_ref()
+                .context("Dataset is missing team slug")?
+        );
+        let response = client.post(&endpoint, &api_payload).await?;
+
+        expect_http_ok!(response, RegisterExistingItemResponse)
     }
 }
 
