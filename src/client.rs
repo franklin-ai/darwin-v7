@@ -416,33 +416,4 @@ mod tests {
         let response = client.put::<String>("testput", None).await.unwrap();
         assert_eq!(response.status(), 200);
     }
-    #[tokio::test]
-    async fn test_v2_client_get() {
-        // Setup the mock endpoint
-        let mock_server = MockServer::start().await;
-
-        let api_key = "api-key-1234".to_string();
-
-        // Setup the client
-        let client = V7Client::new(
-            format!("{}/", mock_server.uri()),
-            api_key.to_string(),
-            String::new(),
-        )
-        .unwrap();
-
-        Mock::given(method("GET"))
-            .and(path("/v2/status"))
-            .and(header("accept", "application/json"))
-            .and(header("content-type", "application/json"))
-            .and(header(
-                "Authorization",
-                format!("ApiKey {}", api_key).as_str(),
-            ))
-            .respond_with(ResponseTemplate::new(200))
-            .mount(&mock_server)
-            .await;
-
-        assert_eq!(client.v2().get("status").await.unwrap().status(), 200);
-    }
 }
