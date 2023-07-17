@@ -143,7 +143,6 @@ pub trait V7Methods {
     ) -> Result<reqwest::Response, reqwest::Error>;
     fn team(&self) -> &String;
     fn api_endpoint(&self) -> &str;
-    fn v2(&self) -> V7Client;
 }
 
 impl V7Client {
@@ -195,15 +194,6 @@ impl V7Methods for V7Client {
 
     fn team(&self) -> &String {
         &self.team
-    }
-
-    fn v2(&self) -> V7Client {
-        V7Client {
-            api_endpoint: format!("{}v2/", self.api_endpoint()),
-            api_key: self.api_key.clone(),
-            team: self.team.clone(),
-            client: self.client.clone(),
-        }
     }
 
     async fn get(&self, endpoint: &str) -> Result<reqwest::Response, reqwest::Error> {

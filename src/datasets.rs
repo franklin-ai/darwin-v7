@@ -310,14 +310,6 @@ where
         data: Vec<AddDataPayload>,
         external_storage: String,
     ) -> Result<AddDataItemsResponse>;
-}
-
-/// Dataset data methods for the V7 API version 2
-#[async_trait]
-pub trait DatasetDataMethodsV2<C>
-where
-    C: V7Methods,
-{
     async fn register_items_to_dataset(
         &self,
         client: &C,
@@ -474,13 +466,8 @@ where
 
         expect_http_ok!(response, AddDataItemsResponse)
     }
-}
 
-#[async_trait]
-impl<C> DatasetDataMethodsV2<C> for Dataset
-where
-    C: V7Methods + std::marker::Sync,
-{
+    // V7 Version 2
     async fn register_items_to_dataset(
         &self,
         client: &C,
@@ -493,12 +480,12 @@ where
             items: data,
         };
         let endpoint = format!(
-            "teams/{}/items/register_existing_readonly",
+            "v2/teams/{}/items/register_existing_readonly",
             self.team_slug
                 .as_ref()
                 .context("Dataset is missing team slug")?
         );
-        let response = client.v2().post(&endpoint, &api_payload).await?;
+        let response = client.post(&endpoint, &api_payload).await?;
 
         expect_http_ok!(response, RegisterExistingItemResponse)
     }
