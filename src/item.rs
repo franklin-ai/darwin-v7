@@ -231,10 +231,6 @@ impl TryFrom<&str> for DatasetItemStatus {
 pub struct DataPayloadLevel {
     pub levels: HashMap<usize, ImageLevel>,
     pub base_key: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub height: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub width: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
@@ -358,13 +354,23 @@ impl Display for DatasetItem {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct ItemSlotLevel {
+    pub levels: HashMap<usize, ImageLevel>,
+    pub base_key: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub height: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub width: Option<u32>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
 pub struct ItemSlot {
     pub file_name: String,
     pub fps: Option<u32>,
     pub id: String,
     pub is_external: bool,
-    pub metadata: DataPayloadLevel,
+    pub metadata: ItemSlotLevel,
     pub size_bytes: u64,
     pub slot_name: String,
     pub streamable: bool,

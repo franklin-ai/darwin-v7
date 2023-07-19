@@ -797,6 +797,7 @@ mod test_client_calls {
             .mount(&mock_server)
             .await;
 
+        #[allow(deprecated)]
         let result: Vec<DatasetItem> = mock_data.list_dataset_items(&client).await.unwrap();
 
         // Only compare a few values, this is mostly testing the endpoint
@@ -828,6 +829,7 @@ mod test_client_calls {
         )
         .unwrap();
 
+        #[allow(deprecated)]
         mock_data
             .list_dataset_items(&client)
             .await
