@@ -135,6 +135,25 @@ struct UserId {
     pub user_id: u32,
 }
 
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct FilterAssignItemPayload {
+    pub statuses: Vec<StageType>,
+    pub dataset_ids: Vec<u64>,
+    pub select_all: bool,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct AssignItemPayload {
+    pub filters: FilterAssignItemPayload,
+    pub assignee_email: String,
+    pub workflow_id: String,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct AssignItemResponse {
+    pub created_commands: u32,
+}
+
 impl Workflow {
     pub async fn assign<C>(&self, client: &C, user_id: &u32) -> Result<Workflow>
     where
@@ -147,6 +166,21 @@ impl Workflow {
             .await?;
 
         expect_http_ok!(response, Workflow)
+    }
+
+    pub async fn assign_v2<C>(
+        &self,
+        client: &C,
+        data: &AssignItemPayload,
+    ) -> Result<AssignItemResponse>
+    where
+        C: V7Methods,
+    {
+        let response = client
+            .post(&format!("v2/teams/{}/items/assign", client.team()), &data)
+            .await?;
+
+        expect_http_ok!(response, AssignItemResponse)
     }
 
     /// Warning undocumented
