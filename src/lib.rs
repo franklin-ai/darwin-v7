@@ -1,6 +1,7 @@
 pub mod annotation;
 pub mod classes;
 pub mod client;
+pub mod comment;
 pub mod config;
 pub mod datasets;
 pub mod export;

@@ -1,4 +1,4 @@
-use crate::workflow::Workflow;
+use crate::workflow::{StageType, Workflow};
 use anyhow::{bail, Result};
 use fake::{Dummy, Fake, Faker};
 use serde::ser::SerializeMap;
@@ -354,6 +354,75 @@ impl Display for DatasetItem {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct ItemSlotLevel {
+    pub levels: HashMap<usize, ImageLevel>,
+    pub base_key: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub height: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub width: Option<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
+pub struct ItemSlot {
+    pub file_name: String,
+    pub fps: Option<u32>,
+    pub id: String,
+    pub is_external: bool,
+    pub metadata: ItemSlotLevel,
+    pub size_bytes: u64,
+    pub slot_name: String,
+    pub streamable: bool,
+    pub total_sections: u32,
+    #[serde(rename = "type")]
+    pub item_slot_type: DatasetItemTypes,
+    pub upload_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
+pub struct DatasetItemLayout {
+    pub slots: Vec<String>,
+    #[serde(rename = "type")]
+    pub layout_type: String,
+    pub version: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
+pub struct DatasetItemV2 {
+    pub archived: bool,
+    pub cursor: String,
+    pub dataset_id: u32,
+    pub id: String,
+    pub inserted_at: Option<String>,
+    pub layout: DatasetItemLayout,
+    pub name: String,
+    pub path: Option<String>,
+    pub priority: Option<u32>,
+    pub processing_status: DatasetItemStatus,
+    pub slot_types: Vec<DatasetItemTypes>,
+    pub slots: Vec<ItemSlot>,
+    pub status: DatasetItemStatus,
+    pub tags: Vec<String>,
+    pub updated_at: Option<String>,
+    pub uploads: Vec<String>,
+    pub workflow_status: StageType,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
+pub struct ItemPage {
+    pub count: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub next: Option<String>,
+    pub previous: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
+pub struct Item {
+    pub items: Vec<DatasetItemV2>,
+    pub page: Vec<ItemPage>,
+}
+
 #[cfg(test)]
 mod test_serde {
     use super::*;
@@ -528,5 +597,134 @@ mod test_serde {
             "png".to_string()
         );
         assert_eq!(level_0.base_key, "some-base-key.jpg".to_string());
+    }
+
+    #[test]
+    fn test_dataset_item_v2() {
+        let contents = r#"
+    {
+          "archived": false,
+          "cursor": "018951a8-466f-d61d-9c3b-45ba10201cc3",
+          "dataset_id": 657106,
+          "id": "018951a8-466f-d61d-9c3b-45ba10201cc3",
+          "inserted_at": "2023-07-13T23:48:49Z",
+          "layout": {
+            "slots": [
+              "1cb65790-1e55-cb67-501d-a48b8ca05535.e47f119"
+            ],
+            "type": "simple",
+            "version": 1
+          },
+          "name": "1cb65790-1e55-cb67-501d-a48b8ca05535.e47f119",
+          "path": "/",
+          "priority": 0,
+          "processing_status": "complete",
+          "slot_types": [
+            "image",
+            "image"
+          ],
+          "slots": [
+            {
+              "file_name": "1cb65790-1e55-cb67-501d-a48b8ca05535.e47f119",
+              "fps": 1,
+              "id": "8ada6682-48fd-464f-9f9d-28b6f4f81591",
+              "is_external": true,
+              "metadata": {
+                "base_key": "images/List-5/XYZ_Scans/AU1/ABCD/XYZ/123-344-456-678-123.454.fra/",
+                "height": 88539,
+                "levels": {
+                  "0": {
+                    "format": "png",
+                    "pixel_ratio": 1,
+                    "tile_height": 2048,
+                    "tile_width": 2048,
+                    "x_tiles": 79,
+                    "y_tiles": 44
+                  },
+                  "1": {
+                    "format": "png",
+                    "pixel_ratio": 2,
+                    "tile_height": 2048,
+                    "tile_width": 2048,
+                    "x_tiles": 40,
+                    "y_tiles": 22
+                  },
+                  "2": {
+                    "format": "png",
+                    "pixel_ratio": 4,
+                    "tile_height": 2048,
+                    "tile_width": 2048,
+                    "x_tiles": 20,
+                    "y_tiles": 11
+                  },
+                  "3": {
+                    "format": "png",
+                    "pixel_ratio": 8,
+                    "tile_height": 2048,
+                    "tile_width": 2048,
+                    "x_tiles": 10,
+                    "y_tiles": 6
+                  },
+                  "4": {
+                    "format": "png",
+                    "pixel_ratio": 16,
+                    "tile_height": 2048,
+                    "tile_width": 2048,
+                    "x_tiles": 5,
+                    "y_tiles": 3
+                  },
+                  "5": {
+                    "format": "png",
+                    "pixel_ratio": 32,
+                    "tile_height": 2048,
+                    "tile_width": 2048,
+                    "x_tiles": 3,
+                    "y_tiles": 2
+                  },
+                  "6": {
+                    "format": "png",
+                    "pixel_ratio": 64,
+                    "tile_height": 2048,
+                    "tile_width": 2048,
+                    "x_tiles": 2,
+                    "y_tiles": 1
+                  },
+                  "7": {
+                    "format": "png",
+                    "pixel_ratio": 128,
+                    "tile_height": 2048,
+                    "tile_width": 2048,
+                    "x_tiles": 1,
+                    "y_tiles": 1
+                  }
+                },
+                "width": 161717
+              },
+              "size_bytes": 0,
+              "slot_name": "1cb65790-1e55-cb67-501d-a48b8ca05535.e47f119",
+              "streamable": false,
+              "total_sections": 1,
+              "type": "image",
+              "upload_id": "12b90921-95b7-4a1c-8d0e-5ed368ca661a"
+            }
+          ],
+          "status": "new",
+          "tags": [],
+          "updated_at": "2023-07-18T01:56:05.801600Z",
+          "uploads": [],
+          "workflow_status": "new"
+
+
+    }
+        "#;
+
+        let ser_item: DatasetItemV2 = serde_json::from_str(contents).unwrap();
+
+        assert_eq!(ser_item.status, DatasetItemStatus::New);
+        assert_eq!(ser_item.dataset_id, 657106);
+        assert_eq!(ser_item.slots.len(), 1);
+        let levels = &ser_item.slots.get(0).unwrap().metadata.levels;
+        assert_eq!(levels.len(), 8);
+        assert_eq!(levels.get(&0).unwrap().format, "png".to_string());
     }
 }

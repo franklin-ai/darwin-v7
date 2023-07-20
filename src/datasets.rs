@@ -4,7 +4,7 @@ use crate::expect_http_ok;
 use crate::filter::Filter;
 use crate::item::{
     AddDataPayload, DataPayloadLevel, DatasetItem, DatasetItemStatus, DatasetItemTypes,
-    ExistingSimpleItem,
+    DatasetItemV2, ExistingSimpleItem,
 };
 use crate::team::TypeCount;
 use crate::workflow::WorkflowTemplate;
@@ -341,7 +341,9 @@ where
     C: V7Methods,
 {
     async fn list_datasets(client: &C) -> Result<Vec<Dataset>>;
+    #[deprecated = "V2 of the V7 API requires use of `list_dataset_items_v2`"]
     async fn list_dataset_items(&self, client: &C) -> Result<Vec<DatasetItem>>;
+    async fn list_dataset_items_v2(&self, client: &C) -> Result<Vec<DatasetItemV2>>;
     async fn show_dataset(client: &C, id: &u32) -> Result<Dataset>;
 }
 
@@ -560,6 +562,18 @@ where
         let response = client.get(&format!("datasets/{}/items", self.id)).await?;
 
         expect_http_ok!(response, Vec<DatasetItem>)
+    }
+
+    async fn list_dataset_items_v2(&self, client: &C) -> Result<Vec<DatasetItemV2>> {
+        let response = client
+            .get(&format!(
+                "v2/teams/{}/items?dataset_ids={}",
+                self.team_slug.as_ref().context("Missing team slug")?,
+                self.id
+            ))
+            .await?;
+
+        expect_http_ok!(response, Vec<DatasetItemV2>)
     }
 
     async fn show_dataset(client: &C, id: &u32) -> Result<Dataset> {
@@ -783,6 +797,7 @@ mod test_client_calls {
             .mount(&mock_server)
             .await;
 
+        #[allow(deprecated)]
         let result: Vec<DatasetItem> = mock_data.list_dataset_items(&client).await.unwrap();
 
         // Only compare a few values, this is mostly testing the endpoint
@@ -814,6 +829,7 @@ mod test_client_calls {
         )
         .unwrap();
 
+        #[allow(deprecated)]
         mock_data
             .list_dataset_items(&client)
             .await
