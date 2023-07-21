@@ -261,7 +261,6 @@ where
         contains_str: Option<String>,
     ) -> Result<Vec<WorkflowV2>>;
     async fn assign_items(
-        &self,
         client: &C,
         data: &AssignItemPayload,
     ) -> Result<AssignItemResponse>;
@@ -296,7 +295,6 @@ where
     }
 
     async fn assign_items(
-        &self,
         client: &C,
         data: &AssignItemPayload,
     ) -> Result<AssignItemResponse> {
