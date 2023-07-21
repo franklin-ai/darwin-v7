@@ -141,7 +141,7 @@ struct UserId {
 pub struct FilterAssignItemPayload {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub statuses: Option<Vec<StageType>>,
-    pub dataset_ids: Vec<u64>,
+    pub dataset_ids: Vec<u32>,
     pub select_all: bool,
 }
 
