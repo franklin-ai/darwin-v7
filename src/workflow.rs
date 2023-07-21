@@ -257,7 +257,6 @@ where
     C: V7Methods,
 {
     async fn list_workflows(
-        &self,
         client: &C,
         contains_str: Option<String>,
     ) -> Result<Vec<WorkflowV2>>;
@@ -274,7 +273,6 @@ where
     C: V7Methods + std::marker::Sync,
 {
     async fn list_workflows(
-        &self,
         client: &C,
         contains_str: Option<String>,
     ) -> Result<Vec<WorkflowV2>>
