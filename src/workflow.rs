@@ -2,14 +2,13 @@ use crate::classes::BoundingBox;
 use crate::client::V7Methods;
 use crate::expect_http_ok;
 use anyhow::{bail, Context, Result};
+use async_trait::async_trait;
 #[allow(unused_imports)]
 use fake::{Dummy, Fake};
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 use std::collections::HashMap;
 use std::fmt::{self, Display};
-use async_trait::async_trait;
-
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
@@ -256,14 +255,8 @@ pub trait WorkflowMethodsV2<C>
 where
     C: V7Methods,
 {
-    async fn list_workflows(
-        client: &C,
-        contains_str: Option<String>,
-    ) -> Result<Vec<WorkflowV2>>;
-    async fn assign_items(
-        client: &C,
-        data: &AssignItemPayload,
-    ) -> Result<AssignItemResponse>;
+    async fn list_workflows(client: &C, contains_str: Option<String>) -> Result<Vec<WorkflowV2>>;
+    async fn assign_items(client: &C, data: &AssignItemPayload) -> Result<AssignItemResponse>;
 }
 
 #[async_trait]
@@ -271,10 +264,7 @@ impl<C> WorkflowMethodsV2<C> for WorkflowV2
 where
     C: V7Methods + std::marker::Sync,
 {
-    async fn list_workflows(
-        client: &C,
-        contains_str: Option<String>,
-    ) -> Result<Vec<WorkflowV2>>
+    async fn list_workflows(client: &C, contains_str: Option<String>) -> Result<Vec<WorkflowV2>>
     where
         C: V7Methods,
     {
@@ -294,10 +284,7 @@ where
         expect_http_ok!(response, Vec<WorkflowV2>)
     }
 
-    async fn assign_items(
-        client: &C,
-        data: &AssignItemPayload,
-    ) -> Result<AssignItemResponse> {
+    async fn assign_items(client: &C, data: &AssignItemPayload) -> Result<AssignItemResponse> {
         let response = client
             .post(&format!("v2/teams/{}/items/assign", client.team()), &data)
             .await?;
