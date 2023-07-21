@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 use std::collections::HashMap;
 use std::fmt::{self, Display};
+use async_trait::async_trait;
+
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
@@ -155,6 +157,158 @@ pub struct AssignItemResponse {
     pub created_commands: u32,
 }
 
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct AnnotationHotkeys {}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+
+pub struct WorkflowDataset {
+    pub annotation_hotkeys: AnnotationHotkeys,
+    pub annotators_can_instantiate_workflows: bool,
+    pub id: u64,
+    pub instructions: String,
+    pub name: String,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct WorkflowProgress {
+    pub complete: u32,
+    pub idle: u32,
+    pub in_progress: u32,
+    pub total: u32,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct StageConfig {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub allowed_class_ids: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub annotation_group_id: Option<String>,
+    pub assignable_to: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub authorization_header: Option<String>,
+    pub auto_instantiate: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub champion_stage_id: Option<String>,
+    pub class_mapping: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dataset_id: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub from_non_default_v1_template: Option<String>,
+    pub include_annotations: bool,
+    pub initial: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub iou_thresholds: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model_id: Option<String>,
+    pub model_type: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parallel_stage_ids: Option<String>,
+    pub readonly: bool,
+    pub retry_if_fails: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rules: Option<Vec<String>>,
+    pub skippable: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub test_stage_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub threshold: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
+    pub x: u32,
+    pub y: u32,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct StageEdge {
+    pub id: String,
+    pub name: String, //FIXME: What are the different types?
+    pub source_stage_id: String,
+    pub target_stage_id: String,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct WorkflowStageV2 {
+    pub assignable_users: Option<Vec<String>>,
+    pub config: Vec<StageConfig>,
+    pub edges: Vec<StageEdge>,
+    pub id: String,
+    pub name: String,
+    #[serde(rename = "type")]
+    pub stage_type: String,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct WorkflowV2 {
+    pub dataset: WorkflowDataset,
+    pub id: String,
+    pub inserted_at: String,
+    pub name: String,
+    pub progress: WorkflowProgress,
+    pub stages: Vec<WorkflowStageV2>,
+    pub team_id: String,
+    pub thumbnails: Vec<String>,
+    pub updated_at: String,
+}
+
+#[async_trait]
+pub trait WorkflowMethodsV2<C>
+where
+    C: V7Methods,
+{
+    async fn list_workflows(
+        &self,
+        client: &C,
+        contains_str: Option<String>,
+    ) -> Result<Vec<WorkflowV2>>;
+    async fn assign_items(
+        &self,
+        client: &C,
+        data: &AssignItemPayload,
+    ) -> Result<AssignItemResponse>;
+}
+
+#[async_trait]
+impl<C> WorkflowMethodsV2<C> for WorkflowV2
+where
+    C: V7Methods + std::marker::Sync,
+{
+    async fn list_workflows(
+        &self,
+        client: &C,
+        contains_str: Option<String>,
+    ) -> Result<Vec<WorkflowV2>>
+    where
+        C: V7Methods,
+    {
+        let response = if let Some(filter) = contains_str {
+            client
+                .get(&format!(
+                    "v2/teams/{}/workflows?name_contains={}",
+                    client.team(),
+                    filter
+                ))
+                .await?
+        } else {
+            client
+                .get(&format!("v2/teams/{}/workflows", client.team()))
+                .await?
+        };
+        expect_http_ok!(response, Vec<WorkflowV2>)
+    }
+
+    async fn assign_items(
+        &self,
+        client: &C,
+        data: &AssignItemPayload,
+    ) -> Result<AssignItemResponse> {
+        let response = client
+            .post(&format!("v2/teams/{}/items/assign", client.team()), &data)
+            .await?;
+        expect_http_ok!(response, AssignItemResponse)
+    }
+}
+
 impl Workflow {
     pub async fn assign<C>(&self, client: &C, user_id: &u32) -> Result<Workflow>
     where
@@ -167,21 +321,6 @@ impl Workflow {
             .await?;
 
         expect_http_ok!(response, Workflow)
-    }
-
-    pub async fn assign_v2<C>(
-        &self,
-        client: &C,
-        data: &AssignItemPayload,
-    ) -> Result<AssignItemResponse>
-    where
-        C: V7Methods,
-    {
-        let response = client
-            .post(&format!("v2/teams/{}/items/assign", client.team()), &data)
-            .await?;
-
-        expect_http_ok!(response, AssignItemResponse)
     }
 
     /// Warning undocumented
