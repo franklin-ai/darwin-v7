@@ -137,7 +137,8 @@ struct UserId {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct FilterAssignItemPayload {
-    pub statuses: Vec<StageType>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub statuses: Option<Vec<StageType>>,
     pub dataset_ids: Vec<u64>,
     pub select_all: bool,
 }
