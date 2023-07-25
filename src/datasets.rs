@@ -7,7 +7,7 @@ use crate::item::{
     DatasetItemV2, ExistingSimpleItem,
 };
 use crate::team::TypeCount;
-use crate::workflow::WorkflowTemplate;
+use crate::workflow::{WorkflowBuilder, WorkflowTemplate, WorkflowV2};
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use csv_async::AsyncReaderBuilder;
@@ -359,6 +359,7 @@ where
         client: &C,
         workflow: &WorkflowTemplate,
     ) -> Result<WorkflowTemplate>;
+    async fn set_workflow_v2(&self, client: &C, workflow: &WorkflowBuilder) -> Result<WorkflowV2>;
     async fn set_default_workflow(
         &self,
         client: &C,
@@ -643,6 +644,14 @@ where
             .await?;
 
         expect_http_ok!(response, WorkflowTemplate)
+    }
+
+    async fn set_workflow_v2(&self, client: &C, workflow: &WorkflowBuilder) -> Result<WorkflowV2> {
+        let response = client
+            .post(&format!("v2/teams/{}/workflows", client.team()), workflow)
+            .await?;
+
+        expect_http_ok!(response, WorkflowV2)
     }
 
     async fn set_default_workflow(

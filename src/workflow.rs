@@ -250,6 +250,12 @@ pub struct WorkflowV2 {
     pub updated_at: String,
 }
 
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct WorkflowBuilder {
+    stages: Vec<WorkflowStageV2>,
+    name: Option<String>,
+}
+
 #[async_trait]
 pub trait WorkflowMethodsV2<C>
 where
