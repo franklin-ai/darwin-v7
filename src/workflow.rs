@@ -228,9 +228,15 @@ pub struct StageEdge {
     pub target_stage_id: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkflowStageAssignees {
+    pub stage_id: String,
+    pub user_id: u32,
+}
+
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct WorkflowStageV2 {
-    pub assignable_users: Option<Vec<String>>,
+    pub assignable_users: Vec<WorkflowStageAssignees>,
     pub config: Vec<StageConfig>,
     pub edges: Vec<StageEdge>,
     pub id: String,
