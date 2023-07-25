@@ -19,6 +19,7 @@ pub enum StageType {
     Model,
     New,
     Review,
+    Dataset,
 }
 
 impl Display for StageType {
@@ -30,6 +31,7 @@ impl Display for StageType {
             StageType::New => "New",
             StageType::Model => "Model",
             StageType::Review => "Review",
+            StageType::Dataset => "Dataset",
         };
         write!(f, "{val}")
     }
@@ -234,7 +236,7 @@ pub struct WorkflowStageV2 {
     pub id: String,
     pub name: String,
     #[serde(rename = "type")]
-    pub stage_type: String,
+    pub stage_type: StageType,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
