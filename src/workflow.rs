@@ -186,31 +186,38 @@ pub struct StageConfig {
     pub allowed_class_ids: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub annotation_group_id: Option<String>,
-    pub assignable_to: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub assignable_to: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub authorization_header: Option<String>,
-    pub auto_instantiate: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub auto_instantiate: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub champion_stage_id: Option<String>,
-    pub class_mapping: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub dataset_id: Option<u64>,
+    pub class_mapping: Option<Vec<String>>,
+    pub dataset_id: u32,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub from_non_default_v1_template: Option<String>,
-    pub include_annotations: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub include_annotations: Option<bool>,
     pub initial: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub iou_thresholds: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub model_id: Option<String>,
-    pub model_type: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model_type: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parallel_stage_ids: Option<String>,
-    pub readonly: bool,
-    pub retry_if_fails: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub readonly: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub retry_if_fails: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rules: Option<Vec<String>>,
-    pub skippable: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub skippable: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub test_stage_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -223,7 +230,8 @@ pub struct StageConfig {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct StageEdge {
-    pub id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
     pub name: String, //FIXME: What are the different types?
     pub source_stage_id: String,
     pub target_stage_id: String,
