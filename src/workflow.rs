@@ -162,7 +162,6 @@ pub struct AssignItemResponse {
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct AnnotationHotkeys {}
 
-
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct WorkflowDataset {
     pub annotation_hotkeys: AnnotationHotkeys,
@@ -246,7 +245,7 @@ pub struct WorkflowStageAssignees {
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct WorkflowStageV2 {
     pub assignable_users: Vec<WorkflowStageAssignees>,
-    pub config: Vec<StageConfig>,
+    pub config: StageConfig,
     pub edges: Vec<StageEdge>,
     pub id: String,
     pub name: String,
