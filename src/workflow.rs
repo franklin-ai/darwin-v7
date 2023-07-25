@@ -10,9 +10,10 @@ use std::cmp::PartialEq;
 use std::collections::HashMap;
 use std::fmt::{self, Display};
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum StageType {
+    #[default]
     Annotate,
     Complete,
     Consensus,
@@ -161,8 +162,8 @@ pub struct AssignItemResponse {
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct AnnotationHotkeys {}
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct WorkflowDataset {
     pub annotation_hotkeys: AnnotationHotkeys,
     pub annotators_can_instantiate_workflows: bool,
@@ -228,7 +229,7 @@ pub struct StageEdge {
     pub target_stage_id: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct WorkflowStageAssignees {
     pub stage_id: String,
     pub user_id: u32,
