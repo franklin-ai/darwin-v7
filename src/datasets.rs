@@ -7,7 +7,7 @@ use crate::item::{
     DatasetItemV2, ExistingSimpleItem,
 };
 use crate::team::TypeCount;
-use crate::workflow::{Workflow, WorkflowBuilder, WorkflowTemplate, WorkflowV2};
+use crate::workflow::{WorkflowBuilder, WorkflowMethodsV2, WorkflowTemplate, WorkflowV2};
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use csv_async::AsyncReaderBuilder;
@@ -365,7 +365,7 @@ where
         client: &C,
         workflow: &WorkflowTemplate,
     ) -> Result<Dataset>;
-    async fn get_workflows_v2(&self, client: &C) -> Result<Vec<WorkflowV2>>;
+    async fn get_workflow_v2(&self, client: &C) -> Result<Option<WorkflowV2>>;
 }
 
 #[async_trait]
@@ -672,16 +672,16 @@ where
         expect_http_ok!(response, Dataset)
     }
 
-    async fn get_workflows_v2(&self, client: &C) -> Result<Vec<WorkflowV2>> {
-        let response = client
-            .get(&format!("v2/teams/{}/workflows", client.team()))
-            .await?;
-        let workflows = expect_http_ok!(response, Vec<WorkflowV2>)?;
+    async fn get_workflow_v2(&self, client: &C) -> Result<Option<WorkflowV2>> {
+        let workflows = WorkflowV2::get_workflows(client).await?;
+        let dataset_name = self.name.as_ref().context("Missing dataset name")?;
         Ok(workflows
             .iter()
             .cloned()
-            .filter(|workflow| workflow.dataset.name == self.name)
-            .collect::<Vec<_>>())
+            .filter(|workflow| workflow.dataset.name == dataset_name.to_string())
+            .collect::<Vec<_>>()
+            .first()
+            .cloned())
     }
 }
 
