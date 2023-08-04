@@ -673,8 +673,15 @@ where
     }
 
     async fn get_workflows_v2(&self, client: &C) -> Result<Vec<WorkflowV2>> {
-        let response = client.get(&format!("v2/teams/{}/workflows", client.team())).await?;
-        expect_http_ok!(response, Vec<WorkflowV2>)
+        let response = client
+            .get(&format!("v2/teams/{}/workflows", client.team()))
+            .await?;
+        let workflows = expect_http_ok!(response, Vec<WorkflowV2>)?;
+        Ok(workflows
+            .iter()
+            .cloned()
+            .filter(|workflow| workflow.dataset.name == self.name)
+            .collect::<Vec<_>>())
     }
 }
 
