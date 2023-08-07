@@ -362,7 +362,7 @@ where
     async fn list_datasets(client: &C) -> Result<Vec<Dataset>>;
     #[deprecated = "V2 of the V7 API requires use of `list_dataset_items_v2`"]
     async fn list_dataset_items(&self, client: &C) -> Result<Vec<DatasetItem>>;
-    async fn list_dataset_items_v2(&self, client: &C) -> Result<Vec<Item>>;
+    async fn list_dataset_items_v2(&self, client: &C) -> Result<Item>;
     async fn show_dataset(client: &C, id: &u32) -> Result<Dataset>;
 }
 
@@ -593,7 +593,7 @@ where
         expect_http_ok!(response, Vec<DatasetItem>)
     }
 
-    async fn list_dataset_items_v2(&self, client: &C) -> Result<Vec<Item>> {
+    async fn list_dataset_items_v2(&self, client: &C) -> Result<Item> {
         let response = client
             .get(&format!(
                 "v2/teams/{}/items?dataset_ids={}",
@@ -602,7 +602,7 @@ where
             ))
             .await?;
 
-        expect_http_ok!(response, Vec<Item>)
+        expect_http_ok!(response, Item)
     }
 
     async fn show_dataset(client: &C, id: &u32) -> Result<Dataset> {
