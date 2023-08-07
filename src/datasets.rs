@@ -602,7 +602,7 @@ where
             ))
             .await?;
 
-        expect_http_ok!(response, Vec<DatasetItemV2>)
+        expect_http_ok!(response, Vec<Item>)
     }
 
     async fn show_dataset(client: &C, id: &u32) -> Result<Dataset> {
