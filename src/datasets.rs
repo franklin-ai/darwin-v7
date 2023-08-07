@@ -7,7 +7,7 @@ use crate::item::{
     DatasetItemV2, ExistingSimpleItem,
 };
 use crate::team::TypeCount;
-use crate::workflow::{WorkflowBuilder, WorkflowTemplate, WorkflowV2};
+use crate::workflow::{WorkflowBuilder, WorkflowMethodsV2, WorkflowTemplate, WorkflowV2};
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use csv_async::AsyncReaderBuilder;
@@ -216,6 +216,24 @@ struct SetStagePayload {
     pub filter: Filter,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SetStageFilter {
+    pub dataset_ids: Vec<u32>,
+    pub select_all: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SetStagePayloadV2 {
+    pub filters: SetStageFilter,
+    pub stage_id: String,
+    pub workflow_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SetStageResponse {
+    pub created_commands: u32,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct ItemReport {
     /// Original filename of the item
@@ -365,6 +383,13 @@ where
         client: &C,
         workflow: &WorkflowTemplate,
     ) -> Result<Dataset>;
+    async fn get_workflow_v2(&self, client: &C) -> Result<Option<WorkflowV2>>;
+    async fn set_stage_v2(
+        &self,
+        client: &C,
+        stage_id: String,
+        workflow_id: String,
+    ) -> Result<SetStageResponse>;
 }
 
 #[async_trait]
@@ -669,6 +694,37 @@ where
         let response = client.put(&endpoint, payload).await?;
 
         expect_http_ok!(response, Dataset)
+    }
+
+    async fn get_workflow_v2(&self, client: &C) -> Result<Option<WorkflowV2>> {
+        let workflows = WorkflowV2::get_workflows(client).await?;
+        let dataset_name = self.name.as_ref().context("Missing dataset name")?;
+        Ok(workflows
+            .into_iter()
+            .filter(|workflow| workflow.dataset.name == *dataset_name)
+            .collect::<Vec<_>>()
+            .first()
+            .cloned())
+    }
+
+    async fn set_stage_v2(
+        &self,
+        client: &C,
+        stage_id: String,
+        workflow_id: String,
+    ) -> Result<SetStageResponse> {
+        let payload = SetStagePayloadV2 {
+            filters: SetStageFilter {
+                dataset_ids: vec![self.id],
+                select_all: false,
+            },
+            stage_id,
+            workflow_id,
+        };
+        let response = client
+            .post(&format!("v2/teams/{}/items/stage", client.team()), &payload)
+            .await?;
+        expect_http_ok!(response, SetStageResponse)
     }
 }
 
