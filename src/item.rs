@@ -367,7 +367,7 @@ pub struct ItemSlotLevel {
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
 pub struct ItemSlot {
     pub file_name: String,
-    pub fps: Option<u32>,
+    pub fps: Option<f32>,
     pub id: String,
     pub is_external: bool,
     pub metadata: ItemSlotLevel,
@@ -420,7 +420,7 @@ pub struct ItemPage {
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
 pub struct Item {
     pub items: Vec<DatasetItemV2>,
-    pub page: Vec<ItemPage>,
+    pub page: ItemPage,
 }
 
 #[cfg(test)]
