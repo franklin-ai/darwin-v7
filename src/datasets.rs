@@ -7,7 +7,7 @@ use crate::item::{
     DatasetItemV2, ExistingSimpleItem,
 };
 use crate::team::TypeCount;
-use crate::workflow::{WorkflowBuilder, WorkflowMethodsV2, WorkflowTemplate, WorkflowV2};
+use crate::workflow::{WorkflowBuilder, WorkflowMethods, WorkflowTemplate, WorkflowV2};
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use csv_async::AsyncReaderBuilder;
@@ -320,6 +320,7 @@ pub trait DatasetDataMethods<C>
 where
     C: V7Methods,
 {
+    #[deprecated = "V2 of the V7 API requires use of Workflow methods"]
     async fn assign_items(&self, client: &C, assignee_id: &u32, filter: &Filter) -> Result<()>;
     #[deprecated = "V2 of the V7 API requires use of `register_items_to_dataset`"]
     async fn add_data_to_dataset(
@@ -371,7 +372,9 @@ where
     C: V7Methods,
 {
     async fn reset_to_new(&self, client: &C, filter: &Filter) -> Result<()>;
+    #[deprecated = "V2 of the V7 API requires use of `set_stage_v2`"]
     async fn set_stage(&self, client: &C, stage_template_id: &u32, filter: &Filter) -> Result<()>;
+    #[deprecated = "V2 of the V7 API requires use of `set_workflow_v2`"]
     async fn set_workflow(
         &self,
         client: &C,

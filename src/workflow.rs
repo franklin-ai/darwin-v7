@@ -144,6 +144,8 @@ pub struct FilterAssignItemPayload {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub statuses: Option<Vec<StageType>>,
     pub dataset_ids: Vec<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub item_ids: Option<Vec<String>>,
     pub select_all: bool,
 }
 
@@ -273,7 +275,7 @@ pub struct WorkflowBuilder {
 }
 
 #[async_trait]
-pub trait WorkflowMethodsV2<C>
+pub trait WorkflowMethods<C>
 where
     C: V7Methods,
 {
@@ -283,7 +285,7 @@ where
 }
 
 #[async_trait]
-impl<C> WorkflowMethodsV2<C> for WorkflowV2
+impl<C> WorkflowMethods<C> for WorkflowV2
 where
     C: V7Methods + std::marker::Sync,
 {
