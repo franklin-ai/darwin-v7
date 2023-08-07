@@ -4,7 +4,7 @@ use crate::expect_http_ok;
 use crate::filter::Filter;
 use crate::item::{
     AddDataPayload, DataPayloadLevel, DatasetItem, DatasetItemStatus, DatasetItemTypes,
-    DatasetItemV2, ExistingSimpleItem,
+    ExistingSimpleItem, Item,
 };
 use crate::team::TypeCount;
 use crate::workflow::{WorkflowBuilder, WorkflowMethods, WorkflowTemplate, WorkflowV2};
@@ -362,7 +362,7 @@ where
     async fn list_datasets(client: &C) -> Result<Vec<Dataset>>;
     #[deprecated = "V2 of the V7 API requires use of `list_dataset_items_v2`"]
     async fn list_dataset_items(&self, client: &C) -> Result<Vec<DatasetItem>>;
-    async fn list_dataset_items_v2(&self, client: &C) -> Result<Vec<DatasetItemV2>>;
+    async fn list_dataset_items_v2(&self, client: &C) -> Result<Vec<Item>>;
     async fn show_dataset(client: &C, id: &u32) -> Result<Dataset>;
 }
 
@@ -593,7 +593,7 @@ where
         expect_http_ok!(response, Vec<DatasetItem>)
     }
 
-    async fn list_dataset_items_v2(&self, client: &C) -> Result<Vec<DatasetItemV2>> {
+    async fn list_dataset_items_v2(&self, client: &C) -> Result<Vec<Item>> {
         let response = client
             .get(&format!(
                 "v2/teams/{}/items?dataset_ids={}",
