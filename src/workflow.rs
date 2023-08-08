@@ -164,9 +164,6 @@ pub struct AssignItemResponse {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
-pub struct AnnotationHotkeys {}
-
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct WorkflowDataset {
     pub annotation_hotkeys: Option<HashMap<String, String>>,
     pub annotators_can_instantiate_workflows: bool,
