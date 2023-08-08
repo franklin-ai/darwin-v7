@@ -21,6 +21,7 @@ pub enum StageType {
     New,
     Review,
     Dataset,
+    Discard,
 }
 
 impl Display for StageType {
@@ -33,6 +34,7 @@ impl Display for StageType {
             StageType::Model => "Model",
             StageType::Review => "Review",
             StageType::Dataset => "Dataset",
+            StageType::Discard => "Discard",
         };
         write!(f, "{val}")
     }
@@ -144,6 +146,8 @@ pub struct FilterAssignItemPayload {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub statuses: Option<Vec<StageType>>,
     pub dataset_ids: Vec<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub item_ids: Option<Vec<String>>,
     pub select_all: bool,
 }
 
@@ -160,23 +164,20 @@ pub struct AssignItemResponse {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
-pub struct AnnotationHotkeys {}
-
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct WorkflowDataset {
-    pub annotation_hotkeys: AnnotationHotkeys,
+    pub annotation_hotkeys: Option<HashMap<String, String>>,
     pub annotators_can_instantiate_workflows: bool,
-    pub id: u64,
+    pub id: Option<u32>,
     pub instructions: String,
     pub name: String,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct WorkflowProgress {
-    pub complete: u32,
-    pub idle: u32,
-    pub in_progress: u32,
-    pub total: u32,
+    pub complete: Option<u32>,
+    pub idle: Option<u32>,
+    pub in_progress: Option<u32>,
+    pub total: Option<u32>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
@@ -193,11 +194,11 @@ pub struct StageConfig {
     pub auto_instantiate: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub champion_stage_id: Option<String>,
+    pub class_mapping: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub class_mapping: Option<Vec<String>>,
-    pub dataset_id: u32,
+    pub dataset_id: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub from_non_default_v1_template: Option<String>,
+    pub from_non_default_v1_template: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub include_annotations: Option<bool>,
     pub initial: bool,
@@ -213,8 +214,7 @@ pub struct StageConfig {
     pub readonly: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub retry_if_fails: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub rules: Option<Vec<String>>,
+    pub rules: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub skippable: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -223,8 +223,8 @@ pub struct StageConfig {
     pub threshold: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub url: Option<String>,
-    pub x: u32,
-    pub y: u32,
+    pub x: Option<u32>,
+    pub y: Option<u32>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
@@ -255,13 +255,13 @@ pub struct WorkflowStageV2 {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct WorkflowV2 {
-    pub dataset: WorkflowDataset,
+    pub dataset: Option<WorkflowDataset>,
     pub id: String,
     pub inserted_at: String,
     pub name: String,
     pub progress: WorkflowProgress,
     pub stages: Vec<WorkflowStageV2>,
-    pub team_id: String,
+    pub team_id: u32,
     pub thumbnails: Vec<String>,
     pub updated_at: String,
 }
@@ -273,7 +273,7 @@ pub struct WorkflowBuilder {
 }
 
 #[async_trait]
-pub trait WorkflowMethodsV2<C>
+pub trait WorkflowMethods<C>
 where
     C: V7Methods,
 {
@@ -283,7 +283,7 @@ where
 }
 
 #[async_trait]
-impl<C> WorkflowMethodsV2<C> for WorkflowV2
+impl<C> WorkflowMethods<C> for WorkflowV2
 where
     C: V7Methods + std::marker::Sync,
 {

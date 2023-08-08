@@ -4,10 +4,10 @@ use crate::expect_http_ok;
 use crate::filter::Filter;
 use crate::item::{
     AddDataPayload, DataPayloadLevel, DatasetItem, DatasetItemStatus, DatasetItemTypes,
-    DatasetItemV2, ExistingSimpleItem,
+    ExistingSimpleItem, Item,
 };
 use crate::team::TypeCount;
-use crate::workflow::{WorkflowBuilder, WorkflowMethodsV2, WorkflowTemplate, WorkflowV2};
+use crate::workflow::{WorkflowBuilder, WorkflowMethods, WorkflowTemplate, WorkflowV2};
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use csv_async::AsyncReaderBuilder;
@@ -361,7 +361,7 @@ where
     async fn list_datasets(client: &C) -> Result<Vec<Dataset>>;
     #[deprecated = "V2 of the V7 API requires use of `list_dataset_items_v2`"]
     async fn list_dataset_items(&self, client: &C) -> Result<Vec<DatasetItem>>;
-    async fn list_dataset_items_v2(&self, client: &C) -> Result<Vec<DatasetItemV2>>;
+    async fn list_dataset_items_v2(&self, client: &C) -> Result<Item>;
     async fn show_dataset(client: &C, id: &u32) -> Result<Dataset>;
 }
 
@@ -590,7 +590,7 @@ where
         expect_http_ok!(response, Vec<DatasetItem>)
     }
 
-    async fn list_dataset_items_v2(&self, client: &C) -> Result<Vec<DatasetItemV2>> {
+    async fn list_dataset_items_v2(&self, client: &C) -> Result<Item> {
         let response = client
             .get(&format!(
                 "v2/teams/{}/items?dataset_ids={}",
@@ -599,7 +599,7 @@ where
             ))
             .await?;
 
-        expect_http_ok!(response, Vec<DatasetItemV2>)
+        expect_http_ok!(response, Item)
     }
 
     async fn show_dataset(client: &C, id: &u32) -> Result<Dataset> {
@@ -701,7 +701,14 @@ where
         let dataset_name = self.name.as_ref().context("Missing dataset name")?;
         Ok(workflows
             .into_iter()
-            .filter(|workflow| workflow.dataset.name == *dataset_name)
+            .filter(|workflow| workflow.dataset.is_some())
+            .filter(|workflow| {
+                let dataset = workflow
+                    .dataset
+                    .as_ref()
+                    .expect("No associated dataset to workflow");
+                dataset.name == *dataset_name
+            })
             .collect::<Vec<_>>()
             .first()
             .cloned())
@@ -716,7 +723,7 @@ where
         let payload = SetStagePayloadV2 {
             filters: SetStageFilter {
                 dataset_ids: vec![self.id],
-                select_all: false,
+                select_all: true,
             },
             stage_id,
             workflow_id,
