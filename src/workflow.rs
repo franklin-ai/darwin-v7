@@ -21,6 +21,7 @@ pub enum StageType {
     New,
     Review,
     Dataset,
+    Discard,
 }
 
 impl Display for StageType {
@@ -33,6 +34,7 @@ impl Display for StageType {
             StageType::Model => "Model",
             StageType::Review => "Review",
             StageType::Dataset => "Dataset",
+            StageType::Discard => "Discard",
         };
         write!(f, "{val}")
     }
@@ -178,7 +180,7 @@ pub struct WorkflowProgress {
     pub complete: Option<u32>,
     pub idle: Option<u32>,
     pub in_progress: Option<u32>,
-    pub total:Option<u32>,
+    pub total: Option<u32>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
