@@ -704,7 +704,10 @@ where
         let dataset_name = self.name.as_ref().context("Missing dataset name")?;
         Ok(workflows
             .into_iter()
-            .filter(|workflow| workflow.dataset.name == *dataset_name)
+            .filter(|workflow| {
+                let dataset = workflow.dataset.as_ref().expect("No associated dataset to workflow");
+                dataset.name == *dataset_name
+            })
             .collect::<Vec<_>>()
             .first()
             .cloned())
