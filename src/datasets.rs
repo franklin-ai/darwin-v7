@@ -723,7 +723,7 @@ where
         let payload = SetStagePayloadV2 {
             filters: SetStageFilter {
                 dataset_ids: vec![self.id],
-                select_all: false,
+                select_all: true,
             },
             stage_id,
             workflow_id,
