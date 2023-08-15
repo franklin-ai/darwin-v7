@@ -280,6 +280,11 @@ where
     async fn list_workflows(client: &C, contains_str: Option<String>) -> Result<Vec<WorkflowV2>>;
     async fn assign_items(client: &C, data: &AssignItemPayload) -> Result<AssignItemResponse>;
     async fn get_workflows(client: &C) -> Result<Vec<WorkflowV2>>;
+    async fn update_workflow(
+        &self,
+        client: &C,
+        update_payload: &WorkflowBuilder,
+    ) -> Result<WorkflowV2>;
 }
 
 #[async_trait]
@@ -319,6 +324,20 @@ where
             .get(&format!("v2/teams/{}/workflows", client.team()))
             .await?;
         expect_http_ok!(response, Vec<WorkflowV2>)
+    }
+
+    async fn update_workflow(
+        &self,
+        client: &C,
+        update_payload: &WorkflowBuilder,
+    ) -> Result<WorkflowV2> {
+        let response = client
+            .put(
+                &format!("v2/teams/{}/workflows/{}", client.team(), self.id),
+                Some(update_payload),
+            )
+            .await?;
+        expect_http_ok!(response, WorkflowV2)
     }
 }
 
