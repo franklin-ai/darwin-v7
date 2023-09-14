@@ -79,7 +79,7 @@ where
     ) -> Result<CommentThreadResponse> {
         let response = client
             .post(
-                &format!("v2/teams/{}/items/{}/comment_thread", team_slug, self.id),
+                &format!("v2/teams/{}/items/{}/comment_threads", team_slug, self.id),
                 &data,
             )
             .await?;
