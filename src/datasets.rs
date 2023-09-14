@@ -675,8 +675,11 @@ where
         let response = client
             .post(&format!("v2/teams/{}/workflows", client.team()), workflow)
             .await?;
-
-        expect_http_ok!(response, WorkflowV2)
+        // 201 is correct operation for this endpoint
+        if response.status() != 201 {
+            bail!("Invalid status code {}", response.status())
+        }
+        Ok(response.json().await?)
     }
 
     async fn set_default_workflow(
