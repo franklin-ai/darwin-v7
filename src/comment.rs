@@ -14,7 +14,7 @@ pub struct CommentBody {
     pub body: String,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
 pub struct CommentThread {
     pub bounding_box: BoundingBox,
     pub comments: Vec<CommentBody>,
