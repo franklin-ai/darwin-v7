@@ -117,13 +117,13 @@ pub struct WorkflowBody {
     pub body: String,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
 pub struct LocatedWorkflowComments {
     pub bounding_box: BoundingBox,
     pub workflow_comments: Vec<WorkflowBody>,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
 pub struct WorkflowCommentThread {
     pub author_id: u32,
     pub bounding_box: BoundingBox,
