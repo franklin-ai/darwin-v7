@@ -47,9 +47,9 @@ pub struct CommentLine {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct CommentThreadResponse {
-    pub author_id: u32,
+    pub author_id: f32,
     pub bounding_box: BoundingBox,
-    pub comment_count: u32,
+    pub comment_count: f32,
     pub dataset_item_id: String,
     pub first_comment: CommentLine,
     pub id: String,
