@@ -45,7 +45,7 @@ pub struct CommentLine {
     pub updated_at: String,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
 pub struct CommentThreadResponse {
     pub author_id: f32,
     pub bounding_box: BoundingBox,
