@@ -34,9 +34,9 @@ where
     ) -> Result<CommentThreadResponse>;
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
 pub struct CommentLine {
-    pub author_id: u32,
+    pub author_id: f32,
     pub body: String,
     pub comment_thread_id: String,
     pub created_by_system: bool,
