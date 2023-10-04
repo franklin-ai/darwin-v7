@@ -67,48 +67,48 @@ pub struct JsonExport {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Item {
-    name: String,
-    path: String,
-    source_info: SourceInfo,
-    slots: Vec<Slot>,
+    pub name: String,
+    pub path: String,
+    pub source_info: SourceInfo,
+    pub slots: Vec<Slot>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-struct SourceInfo {
-    dataset: Dataset,
-    item_id: String,
-    team: Team,
-    workview_url: String,
+pub struct SourceInfo {
+    pub dataset: Dataset,
+    pub item_id: String,
+    pub team: Team,
+    pub workview_url: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-struct Dataset {
-    name: String,
-    slug: String,
-    dataset_management_url: String,
+pub struct Dataset {
+    pub name: String,
+    pub slug: String,
+    pub dataset_management_url: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-struct Team {
-    name: String,
-    slug: String,
+pub struct Team {
+    pub name: String,
+    pub slug: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-struct Slot {
+pub struct Slot {
     #[serde(rename = "type")]
-    slot_type: DatasetItemTypes,
-    slot_name: String,
-    width: u32,
-    height: u32,
-    thumbnail_url: String,
-    source_files: Vec<SourceFile>,
+    pub slot_type: DatasetItemTypes,
+    pub slot_name: String,
+    pub width: u32,
+    pub height: u32,
+    pub thumbnail_url: String,
+    pub source_files: Vec<SourceFile>,
 }
 #[derive(Clone, Debug, Deserialize, Serialize)]
-struct SourceFile {
-    file_name: String,
-    storage_key: String,
-    url: String,
+pub struct SourceFile {
+    pub file_name: String,
+    pub storage_key: String,
+    pub url: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
