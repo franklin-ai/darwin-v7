@@ -38,42 +38,6 @@ pub struct ImageExport {
     pub workview_url: String,
 }
 
-#[derive(Clone, Hash, Eq, PartialEq, Debug, Serialize, Deserialize)]
-enum MainAnnotationType {
-    #[serde(rename = "bounding_box")]
-    BoundingBox,
-    #[serde(rename = "cuboid")]
-    Cuboid,
-    #[serde(rename = "ellipse")]
-    Ellipse,
-    #[serde(rename = "line")]
-    Line,
-    #[serde(rename = "keypoint")]
-    Keypoint,
-    #[serde(rename = "polygon")]
-    Polygon,
-    #[serde(rename = "skeleton")]
-    Skeleton,
-    #[serde(rename = "tag")]
-    Tag,
-    #[serde(rename = "mask")]
-    Mask,
-    #[serde(rename = "raster_layer")]
-    RasterLayer,
-}
-
-#[derive(Clone, Hash, Eq, PartialEq, Debug, Serialize, Deserialize)]
-enum SubAnnotationType {
-    #[serde(rename = "attributes")]
-    Attributes,
-    #[serde(rename = "directional_vector")]
-    DirectionalVector,
-    #[serde(rename = "instance_id")]
-    InstanceID,
-    #[serde(rename = "text")]
-    Text,
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ImageAnnotation {
     // ID of the annotation
