@@ -94,16 +94,15 @@ impl From<&Dataset> for DatasetUpdate {
     fn from(value: &Dataset) -> Self {
         DatasetUpdate {
             annotation_hotkeys: value.annotation_hotkeys.clone(),
-            annotators_can_create_tags: value.annotators_can_create_tags.clone(),
+            annotators_can_create_tags: value.annotators_can_create_tags,
             annotators_can_instantiate_workflows: value
-                .annotators_can_instantiate_workflows
-                .clone(),
-            anyone_can_double_assign: value.anyone_can_double_assign.clone(),
+                .annotators_can_instantiate_workflows,
+            anyone_can_double_assign: value.anyone_can_double_assign,
             instructions: value.instructions.clone(),
             name: value.name.clone(),
-            public: value.public.clone(),
-            reviewers_can_annotate: value.reviewers_can_annotate.clone(),
-            work_size: value.work_size.clone(),
+            public: value.public,
+            reviewers_can_annotate: value.reviewers_can_annotate,
+            work_size: value.work_size,
             work_prioritization: value.work_prioritization.clone(),
         }
     }
@@ -509,7 +508,7 @@ where
 
     async fn update_batch_size(&self, client: &C, size: &u32) -> Result<()> {
         let mut payload = DatasetUpdate::from(self);
-        payload.work_size = Some(size.clone().into()); // this PUT path requires every parameter
+        payload.work_size = Some(*size); // this PUT path requires every parameter
                                                        // even if we're not updating them
                                                        // so we have to replicate the rest of the existing settings
 
