@@ -75,6 +75,41 @@ pub struct Dataset {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy)]
+pub struct DatasetUpdate {
+    pub annotation_hotkeys: Option<HashMap<String, String>>,
+    pub annotators_can_create_tags: Option<bool>,
+    pub annotators_can_instantiate_workflows: Option<bool>,
+    pub anyone_can_double_assign: Option<bool>,
+
+    pub instructions: Option<String>,
+
+    pub name: Option<String>,
+    pub public: Option<bool>,
+    pub reviewers_can_annotate: Option<bool>,
+    pub work_size: Option<u32>,
+    pub work_prioritization: Option<String>,
+}
+
+impl From<&Dataset> for DatasetUpdate {
+    fn from(value: &Dataset) -> Self {
+        DatasetUpdate {
+            annotation_hotkeys: value.annotation_hotkeys.clone(),
+            annotators_can_create_tags: value.annotators_can_create_tags.clone(),
+            annotators_can_instantiate_workflows: value
+                .annotators_can_instantiate_workflows
+                .clone(),
+            anyone_can_double_assign: value.anyone_can_double_assign.clone(),
+            instructions: value.instructions.clone(),
+            name: value.name.clone(),
+            public: value.public.clone(),
+            reviewers_can_annotate: value.reviewers_can_annotate.clone(),
+            work_size: value.work_size.clone(),
+            work_prioritization: value.work_prioritization.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy)]
 pub struct ExportMetadata {
     pub annotation_classes: Vec<AnnotationClass>,
     pub annotation_types: Vec<TypeCount>,
@@ -321,6 +356,7 @@ where
     C: V7Methods,
 {
     async fn assign_items(&self, client: &C, assignee_id: &u32, filter: &Filter) -> Result<()>;
+    async fn update_batch_size(&self, client: &C, size: &u32) -> Result<()>;
     #[deprecated = "V2 of the V7 API requires use of `register_items_to_dataset`"]
     async fn add_data_to_dataset(
         &self,
@@ -466,6 +502,24 @@ where
         // 204 is correct operation for this endpoint
         if status != 204 {
             bail!("Invalid status code {status}")
+        }
+
+        Ok(())
+    }
+
+    async fn update_batch_size(&self, client: &C, size: &u32) -> Result<()> {
+        let mut payload = DatasetUpdate::from(self);
+        payload.work_size = Some(size.clone().into()); // this PUT path requires every parameter
+                                                       // even if we're not updating them
+                                                       // so we have to replicate the rest of the existing settings
+
+        let response = client
+            .put(&format!("datasets/{}", self.id), Some(&payload))
+            .await?;
+        let status = response.status();
+
+        if status != 200 {
+            bail!("Invalid status code {status}");
         }
 
         Ok(())
