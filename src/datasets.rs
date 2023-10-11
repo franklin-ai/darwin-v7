@@ -253,6 +253,8 @@ struct SetStagePayload {
 pub struct SetStageFilter {
     pub dataset_ids: Vec<u32>,
     pub select_all: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub workflow_stage_ids: Option<Vec<String>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -423,6 +425,7 @@ where
         client: &C,
         stage_id: String,
         workflow_id: String,
+        filters: Option<SetStageFilter>,
     ) -> Result<SetStageResponse>;
 }
 
@@ -774,12 +777,20 @@ where
         client: &C,
         stage_id: String,
         workflow_id: String,
+        filters: Option<SetStageFilter>,
     ) -> Result<SetStageResponse> {
-        let payload = SetStagePayloadV2 {
-            filters: SetStageFilter {
+        let filters = if filters.is_none() {
+            SetStageFilter {
                 dataset_ids: vec![self.id],
                 select_all: true,
-            },
+                workflow_stage_ids: None,
+            }
+        } else {
+            filters.context("Invalid filter to set stage")?
+        };
+
+        let payload = SetStagePayloadV2 {
+            filters,
             stage_id,
             workflow_id,
         };
