@@ -205,6 +205,7 @@ mod tests {
             export.annotations[0].polygon.clone().unwrap().paths.len(),
             1
         );
+        assert!(export.annotations[0].tag.is_none());
         Ok(())
     }
 }

@@ -31,17 +31,6 @@ pub struct BoundingBox {
     pub y: f32,
 }
 
-// This may be deprecated in Darwin JSON v2.0.
-// #[derive(Debug, Clone, Serialize, Deserialize, Dummy, Default)]
-// pub struct Polygon {
-//     pub path: Vec<Keypoint>,
-// }
-
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, Default)]
-pub struct ComplexPolygon {
-    pub path: Vec<Vec<Keypoint>>,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, Default)]
 pub struct Polygon {
     pub paths: Vec<Vec<Keypoint>>,
@@ -73,11 +62,6 @@ pub enum AnnotationType {
     #[serde(rename = "bounding_box")]
     #[strum(serialize = "bounding_box")]
     BoundingBox(BoundingBox),
-
-    // This type does not seem to exist in Darwin JSON v2.0
-    // #[serde(rename = "complex_polygon")]
-    // #[strum(serialize = "complex_polygon")]
-    // ComplexPolygon(ComplexPolygon),
     Cuboid,
     #[serde(rename = "directional_vector")]
     DirectionalVector,
@@ -127,7 +111,6 @@ impl From<AnnotationType> for u32 {
             AnnotationType::AutoAnnotate => todo!(),
             AnnotationType::BoundingBox(_) => 2,
             AnnotationType::Cuboid => todo!(),
-            // AnnotationType::ComplexPolygon(_) => todo!(),
             AnnotationType::DirectionalVector => todo!(),
             AnnotationType::Ellipse => todo!(),
             AnnotationType::Inference => todo!(),
@@ -152,7 +135,6 @@ impl AnnotationType {
             "auto_annotate" => AnnotationType::AutoAnnotate,
             "bounding_box" => AnnotationType::BoundingBox(Default::default()),
             "cuboid" => AnnotationType::Cuboid,
-            // "complex_polygon" => AnnotationType::ComplexPolygon(Default::default()),
             "directional_vector" => AnnotationType::DirectionalVector,
             "ellipse" => AnnotationType::Ellipse,
             "inference" => AnnotationType::Inference,
