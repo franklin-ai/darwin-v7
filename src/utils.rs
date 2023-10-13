@@ -8,7 +8,13 @@ macro_rules! expect_http_ok {
                 $x.text().await?
             ))
         } else {
-            Ok($x.json::<$y>().await?)
+            let text = $x.text().await?;
+            let res = serde_json::from_str::<$y>(&text);
+            if (res.is_err()) {
+                bail!("{}\n{}", text, res.err().unwrap())
+            }
+
+            Ok(res?)
         }
     };
 }
