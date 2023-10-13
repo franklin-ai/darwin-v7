@@ -42,7 +42,8 @@ pub struct ComplexPolygon {
     pub path: Vec<Vec<Keypoint>>,
 }
 
-pub struct Polygon{
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, Default)]
+pub struct Polygon {
     pub paths: Vec<Vec<Keypoint>>,
 }
 
@@ -126,7 +127,7 @@ impl From<AnnotationType> for u32 {
             AnnotationType::AutoAnnotate => todo!(),
             AnnotationType::BoundingBox(_) => 2,
             AnnotationType::Cuboid => todo!(),
-            AnnotationType::ComplexPolygon(_) => todo!(),
+            // AnnotationType::ComplexPolygon(_) => todo!(),
             AnnotationType::DirectionalVector => todo!(),
             AnnotationType::Ellipse => todo!(),
             AnnotationType::Inference => todo!(),
@@ -151,7 +152,7 @@ impl AnnotationType {
             "auto_annotate" => AnnotationType::AutoAnnotate,
             "bounding_box" => AnnotationType::BoundingBox(Default::default()),
             "cuboid" => AnnotationType::Cuboid,
-            "complex_polygon" => AnnotationType::ComplexPolygon(Default::default()),
+            // "complex_polygon" => AnnotationType::ComplexPolygon(Default::default()),
             "directional_vector" => AnnotationType::DirectionalVector,
             "ellipse" => AnnotationType::Ellipse,
             "inference" => AnnotationType::Inference,
