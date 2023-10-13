@@ -264,6 +264,9 @@ pub struct WorkflowV2 {
     pub team_id: u32,
     pub thumbnails: Vec<String>,
     pub updated_at: String,
+    pub work_batch_requested: bool,
+    #[serde(rename = "additionalProp")]
+    pub additional_prop: u32,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
