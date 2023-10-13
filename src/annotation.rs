@@ -31,14 +31,19 @@ pub struct BoundingBox {
     pub y: f32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, Default)]
-pub struct Polygon {
-    pub path: Vec<Keypoint>,
-}
+// This may be deprecated in Darwin JSON v2.0.
+// #[derive(Debug, Clone, Serialize, Deserialize, Dummy, Default)]
+// pub struct Polygon {
+//     pub path: Vec<Keypoint>,
+// }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, Default)]
 pub struct ComplexPolygon {
     pub path: Vec<Vec<Keypoint>>,
+}
+
+pub struct Polygon{
+    pub paths: Vec<Vec<Keypoint>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, Default)]
@@ -67,9 +72,11 @@ pub enum AnnotationType {
     #[serde(rename = "bounding_box")]
     #[strum(serialize = "bounding_box")]
     BoundingBox(BoundingBox),
-    #[serde(rename = "complex_polygon")]
-    #[strum(serialize = "complex_polygon")]
-    ComplexPolygon(ComplexPolygon),
+
+    // This type does not seem to exist in Darwin JSON v2.0
+    // #[serde(rename = "complex_polygon")]
+    // #[strum(serialize = "complex_polygon")]
+    // ComplexPolygon(ComplexPolygon),
     Cuboid,
     #[serde(rename = "directional_vector")]
     DirectionalVector,
