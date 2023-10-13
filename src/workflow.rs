@@ -264,9 +264,11 @@ pub struct WorkflowV2 {
     pub team_id: u32,
     pub thumbnails: Vec<String>,
     pub updated_at: String,
-    pub work_batch_requested: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub work_batch_requested: Option<bool>,
     #[serde(rename = "additionalProp")]
-    pub additional_prop: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub additional_prop: Option<u32>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
