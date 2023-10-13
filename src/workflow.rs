@@ -262,7 +262,7 @@ pub struct WorkflowV2 {
     pub progress: WorkflowProgress,
     pub stages: Vec<WorkflowStageV2>,
     pub team_id: u32,
-    pub thumbnails: Vec<String>,
+    pub thumbnails: Vec<Option<String>>,
     pub updated_at: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub work_batch_requested: Option<bool>,
