@@ -111,7 +111,8 @@ pub struct Slot {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct SourceFile {
     pub file_name: String,
-    pub storage_key: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub storage_key: Option<String>,
     pub url: String,
 }
 
