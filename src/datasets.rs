@@ -640,7 +640,7 @@ where
 
     async fn list_exports(&self, client: &C) -> Result<Vec<Export>> {
         let endpoint = format!(
-            "teams/{}/datasets/{}/exports",
+            "v2/teams/{}/datasets/{}/exports",
             self.team_slug.as_ref().context("Missing team slug")?,
             self.slug
         );
