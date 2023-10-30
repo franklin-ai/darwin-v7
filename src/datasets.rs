@@ -129,6 +129,7 @@ pub struct Export {
 #[serde(rename_all = "lowercase")]
 pub enum ExportFormat {
     #[default]
+    #[serde(rename = "darwin_json_2")]
     DarwinJson2,
     Json,
     Xml,
