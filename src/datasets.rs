@@ -129,6 +129,7 @@ pub struct Export {
 #[serde(rename_all = "lowercase")]
 pub enum ExportFormat {
     #[default]
+    DarwinJson2,
     Json,
     Xml,
     Coco,
@@ -144,6 +145,7 @@ pub enum ExportFormat {
 impl From<ExportFormat> for &str {
     fn from(value: ExportFormat) -> Self {
         match value {
+            ExportFormat::DarwinJson2 => "darwin_json_2",
             ExportFormat::Json => "json",
             ExportFormat::Xml => "xml",
             ExportFormat::Coco => "coco",
@@ -235,7 +237,7 @@ struct GenerateExportPayload {
     pub include_authorship: bool,
     pub include_export_token: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub filter: Option<Filter>,
+    pub filters: Option<Filter>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -622,7 +624,7 @@ where
             format: Into::<&str>::into(format.clone()).to_string(),
             include_authorship,
             include_export_token,
-            filter: filter.cloned(),
+            filters: filter.cloned(),
         };
 
         let response = client.post(&endpoint, &payload).await?;
