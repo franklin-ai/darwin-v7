@@ -14,7 +14,7 @@ pub struct Annotator {
     pub full_name: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 
 pub struct ImageExport {
     // Internal filename on Darwin
@@ -38,7 +38,7 @@ pub struct ImageExport {
     pub workview_url: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ImageAnnotation {
     // ID of the annotation
     pub id: Option<String>,
@@ -62,14 +62,14 @@ pub struct ImageAnnotation {
     pub text: Option<Text>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct JsonExport {
     pub annotations: Vec<ImageAnnotation>,
     pub dataset: String,
     pub image: ImageExport,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct Item {
     pub name: String,
     pub path: String,
@@ -77,7 +77,7 @@ pub struct Item {
     pub slots: Vec<Slot>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct SourceInfo {
     pub dataset: Dataset,
     pub item_id: String,
@@ -85,20 +85,20 @@ pub struct SourceInfo {
     pub workview_url: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct Dataset {
     pub name: String,
     pub slug: String,
     pub dataset_management_url: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct Team {
     pub name: String,
     pub slug: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct Slot {
     #[serde(rename = "type")]
     pub slot_type: DatasetItemTypes,
@@ -108,7 +108,7 @@ pub struct Slot {
     pub thumbnail_url: String,
     pub source_files: Vec<SourceFile>,
 }
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct SourceFile {
     pub file_name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -116,7 +116,7 @@ pub struct SourceFile {
     pub url: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct JsonExportV2 {
     pub version: String,
     pub schema_ref: String,
