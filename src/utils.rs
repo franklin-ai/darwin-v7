@@ -9,12 +9,9 @@ macro_rules! expect_http_ok {
             ))
         } else {
             let text = $x.text().await?;
-            let res = serde_json::from_str::<$y>(&text);
-            if (res.is_err()) {
-                bail!("{}\n{}", text, res.err().unwrap())
-            }
-
-            Ok(res?)
+            Ok(serde_path_to_error::deserialize(
+                &mut serde_json::Deserializer::from_str(&text),
+            )?)
         }
     };
 }
