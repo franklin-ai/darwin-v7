@@ -129,6 +129,8 @@ pub struct Export {
 #[serde(rename_all = "lowercase")]
 pub enum ExportFormat {
     #[default]
+    #[serde(rename = "darwin_json_2")]
+    DarwinJson2,
     Json,
     Xml,
     Coco,
@@ -144,6 +146,7 @@ pub enum ExportFormat {
 impl From<ExportFormat> for &str {
     fn from(value: ExportFormat) -> Self {
         match value {
+            ExportFormat::DarwinJson2 => "darwin_json_2",
             ExportFormat::Json => "json",
             ExportFormat::Xml => "xml",
             ExportFormat::Coco => "coco",
@@ -235,7 +238,7 @@ struct GenerateExportPayload {
     pub include_authorship: bool,
     pub include_export_token: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub filter: Option<Filter>,
+    pub filters: Option<Filter>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -370,6 +373,12 @@ where
         data: Vec<ExistingSimpleItem>,
         external_storage: String,
     ) -> Result<RegisterExistingItemResponse>;
+
+    async fn update_annotation_hotkeys(
+        &self,
+        client: &C,
+        hotkeys: HashMap<String, String>,
+    ) -> Result<()>;
 }
 
 #[async_trait]
@@ -572,6 +581,23 @@ where
 
         expect_http_ok!(response, RegisterExistingItemResponse)
     }
+
+    async fn update_annotation_hotkeys(
+        &self,
+        client: &C,
+        hotkeys: HashMap<String, String>,
+    ) -> Result<()> {
+        let mut payload = DatasetUpdate::from(self);
+        payload.annotation_hotkeys = Some(hotkeys);
+        let response = client
+            .put(&format!("datasets/{}", self.id), Some(&payload))
+            .await?;
+        let status = response.status();
+        if status != 200 {
+            bail!("Invalid status code {status}");
+        }
+        Ok(())
+    }
 }
 
 #[async_trait]
@@ -589,7 +615,7 @@ where
         filter: Option<&Filter>,
     ) -> Result<()> {
         let endpoint = format!(
-            "teams/{}/datasets/{}/exports",
+            "v2/teams/{}/datasets/{}/exports",
             self.team_slug.as_ref().context("Missing team slug")?,
             self.slug
         );
@@ -599,7 +625,7 @@ where
             format: Into::<&str>::into(format.clone()).to_string(),
             include_authorship,
             include_export_token,
-            filter: filter.cloned(),
+            filters: filter.cloned(),
         };
 
         let response = client.post(&endpoint, &payload).await?;
@@ -617,7 +643,7 @@ where
 
     async fn list_exports(&self, client: &C) -> Result<Vec<Export>> {
         let endpoint = format!(
-            "teams/{}/datasets/{}/exports",
+            "v2/teams/{}/datasets/{}/exports",
             self.team_slug.as_ref().context("Missing team slug")?,
             self.slug
         );
