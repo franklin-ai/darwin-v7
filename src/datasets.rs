@@ -187,6 +187,11 @@ pub struct ResponseItem {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+pub struct ArchiveResponseItems {
+    pub affected_item_count: i32,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct AddDataItemsResponse {
     pub blocked_items: Vec<ResponseItem>,
     pub items: Vec<ResponseItem>,
@@ -222,7 +227,7 @@ pub struct RegisterExistingItemResponse {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 struct ArchiveItemPayload {
-    pub filter: Filter,
+    pub filters: Filter,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
@@ -349,7 +354,7 @@ where
     C: V7Methods,
 {
     // async fn archive_all_files(&self, client: &C) -> Result<()>;
-    async fn archive_items(&self, client: &C, filter: &Filter) -> Result<()>;
+    async fn archive_items(&self, client: &C, filter: &Filter) -> Result<ArchiveResponseItems>;
     async fn archive_dataset(&self, client: &C) -> Result<Dataset>;
 }
 
@@ -466,21 +471,19 @@ where
 
     /// The docs say a reason is required, but the call actually fails if it is provided
     /// https://docs.v7labs.com/v1.0/reference/archive
-    async fn archive_items(&self, client: &C, filter: &Filter) -> Result<()> {
+    async fn archive_items(&self, client: &C, filter: &Filter) -> Result<ArchiveResponseItems> {
         let payload = ArchiveItemPayload {
-            filter: filter.clone(),
+            filters: filter.clone(),
         };
 
-        let endpoint = &format!("datasets/{}/items/archive", self.id);
-        let response = client.put(endpoint, Some(&payload)).await?;
-
-        let status = response.status();
-
-        // 204 is correct operation for this endpoint
-        if status != 204 {
-            bail!("Invalid status code {status}")
-        }
-        Ok(())
+        let endpoint = &format!(
+            "v2/teams/{}/items/archive",
+            self.team_slug
+                .as_ref()
+                .context("Dataset is missing team slug")?
+        );
+        let response = client.post(endpoint, &payload).await?;
+        expect_http_ok!(response, ArchiveResponseItems)
     }
 
     async fn archive_dataset(&self, client: &C) -> Result<Dataset> {
@@ -866,7 +869,9 @@ mod test_client_calls {
 
     use super::*;
     use crate::client::V7Client;
+    use crate::item::DatasetItemV2;
     use fake::{Fake, Faker};
+    use serde_json::json;
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -972,6 +977,42 @@ mod test_client_calls {
             result[result.len() - 1].id,
             mock_result_vec[mock_result_vec.len() - 1].id
         );
+    }
+
+    #[tokio::test]
+    async fn test_archive_dataset_items() {
+        let mock_server = MockServer::start().await;
+        let mut mock_data: Dataset = Faker.fake();
+        let team_slug = mock_data.id;
+        mock_data.team_slug = Some(team_slug.to_string());
+
+        let dset_id: Option<Vec<u32>> = Some(vec![mock_data.id]);
+        let complete_status: Option<Vec<String>> = Some(vec!["Complete".to_string()]);
+
+        let mut filter = Filter {
+            dataset_item_ids: dset_id,
+            statuses: complete_status,
+            ..Default::default()
+        };
+
+        let client: V7Client = V7Client::new(
+            format!("{}/", mock_server.uri()),
+            "api-key".to_string(),
+            "some-team".to_string(),
+        )
+        .unwrap();
+
+        Mock::given(method("POST"))
+            .and(path(format!("v2/teams/{team_slug}/items/archive")))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "affected_item_count": 1,
+            })))
+            .mount(&mock_server)
+            .await;
+
+        let result = mock_data.archive_items(&client, &filter).await.unwrap();
+
+        assert_eq!(result.affected_item_count, 1);
     }
 
     #[tokio::test]
