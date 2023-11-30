@@ -990,7 +990,7 @@ mod test_client_calls {
         let complete_status: Option<Vec<String>> = Some(vec!["Complete".to_string()]);
 
         let filter = Filter {
-            dataset_ids: dset_id,
+            dataset_item_ids: dset_id,
             statuses: complete_status,
             ..Default::default()
         };
