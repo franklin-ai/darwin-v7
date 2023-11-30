@@ -989,8 +989,8 @@ mod test_client_calls {
         let dset_id: Option<Vec<u32>> = Some(vec![mock_data.id]);
         let complete_status: Option<Vec<String>> = Some(vec!["Complete".to_string()]);
 
-        let mut filter = Filter {
-            dataset_item_ids: dset_id,
+        let filter = Filter {
+            dataset_ids: dset_id,
             statuses: complete_status,
             ..Default::default()
         };
