@@ -17,7 +17,7 @@ pub struct Filter {
     pub not_current_assignees: Option<Vec<u32>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub dataset_item_ids: Option<Vec<u32>>,
+    pub dataset_ids: Option<Vec<u32>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub not_dataset_item_ids: Option<Vec<u32>>,
