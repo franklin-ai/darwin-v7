@@ -869,7 +869,7 @@ mod test_client_calls {
 
     use super::*;
     use crate::client::V7Client;
-    use crate::item::DatasetItemV2;
+
     use fake::{Fake, Faker};
     use serde_json::json;
     use wiremock::matchers::{method, path};

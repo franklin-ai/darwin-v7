@@ -5,88 +5,106 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct Filter {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub annotation_class_ids: Option<Vec<u32>>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub not_annotation_class_ids: Option<Vec<u32>>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub assignees: Option<Vec<u32>>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub not_current_assignees: Option<Vec<u32>>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub dataset_ids: Option<Vec<u32>>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub not_dataset_item_ids: Option<Vec<u32>>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub filename_contains: Option<String>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub not_filename_contains: Option<String>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub filenames: Option<Vec<String>>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub not_filenames: Option<Vec<String>>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub path: Option<String>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub not_path: Option<String>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub paths: Option<Vec<String>>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub not_paths: Option<Vec<String>>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub path_prefix: Option<String>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub not_path_prefix: Option<String>,
-
-    #[serde(skip_serializing_if = "Filter::no_serialize_select")]
-    pub select_all: bool,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub statuses: Option<Vec<String>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub accuracy_from: Option<u32>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub not_statuses: Option<Vec<String>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub not_workflow_stage_ids: Option<Vec<u32>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub not_item_name_contains: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub iou_threshold: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub annotation_class_ids: Option<Vec<u32>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub not_current_assignees: Option<Vec<u32>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub types: Option<Vec<String>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub not_assignees: Option<Vec<u32>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub item_paths: Option<Vec<String>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub item_names: Option<Vec<String>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub not_item_names: Option<Vec<String>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub current_assignees: Option<Vec<u32>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub has_comments: Option<bool>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub assignees: Option<Vec<u32>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub item_path_prefix: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub item_name_prefix: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub not_item_paths: Option<Vec<String>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub item_name_contains: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub not_annotation_class_ids: Option<Vec<u32>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub map_from: Option<u32>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub evaluation_metrics_run_id: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub not_item_ids: Option<Vec<u32>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub item_ids: Option<Vec<u32>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dataset_ids: Option<Vec<u32>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub not_item_name_prefix: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub accuracy_to: Option<u32>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub evaluation_metrics_run_otucomes: Option<Vec<String>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub not_item_path_prefix: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub workflow_stage_ids: Option<Vec<u32>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub not_types: Option<Vec<String>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub video_ids: Option<Vec<u32>>,
+    pub map_to: Option<u32>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub not_video_ids: Option<Vec<u32>>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub workflow_stage_template_ids: Option<Vec<u32>>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub not_workflow_stage_template_ids: Option<Vec<u32>>,
-}
-
-impl Filter {
-    // To my knowledge serde doesn't provide a
-    // simpler way to not serialize false or default
-    // values (without using nightly)
-    fn no_serialize_select(val: &bool) -> bool {
-        !*val
-    }
+    pub select_all: Option<bool>,
 }
 
 #[cfg(test)]
@@ -103,7 +121,7 @@ mod test_serde {
     #[test]
     fn test_simple_serde() {
         let mut filter = Filter {
-            select_all: true,
+            select_all: Some(true),
             ..Default::default()
         };
         let val: Vec<u32> = vec![1, 2, 3, 4];
