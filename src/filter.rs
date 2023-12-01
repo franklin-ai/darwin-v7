@@ -74,10 +74,10 @@ pub struct Filter {
     pub evaluation_metrics_run_id: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub not_item_ids: Option<Vec<u32>>,
+    pub not_item_ids: Option<Vec<String>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub item_ids: Option<Vec<u32>>,
+    pub item_ids: Option<Vec<String>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dataset_ids: Option<Vec<u32>>,
