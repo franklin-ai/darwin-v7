@@ -85,7 +85,7 @@ fn _find_annotation_class_id(
 }
 
 impl AnnotationImportAnnotation {
-    fn new_polygon_annotation(
+    pub fn new_polygon_annotation(
         original_annotation: &ImageAnnotation,
         path: Vec<Keypoint>,
         eligible_annotation_classes: &[&AnnotationClass],
@@ -104,7 +104,7 @@ impl AnnotationImportAnnotation {
         })
     }
 
-    fn new_tag_annotation(
+    pub fn new_tag_annotation(
         original_annotation: &ImageAnnotation,
         eligible_annotation_classes: &[&AnnotationClass],
         slot_name: &str,
