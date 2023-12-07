@@ -2,6 +2,7 @@ use crate::annotation::AnnotationClass;
 use crate::client::V7Methods;
 use crate::expect_http_ok;
 use crate::filter::Filter;
+use crate::imports::AnnotationImport;
 use crate::item::{
     AddDataPayload, DataPayloadLevel, DatasetItem, DatasetItemStatus, DatasetItemTypes,
     ExistingSimpleItem, Item,
@@ -384,6 +385,12 @@ where
         client: &C,
         hotkeys: HashMap<String, String>,
     ) -> Result<()>;
+    async fn import_annotation(
+        &self,
+        client: &C,
+        item_id: &str,
+        annotation_import: &AnnotationImport,
+    ) -> Result<()>;
 }
 
 #[async_trait]
@@ -595,6 +602,27 @@ where
         let response = client
             .put(&format!("datasets/{}", self.id), Some(&payload))
             .await?;
+        let status = response.status();
+        if status != 200 {
+            bail!("Invalid status code {status}");
+        }
+        Ok(())
+    }
+
+    async fn import_annotation(
+        &self,
+        client: &C,
+        item_id: &str,
+        annotation_import: &AnnotationImport,
+    ) -> Result<()> {
+        let endpoint = format!(
+            "v2/teams/{team_slug}/items/{item_id}/import",
+            team_slug = self
+                .team_slug
+                .as_ref()
+                .context("Dataset is missing team slug")?
+        );
+        let response = client.post(&endpoint, annotation_import).await?;
         let status = response.status();
         if status != 200 {
             bail!("Invalid status code {status}");
