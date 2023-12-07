@@ -642,10 +642,10 @@ where
     ) -> Result<()> {
         let endpoint = format!(
             "v2/teams/{team_slug}/items/{item_id}/import",
-            team_slug = self
-                .team_slug
-                .as_ref()
-                .with_context(|| format!("Dataset is missing team slug. dataset slug: {}", self.slug))?
+            team_slug = self.team_slug.as_ref().with_context(|| format!(
+                "Dataset is missing team slug. dataset slug: {}",
+                self.slug
+            ))?
         );
         let response = client.post(&endpoint, annotation_import).await?;
         let status = response.status();
