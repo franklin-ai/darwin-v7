@@ -125,3 +125,105 @@ impl AnnotationImportAnnotation {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::annotation::{AnnotationClass, Keypoint};
+    use crate::imports::ImageAnnotation;
+    use anyhow::Result;
+
+    // A helper function to create a sample ImageAnnotation for testing
+    fn create_sample_image_annotation(tag: Option<Tag>) -> ImageAnnotation {
+        ImageAnnotation {
+            name: "Sample Class".to_string(),
+            tag,
+            ..ImageAnnotation::default()
+        }
+    }
+
+    // A helper function to create a sample AnnotationClass for testing
+    fn create_sample_annotation_class(name: &str, id: u32) -> AnnotationClass {
+        AnnotationClass {
+            name: Some(name.to_string()),
+            id: Some(id),
+            ..AnnotationClass::default()
+        }
+    }
+
+    #[test]
+    fn test_new_polygon_annotation_success() -> Result<()> {
+        let original_annotation = create_sample_image_annotation(None);
+        let path = vec![Keypoint { x: 10.0, y: 10.0 }, Keypoint { x: 20.0, y: 20.0 }];
+        let eligible_annotation_classes = &[&create_sample_annotation_class("Sample Class", 1)];
+
+        let result = AnnotationImportAnnotation::new_polygon_annotation(
+            &original_annotation,
+            path,
+            eligible_annotation_classes,
+            "sample_slot",
+        )?;
+
+        assert_eq!(result.id.len(), 36); // UUID length
+        assert!(result.data.polygon.is_some());
+        assert_eq!(result.annotation_class_id, 1);
+        assert_eq!(
+            result.context_keys.slot_names,
+            vec!["sample_slot".to_string()]
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_new_polygon_annotation_with_invalid_class() {
+        let original_annotation = create_sample_image_annotation(None);
+        let path = vec![Keypoint { x: 10.0, y: 10.0 }, Keypoint { x: 20.0, y: 20.0 }];
+        let eligible_annotation_classes = &[]; // No eligible classes
+
+        let result = AnnotationImportAnnotation::new_polygon_annotation(
+            &original_annotation,
+            path,
+            eligible_annotation_classes,
+            "sample_slot",
+        );
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_new_tag_annotation_success() -> Result<()> {
+        let original_annotation = create_sample_image_annotation(Some(Tag {}));
+        let eligible_annotation_classes = &[&create_sample_annotation_class("Sample Class", 1)];
+
+        let result = AnnotationImportAnnotation::new_tag_annotation(
+            &original_annotation,
+            eligible_annotation_classes,
+            "sample_slot",
+        )?;
+
+        assert_eq!(result.id.len(), 36); // UUID length
+        assert!(result.data.tag.is_some());
+        assert_eq!(result.annotation_class_id, 1);
+        assert_eq!(
+            result.context_keys.slot_names,
+            vec!["sample_slot".to_string()]
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_new_tag_annotation_with_invalid_class() {
+        let original_annotation = create_sample_image_annotation(Some(Tag {}));
+        let eligible_annotation_classes = &[]; // No eligible classes
+
+        let result = AnnotationImportAnnotation::new_tag_annotation(
+            &original_annotation,
+            eligible_annotation_classes,
+            "sample_slot",
+        );
+
+        assert!(result.is_err());
+    }
+}
