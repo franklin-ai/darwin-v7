@@ -2,6 +2,7 @@ use crate::annotation::AnnotationClass;
 use crate::client::V7Methods;
 use crate::expect_http_ok;
 use crate::filter::Filter;
+use crate::imports::AnnotationImport;
 use crate::item::{
     AddDataPayload, DataPayloadLevel, DatasetItem, DatasetItemStatus, DatasetItemTypes,
     ExistingSimpleItem, Item,
@@ -384,6 +385,24 @@ where
         client: &C,
         hotkeys: HashMap<String, String>,
     ) -> Result<()>;
+
+    /// Asynchronously imports an annotation into this dataset.
+    ///
+    /// This function takes a reference to a client, an item ID, and an annotation import object,
+    /// and attempts to add the annotation to the specified item in the dataset. The operation
+    /// is performed asynchronously.
+    ///
+    /// # Arguments
+    /// * `client` - A reference to the client used to access V7.
+    /// * `item_id` - The identifier of the item to which the annotation should be added.
+    /// * `annotation_import` - A reference to the `AnnotationImport` object containing the
+    ///   annotation data to be imported.
+    async fn import_annotation(
+        &self,
+        client: &C,
+        item_id: &str,
+        annotation_import: &AnnotationImport,
+    ) -> Result<()>;
 }
 
 #[async_trait]
@@ -598,6 +617,40 @@ where
         let status = response.status();
         if status != 200 {
             bail!("Invalid status code {status}");
+        }
+        Ok(())
+    }
+
+    /// Asynchronously imports an annotation into a dataset.
+    ///
+    /// Posts `annotation_import` data to a constructed endpoint using `item_id`. Checks for
+    /// a successful 200 HTTP response status. Errors if the dataset lacks a team slug or
+    /// if the response status indicates failure.
+    ///
+    /// # Arguments
+    /// * `client` - Client for HTTP operations.
+    /// * `item_id` - Identifier for the target item.
+    /// * `annotation_import` - Data for the annotation to be imported.
+    ///
+    /// # Returns
+    /// `Result<()>` indicating success or failure.
+    async fn import_annotation(
+        &self,
+        client: &C,
+        item_id: &str,
+        annotation_import: &AnnotationImport,
+    ) -> Result<()> {
+        let endpoint = format!(
+            "v2/teams/{team_slug}/items/{item_id}/import",
+            team_slug = self.team_slug.as_ref().with_context(|| format!(
+                "Dataset is missing team slug. dataset slug: {}",
+                self.slug
+            ))?
+        );
+        let response = client.post(&endpoint, annotation_import).await?;
+        let status = response.status();
+        if status != 200 {
+            bail!("Import Annotation: Invalid status code {status}");
         }
         Ok(())
     }
