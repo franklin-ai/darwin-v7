@@ -66,25 +66,32 @@ impl From<Vec<Keypoint>> for AnnotationImportData {
     }
 }
 
-fn _find_annotation_class_id(
-    eligible_annotation_classes: &[&AnnotationClass],
-    class_name: &str,
-) -> Result<u32> {
-    eligible_annotation_classes
-        .iter()
-        .find(|ac| {
-            if ac.name.is_some() {
-                ac.name.clone().unwrap() == class_name
-            } else {
-                false
-            }
-        })
-        .context("Unable to find matching annotation class ID from export JSON")?
-        .id
-        .context("Annotation Class has no ID")
-}
-
 impl AnnotationImportAnnotation {
+    /// Creates a new polygon annotation.
+    ///
+    /// This function generates an `AnnotationImportAnnotation` instance representing a polygon annotation.
+    /// It assigns a unique ID, sets the annotation data with the provided `path` representing the polygon,
+    /// and links it to an appropriate annotation class based on the `original_annotation` and the provided
+    /// `eligible_annotation_classes`. The `slot_name` is used to specify where in the dataset item this annotation
+    /// should be attached.
+    ///
+    /// # Arguments
+    ///
+    /// * `original_annotation` - A reference to an `ImageAnnotation` from which the name of the annotation class is derived.
+    /// * `path` - A vector of `Keypoint` objects defining the vertices of the polygon.
+    /// * `eligible_annotation_classes` - A slice of references to `AnnotationClass` objects.
+    ///    The function searches these to find a matching class ID for the `original_annotation`.
+    /// * `slot_name` - The name of the slot in the dataset item where this annotation will be attached.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Result<AnnotationImportAnnotation, Error>` where `Ok` contains the newly created `AnnotationImportAnnotation`
+    /// if the annotation class corresponding to `original_annotation` is found in `eligible_annotation_classes`;
+    /// otherwise, an error is returned.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if no matching annotation class ID is found in `eligible_annotation_classes` for the `original_annotation`.
     pub fn new_polygon_annotation(
         original_annotation: &ImageAnnotation,
         path: Vec<Keypoint>,
@@ -94,7 +101,7 @@ impl AnnotationImportAnnotation {
         Ok(AnnotationImportAnnotation {
             id: uuid::Uuid::new_v4().to_string(),
             data: AnnotationImportData::from(path),
-            annotation_class_id: _find_annotation_class_id(
+            annotation_class_id: Self::find_annotation_class_id(
                 eligible_annotation_classes,
                 &original_annotation.name,
             )?,
@@ -104,6 +111,31 @@ impl AnnotationImportAnnotation {
         })
     }
 
+    /// Creates a new tag annotation.
+    ///
+    /// This function generates an `AnnotationImportAnnotation` instance for a tag annotation.
+    /// It assigns a unique ID, sets the annotation data based on the `original_annotation`,
+    /// and identifies the correct annotation class from `eligible_annotation_classes`.
+    /// The `slot_name` is used to specify the dataset item slot for the annotation.
+    ///
+    /// # Arguments
+    ///
+    /// * `original_annotation` - A reference to an `ImageAnnotation` used to derive the tag data
+    ///   and annotation class name.
+    /// * `eligible_annotation_classes` - A slice of references to `AnnotationClass` objects.
+    ///   The function searches these to find a matching class ID for the `original_annotation`.
+    /// * `slot_name` - The name of the slot in the dataset item where this annotation will be attached.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Result<AnnotationImportAnnotation, Error>`. On success, it contains the newly
+    /// created `AnnotationImportAnnotation`. If a matching annotation class is not found in
+    /// `eligible_annotation_classes`, it returns an error.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if no matching annotation class ID is found in `eligible_annotation_classes`
+    /// for the `original_annotation`.
     pub fn new_tag_annotation(
         original_annotation: &ImageAnnotation,
         eligible_annotation_classes: &[&AnnotationClass],
@@ -115,7 +147,7 @@ impl AnnotationImportAnnotation {
                 polygon: None,
                 tag: original_annotation.tag.clone(),
             },
-            annotation_class_id: _find_annotation_class_id(
+            annotation_class_id: Self::find_annotation_class_id(
                 eligible_annotation_classes,
                 &original_annotation.name,
             )?,
@@ -123,6 +155,46 @@ impl AnnotationImportAnnotation {
                 slot_names: vec![slot_name.to_string()],
             },
         })
+    }
+
+    /// Finds the ID of an annotation class.
+    ///
+    /// This function searches through a slice of `AnnotationClass` references to find a class
+    /// whose name matches the provided `class_name`. It is primarily used to retrieve the unique
+    /// ID associated with an annotation class based on its name.
+    ///
+    /// # Arguments
+    ///
+    /// * `eligible_annotation_classes` - A slice of references to `AnnotationClass` objects in which
+    ///   the function searches for a matching class name.
+    /// * `class_name` - The name of the annotation class for which the ID is being searched.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Result<u32, Error>`. On success, it contains the ID of the matching annotation class.
+    /// If no class with the given name is found, or if the found class lacks an ID, it returns an error.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error in the following cases:
+    /// - No annotation class with the given name is found in `eligible_annotation_classes`.
+    /// - The annotation class found does not have an ID.
+    fn find_annotation_class_id(
+        eligible_annotation_classes: &[&AnnotationClass],
+        class_name: &str,
+    ) -> Result<u32> {
+        eligible_annotation_classes
+            .iter()
+            .find(|ac| {
+                if ac.name.is_some() {
+                    ac.name.clone().unwrap() == class_name
+                } else {
+                    false
+                }
+            })
+            .context("Unable to find matching annotation class ID from export JSON")?
+            .id
+            .context("Annotation Class has no ID")
     }
 }
 
