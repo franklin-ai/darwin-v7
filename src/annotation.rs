@@ -36,7 +36,7 @@ pub struct Polygon {
     pub paths: Vec<Vec<Keypoint>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy, Default, PartialEq, PartialOrd)]
 pub struct Keypoint {
     // The horizontal coordinate of the keypoint
     pub x: f32,
