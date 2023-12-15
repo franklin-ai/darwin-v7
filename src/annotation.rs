@@ -12,7 +12,7 @@ use crate::expect_http_ok;
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq, Default)]
 pub struct AnnotationClassMetadata {
     #[serde(rename = "_color")]
-    pub color: String,
+    pub color: Option<String>,
     pub polygon: Option<HashMap<String, String>>, // TODO find out what this type actually is
     pub auto_annotate: Option<HashMap<String, String>>, // TODO find out what this type actually is
     pub inference: Option<HashMap<String, String>>, // TODO find out what this type actually is
@@ -76,11 +76,12 @@ pub enum AnnotationType {
     Measures,
     #[strum(serialize = "polygon")]
     Polygon(Polygon),
-
     Skeleton,
     #[strum(serialize = "tag")]
     Tag(Tag),
     Text(Text),
+    #[serde(rename = "raster_layer")]
+    RasterLayer,
 }
 
 // Various ids for annotation types and sub types
@@ -122,6 +123,7 @@ impl From<AnnotationType> for u32 {
             AnnotationType::Skeleton => 12,
             AnnotationType::Tag(_) => 1,
             AnnotationType::Text(_) => 6,
+            AnnotationType::RasterLayer => todo!(),
         }
     }
 }
