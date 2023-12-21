@@ -18,7 +18,7 @@ jobs:
           private_key: ${{ secrets.RENOVATE_KEY }}
           app_id: ${{ secrets.RENOVATE_APP_ID }}
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Git credential helper and add Cloudsmith credentials
         run: |
