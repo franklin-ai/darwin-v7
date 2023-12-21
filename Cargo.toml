@@ -27,4 +27,4 @@ csv-async = "1.2"
 [dev-dependencies]
 tempfile = "3.8"
 wiremock = "0.5"
-tokio = { version = "1.25", features = ["full"] }
+tokio = { version = "1.35", features = ["full"] }
