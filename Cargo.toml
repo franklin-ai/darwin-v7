@@ -18,7 +18,7 @@ serde_path_to_error = "0.1"
 rand = "0.8.5"
 uuid = { version = "1.6", features = ["v4", "serde"] }
 async-trait = "0.1"
-strum = { version = "0.24", features = ["derive"] }
+strum = { version = "0.25", features = ["derive"] }
 strum_macros = "0.24"
 log = "0.4"
 futures = "0.3"
