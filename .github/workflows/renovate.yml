@@ -30,3 +30,33 @@ jobs:
         run: |
           cd renovate && npm ci && npm run renovate -- --token ${{ steps.get_token.outputs.token }}
         shell: bash
+
+      - name: Set if main BRANCH_NAME
+        if: failure() && github.ref == 'refs/heads/main'
+        shell: bash
+        run: echo "BRANCH_NAME=main" >> "$GITHUB_ENV"
+
+      - name: Set if pull_request BRANCH_NAME
+        if: failure() && contains(fromJSON('["pull_request", "pull_request_target"]'), github.event_name)
+        shell: bash
+        run: echo "BRANCH_NAME=${{ github.head_ref }}" >> "$GITHUB_ENV"
+
+      - name: Send GitHub Action trigger data to Slack workflow
+        id: slack
+        if: failure()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "actor": "${{ github.actor }}",
+              "workflow": "${{ github.workflow }}",
+              "event_name": "${{ github.event_name }}",
+              "run_attempt": "${{ github.run_attempt }}",
+              "ref": "${{ github.ref }}",
+              "branch_name": "${{ env.BRANCH_NAME }}",
+              "repository": "${{ github.repository }}",
+              "repository_url": "https://github.com/${{ github.repository }}",
+              "workflow_run_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: https://hooks.slack.com/triggers/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
