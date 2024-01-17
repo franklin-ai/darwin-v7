@@ -1,5 +1,4 @@
 on:
-  pull_request:
   workflow_dispatch:
   schedule:
     # every day at 2:30AM
@@ -12,9 +11,6 @@ jobs:
     name: Check dependencies
     runs-on: ubuntu-22.04
     steps:
-      - name: Intentional failure
-        shell: bash
-        run: fakecmd
       - name: GitHub App token
         id: get_token
         uses: tibdex/github-app-token@v2.1.0
