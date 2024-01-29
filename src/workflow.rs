@@ -62,8 +62,8 @@ pub struct Stage {
     pub assignee_id: Option<u32>,
     pub completed: Option<bool>,
     pub completes_at: Option<String>,
-    pub dataset_item_id: u32,
-    pub id: u32,
+    pub dataset_item_id: Option<u32>,
+    pub id: Option<u32>,
     pub metadata: Option<MetaData>,
     pub number: Option<u32>,
     pub skipped: Option<bool>,
@@ -71,8 +71,8 @@ pub struct Stage {
     pub template_metadata: Option<TemplateMetadata>,
     #[serde(rename = "type")]
     pub stage_type: Option<StageType>,
-    pub workflow_id: u32,
-    pub workflow_stage_template_id: u32,
+    pub workflow_id: Option<u32>,
+    pub workflow_stage_template_id: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
@@ -95,13 +95,13 @@ pub struct WorkflowStageTemplate {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
 pub struct Workflow {
-    pub current_stage_number: u32,
-    pub current_workflow_stage_template_id: u32,
-    pub dataset_item_id: u32,
-    pub id: u32,
-    pub stages: HashMap<u32, Vec<Stage>>,
-    pub status: String, // This can probably be an enum
-    pub workflow_template_id: u32,
+    pub current_stage_number: Option<u32>,
+    pub current_workflow_stage_template_id: Option<u32>,
+    pub dataset_item_id: Option<u32>,
+    pub id: Option<u32>,
+    pub stages: HashMap<u32, Vec<Option<Stage>>>,
+    pub status: Option<String>, // This can probably be an enum
+    pub workflow_template_id: Option<u32>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy)]
@@ -125,15 +125,15 @@ pub struct LocatedWorkflowComments {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
 pub struct WorkflowCommentThread {
-    pub author_id: u32,
-    pub bounding_box: BoundingBox,
-    pub comment_count: u32,
+    pub author_id: Option<u32>,
+    pub bounding_box: Option<BoundingBox>,
+    pub comment_count: Option<u32>,
     pub frame_index: Option<u32>,
-    pub id: u32,
-    pub inserted_at: String,
-    pub resolved: bool,
-    pub updated_at: String,
-    pub workflow_id: u32,
+    pub id: Option<u32>,
+    pub inserted_at: Option<String>,
+    pub resolved: Option<bool>,
+    pub updated_at: Option<String>,
+    pub workflow_id: Option<u32>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
@@ -160,16 +160,16 @@ pub struct AssignItemPayload {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct AssignItemResponse {
-    pub created_commands: u32,
+    pub created_commands: Option<u32>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct WorkflowDataset {
     pub annotation_hotkeys: Option<HashMap<String, String>>,
-    pub annotators_can_instantiate_workflows: bool,
+    pub annotators_can_instantiate_workflows: Option<bool>,
     pub id: Option<u32>,
     pub instructions: Option<String>,
-    pub name: String,
+    pub name: Option<String>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
@@ -231,39 +231,39 @@ pub struct StageConfig {
 pub struct StageEdge {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
-    pub name: String, //FIXME: What are the different types?
-    pub source_stage_id: String,
-    pub target_stage_id: String,
+    pub name: Option<String>, //FIXME: What are the different types?
+    pub source_stage_id: Option<String>,
+    pub target_stage_id: Option<String>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct WorkflowStageAssignees {
-    pub stage_id: String,
-    pub user_id: u32,
+    pub stage_id: Option<String>,
+    pub user_id: Option<u32>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct WorkflowStageV2 {
-    pub assignable_users: Vec<WorkflowStageAssignees>,
-    pub config: StageConfig,
-    pub edges: Vec<StageEdge>,
-    pub id: String,
-    pub name: String,
+    pub assignable_users: Vec<Option<WorkflowStageAssignees>>,
+    pub config: Option<StageConfig>,
+    pub edges: Vec<Option<StageEdge>>,
+    pub id: Option<String>,
+    pub name: Option<String>,
     #[serde(rename = "type")]
-    pub stage_type: StageType,
+    pub stage_type: Option<StageType>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct WorkflowV2 {
     pub dataset: Option<WorkflowDataset>,
-    pub id: String,
-    pub inserted_at: String,
-    pub name: String,
-    pub progress: WorkflowProgress,
-    pub stages: Vec<WorkflowStageV2>,
+    pub id: Option<String>,
+    pub inserted_at: Option<String>,
+    pub name: Option<String>,
+    pub progress: Option<WorkflowProgress>,
+    pub stages: Vec<Option<WorkflowStageV2>>,
     pub team_id: u32,
     pub thumbnails: Vec<Option<String>>,
-    pub updated_at: String,
+    pub updated_at: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub work_batch_requested: Option<bool>,
     #[serde(rename = "additionalProp")]
@@ -338,7 +338,11 @@ where
     ) -> Result<WorkflowV2> {
         let response = client
             .put(
-                &format!("v2/teams/{}/workflows/{}", client.team(), self.id),
+                &format!(
+                    "v2/teams/{}/workflows/{}",
+                    client.team(),
+                    self.id.as_ref().context("Id required")?
+                ),
                 Some(update_payload),
             )
             .await?;
@@ -354,7 +358,10 @@ impl Workflow {
         let user = UserId { user_id: *user_id };
 
         let response = client
-            .post(&format!("workflow_stages/{}/assign", self.id), &user)
+            .post(
+                &format!("workflow_stages/{}/assign", self.id.context("Id required")?),
+                &user,
+            )
             .await?;
 
         expect_http_ok!(response, Workflow)
@@ -371,7 +378,10 @@ impl Workflow {
     {
         let response = client
             .post(
-                &format!("workflows/{}/workflow_comment_threads", self.id),
+                &format!(
+                    "workflows/{}/workflow_comment_threads",
+                    self.id.context("Id required")?
+                ),
                 comments,
             )
             .await?;
@@ -555,7 +565,7 @@ mod test_serde {
         assert_eq!(stage.assignee_id, Some(12974));
         assert_eq!(stage.completed, Some(false));
         assert_eq!(stage.completes_at, None);
-        assert_eq!(stage.id, 115470255);
+        assert_eq!(stage.id, Some(115470255));
         assert_eq!(stage.metadata.unwrap().ready_for_completion, None);
         assert_eq!(
             stage.template_metadata.unwrap().assignable_to,

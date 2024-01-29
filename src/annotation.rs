@@ -22,13 +22,13 @@ pub struct AnnotationClassMetadata {
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, Default)]
 pub struct BoundingBox {
     // Height of the bounding box
-    pub h: f32,
+    pub h: Option<f32>,
     // Width of the bounding box
-    pub w: f32,
+    pub w: Option<f32>,
     // Left-most coordinate of the bounding box
-    pub x: f32,
+    pub x: Option<f32>,
     // Top-most coordinate of the bounding box
-    pub y: f32,
+    pub y: Option<f32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, Default)]

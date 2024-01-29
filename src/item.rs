@@ -723,7 +723,7 @@ mod test_serde {
         assert_eq!(ser_item.status, DatasetItemStatus::New);
         assert_eq!(ser_item.dataset_id, 657106);
         assert_eq!(ser_item.slots.len(), 1);
-        let levels = &ser_item.slots.get(0).unwrap().metadata.levels;
+        let levels = &ser_item.slots.first().unwrap().metadata.levels;
         assert_eq!(levels.len(), 8);
         assert_eq!(levels.get(&0).unwrap().format, "png".to_string());
     }
