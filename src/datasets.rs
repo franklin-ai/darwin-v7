@@ -847,7 +847,7 @@ where
                     .dataset
                     .as_ref()
                     .expect("No associated dataset to workflow");
-                dataset.name == *dataset_name
+                dataset.name.as_ref() == Some(dataset_name)
             })
             .collect::<Vec<_>>()
             .first()
