@@ -77,19 +77,19 @@ pub struct Stage {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
 pub struct TemplateAssignee {
-    pub assignee_id: u32,
-    pub sampling_rate: f64,
+    pub assignee_id: Option<u32>,
+    pub sampling_rate: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
 pub struct WorkflowStageTemplate {
     pub id: Option<u32>,
-    pub metadata: TemplateMetadata,
+    pub metadata: Option<TemplateMetadata>,
     pub name: Option<String>,
-    pub workflow_stage_template_assignees: Vec<TemplateAssignee>,
+    pub workflow_stage_template_assignees: Vec<Option<TemplateAssignee>>,
     pub stage_number: Option<usize>,
     #[serde(rename = "type")]
-    pub stage_type: StageType,
+    pub stage_type: Option<StageType>,
     pub workflow_template_id: Option<u32>,
 }
 
@@ -106,7 +106,7 @@ pub struct Workflow {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy)]
 pub struct WorkflowTemplate {
-    pub dataset_id: u32,
+    pub dataset_id: Option<u32>,
     pub id: Option<u32>,
     pub name: Option<String>,
     pub workflow_stage_templates: Vec<WorkflowStageTemplate>,
@@ -201,7 +201,7 @@ pub struct StageConfig {
     pub from_non_default_v1_template: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub include_annotations: Option<bool>,
-    pub initial: bool,
+    pub initial: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub iou_thresholds: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -261,7 +261,7 @@ pub struct WorkflowV2 {
     pub name: Option<String>,
     pub progress: Option<WorkflowProgress>,
     pub stages: Vec<Option<WorkflowStageV2>>,
-    pub team_id: u32,
+    pub team_id: Option<u32>,
     pub thumbnails: Vec<Option<String>>,
     pub updated_at: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]

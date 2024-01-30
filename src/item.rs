@@ -25,7 +25,7 @@ pub struct ImageLevel {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Levels {
     pub image_levels: HashMap<u32, ImageLevel>,
-    pub base_key: String,
+    pub base_key: Option<String>,
 }
 
 // JSON levels have a mix of ImageLevel information as well
@@ -104,7 +104,7 @@ impl<'de> Visitor<'de> for LevelVisitor {
 
         Ok(Levels {
             image_levels,
-            base_key,
+            base_key: Some(base_key),
         })
     }
 }
@@ -112,7 +112,7 @@ impl<'de> Visitor<'de> for LevelVisitor {
 impl Dummy<fake::Faker> for Levels {
     fn dummy_with_rng<R: rand::Rng + ?Sized>(_: &fake::Faker, rng: &mut R) -> Self {
         let max_levels: u32 = (2..5).fake_with_rng(rng);
-        let base_key: String = Faker.fake_with_rng(rng);
+        let base_key: Option<String> = Faker.fake_with_rng(rng);
 
         let mut image_levels = HashMap::new();
         for lvl in 1..max_levels {
@@ -134,7 +134,7 @@ pub struct Image {
     pub format: Option<String>,
     pub height: Option<u32>,
     pub width: Option<u32>,
-    pub id: u32,
+    pub id: Option<u32>,
     pub key: Option<String>,
     pub levels: Option<Levels>,
     pub original_filename: Option<String>,
@@ -145,12 +145,12 @@ pub struct Image {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct DatasetImage {
-    pub dataset_id: u32,
+    pub dataset_id: Option<u32>,
     pub dataset_video_id: Option<u32>,
-    pub id: u32,
-    pub image: Image,
-    pub seq: u32,
-    pub set: u32,
+    pub id: Option<u32>,
+    pub image: Option<Image>,
+    pub seq: Option<u32>,
+    pub set: Option<u32>,
 }
 
 // TODO: Define this struct
@@ -317,21 +317,21 @@ pub struct ExistingSimpleItem {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
 pub struct DatasetItem {
-    pub archived: bool,
+    pub archived: Option<bool>,
     pub archived_reason: Option<String>,
     pub current_workflow: Option<Workflow>,
     pub current_workflow_id: Option<u32>,
     pub dataset_id: Option<u32>,
-    pub dataset_image: DatasetImage,
+    pub dataset_image: Option<DatasetImage>,
     pub dataset_image_id: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dataset_video: Option<DatasetVideo>,
     pub dataset_video_id: Option<u32>,
     pub file_size: Option<u32>,
-    pub filename: String,
+    pub filename: Option<String>,
     pub height: Option<u32>,
     pub width: Option<u32>,
-    pub id: u32,
+    pub id: Option<u32>,
     pub inserted_at: Option<String>,
     pub updated_at: Option<String>,
     pub labels: Option<Vec<u32>>,
@@ -339,16 +339,16 @@ pub struct DatasetItem {
     pub priority: Option<u32>,
     pub seq: Option<u32>,
     pub set: Option<u32>,
-    pub status: DatasetItemStatus,
+    pub status: Option<DatasetItemStatus>,
     #[serde(rename = "type")]
-    pub item_type: DatasetItemTypes, // This can probably be an enum
+    pub item_type: Option<DatasetItemTypes>, // This can probably be an enum
 }
 
 impl Display for DatasetItem {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{{id-{}}}:{}/{}[{}]",
+            "{{id-{:?}}}:{:?}/{:?}[{:?}]",
             self.id, self.filename, self.status, self.item_type
         )
     }
@@ -451,7 +451,7 @@ mod test_serde {
 
         let image_level: Levels = serde_json::from_str(contents).unwrap();
 
-        assert_eq!(image_level.base_key, "some-base-key.jpg".to_string());
+        assert_eq!(image_level.base_key, Some("some-base-key.jpg".to_string()));
         assert_eq!(
             image_level.image_levels.get(&0).unwrap().format,
             "png".to_string()
@@ -580,7 +580,7 @@ mod test_serde {
 
         let ser_item: DatasetItem = serde_json::from_str(contents).unwrap();
 
-        assert_eq!(ser_item.status, DatasetItemStatus::Complete);
+        assert_eq!(ser_item.status, Some(DatasetItemStatus::Complete));
         assert_eq!(ser_item.dataset_image_id, Some(646799980));
         assert_eq!(ser_item.labels.unwrap().len(), 3);
         assert!(ser_item
@@ -591,12 +591,18 @@ mod test_serde {
             .copied()
             .any(|x| x == 1));
 
-        let level_0 = ser_item.dataset_image.image.levels.unwrap();
+        let level_0 = ser_item
+            .dataset_image
+            .expect("Image expected")
+            .image
+            .expect("levels expected")
+            .levels
+            .unwrap();
         assert_eq!(
             level_0.image_levels.get(&0).unwrap().format,
             "png".to_string()
         );
-        assert_eq!(level_0.base_key, "some-base-key.jpg".to_string());
+        assert_eq!(level_0.base_key, Some("some-base-key.jpg".to_string()));
     }
 
     #[test]
