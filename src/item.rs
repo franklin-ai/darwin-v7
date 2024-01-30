@@ -366,52 +366,52 @@ pub struct ItemSlotLevel {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
 pub struct ItemSlot {
-    pub file_name: String,
+    pub file_name: Option<String>,
     pub fps: Option<f32>,
-    pub id: String,
-    pub is_external: bool,
-    pub metadata: ItemSlotLevel,
-    pub size_bytes: u64,
-    pub slot_name: String,
-    pub streamable: bool,
-    pub total_sections: u32,
+    pub id: Option<String>,
+    pub is_external: Option<bool>,
+    pub metadata: Option<ItemSlotLevel>,
+    pub size_bytes: Option<u64>,
+    pub slot_name: Option<String>,
+    pub streamable: Option<bool>,
+    pub total_sections: Option<u32>,
     #[serde(rename = "type")]
-    pub item_slot_type: DatasetItemTypes,
-    pub upload_id: String,
+    pub item_slot_type: Option<DatasetItemTypes>,
+    pub upload_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
 pub struct DatasetItemLayout {
-    pub slots: Vec<String>,
+    pub slots: Vec<Option<String>>,
     #[serde(rename = "type")]
-    pub layout_type: String,
-    pub version: u32,
+    pub layout_type: Option<String>,
+    pub version: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
 pub struct DatasetItemV2 {
-    pub archived: bool,
-    pub cursor: String,
-    pub dataset_id: u32,
-    pub id: String,
+    pub archived: Option<bool>,
+    pub cursor: Option<String>,
+    pub dataset_id: Option<u32>,
+    pub id: Option<String>,
     pub inserted_at: Option<String>,
-    pub layout: DatasetItemLayout,
-    pub name: String,
+    pub layout: Option<DatasetItemLayout>,
+    pub name: Option<String>,
     pub path: Option<String>,
     pub priority: Option<u32>,
-    pub processing_status: DatasetItemStatus,
-    pub slot_types: Vec<DatasetItemTypes>,
-    pub slots: Vec<ItemSlot>,
-    pub status: DatasetItemStatus,
-    pub tags: Vec<String>,
+    pub processing_status: Option<DatasetItemStatus>,
+    pub slot_types: Vec<Option<DatasetItemTypes>>,
+    pub slots: Vec<Option<ItemSlot>>,
+    pub status: Option<DatasetItemStatus>,
+    pub tags: Vec<Option<String>>,
     pub updated_at: Option<String>,
-    pub uploads: Vec<String>,
-    pub workflow_status: StageType,
+    pub uploads: Vec<Option<String>>,
+    pub workflow_status: Option<StageType>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
 pub struct ItemPage {
-    pub count: u32,
+    pub count: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub next: Option<String>,
     pub previous: Option<String>,
@@ -419,7 +419,7 @@ pub struct ItemPage {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
 pub struct Item {
-    pub items: Vec<DatasetItemV2>,
+    pub items: Vec<Option<DatasetItemV2>>,
     pub page: ItemPage,
 }
 
@@ -726,10 +726,20 @@ mod test_serde {
 
         let ser_item: DatasetItemV2 = serde_json::from_str(contents).unwrap();
 
-        assert_eq!(ser_item.status, DatasetItemStatus::New);
-        assert_eq!(ser_item.dataset_id, 657106);
+        assert_eq!(ser_item.status, Some(DatasetItemStatus::New));
+        assert_eq!(ser_item.dataset_id, Some(657106));
         assert_eq!(ser_item.slots.len(), 1);
-        let levels = &ser_item.slots.first().unwrap().metadata.levels;
+        let levels = &ser_item
+            .slots
+            .first()
+            .as_ref()
+            .expect("Expected at least one slot")
+            .as_ref()
+            .expect("Expected metadata")
+            .metadata
+            .as_ref()
+            .expect("Expected levels")
+            .levels;
         assert_eq!(levels.len(), 8);
         assert_eq!(levels.get(&0).unwrap().format, "png".to_string());
     }
