@@ -281,11 +281,11 @@ pub struct SetStageResponse {
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct ItemReport {
     /// Original filename of the item
-    pub filename: String,
+    pub filename: Option<String>,
     /// Timestamp of when item was added to the dataset
-    pub uploaded_date: String,
+    pub uploaded_date: Option<String>,
     /// Current status of the dataset
-    pub status: DatasetItemStatus,
+    pub status: Option<DatasetItemStatus>,
     /// Timestamp of when item was first entered into a workflow
     pub workflow_start_date: Option<String>,
     /// Timestamp of when work on the item was completed. null if in progress
@@ -293,23 +293,23 @@ pub struct ItemReport {
     /// For playback videos, the number of frames in the video
     pub number_of_frames: Option<u32>,
     /// Path the item was assigned in the dataset
-    pub folder: String,
+    pub folder: Option<String>,
     /// Total duration of work perform by annotators
-    pub time_spent_annotating_sec: u64,
+    pub time_spent_annotating_sec: Option<u64>,
     /// Total duration of work perform by reviewers
-    pub time_spent_reviewing_sec: u64,
+    pub time_spent_reviewing_sec: Option<u64>,
     /// Total duration of automation actions performed in annotate stages
-    pub automation_time_annotating_sec: u64,
+    pub automation_time_annotating_sec: Option<u64>,
     /// Total duration of automation actions performed in review stages
-    pub automation_time_reviewing_sec: u64,
+    pub automation_time_reviewing_sec: Option<u64>,
     /// Emails of all annotators who performed work on this item, joined by semicolon
-    pub annotators: String,
+    pub annotators: Option<String>,
     /// Emails of all reviewers who performed work on this item, joined by semicolon
-    pub reviewers: String,
+    pub reviewers: Option<String>,
     /// True if item was every rejected in any review stage
-    pub was_rejected_in_review: bool,
+    pub was_rejected_in_review: Option<bool>,
     /// Darwin Workview URL for the item
-    pub url: String,
+    pub url: Option<String>,
 }
 
 pub async fn item_reports_from_bytes(contents: &[u8]) -> Result<Vec<ItemReport>> {
@@ -1126,7 +1126,7 @@ somefilename,2023-05-10 14:15:27,complete,2023-05-10 14:16:17,2023-05-17 01:28:1
 
         let result = results.first().unwrap();
 
-        assert_eq!(result.filename, "somefilename".to_string());
+        assert_eq!(result.filename, Some("somefilename".to_string()));
     }
 
     #[tokio::test]
@@ -1177,9 +1177,9 @@ somefilename,2023-05-10 14:15:27,complete,2023-05-10 14:16:17,2023-05-17 01:28:1
 
         let result = results.first().unwrap();
 
-        assert_eq!(result.filename, filename.to_string());
-        assert_eq!(result.uploaded_date, uploaded_date.to_string());
-        assert_eq!(result.status, DatasetItemStatus::Complete);
+        assert_eq!(result.filename, Some(filename.to_string()));
+        assert_eq!(result.uploaded_date, Some(uploaded_date.to_string()));
+        assert_eq!(result.status, Some(DatasetItemStatus::Complete));
         assert_eq!(
             result.workflow_start_date,
             Some(workflow_start_date.to_string())
@@ -1189,20 +1189,26 @@ somefilename,2023-05-10 14:15:27,complete,2023-05-10 14:16:17,2023-05-17 01:28:1
             Some(workflow_complete_date.to_string())
         );
         assert_eq!(result.number_of_frames, None);
-        assert_eq!(result.folder, folder.to_string());
-        assert_eq!(result.time_spent_annotating_sec, time_spent_annotating_sec);
-        assert_eq!(result.time_spent_reviewing_sec, time_spent_reviewing_sec);
+        assert_eq!(result.folder, Some(folder.to_string()));
+        assert_eq!(
+            result.time_spent_annotating_sec,
+            Some(time_spent_annotating_sec)
+        );
+        assert_eq!(
+            result.time_spent_reviewing_sec,
+            Some(time_spent_reviewing_sec)
+        );
         assert_eq!(
             result.automation_time_annotating_sec,
-            automation_time_annotating_sec
+            Some(automation_time_annotating_sec)
         );
         assert_eq!(
             result.automation_time_reviewing_sec,
-            automation_time_reviewing_sec
+            Some(automation_time_reviewing_sec)
         );
-        assert_eq!(result.annotators, annotators.to_string());
-        assert_eq!(result.reviewers, reviewers.to_string());
-        assert_eq!(result.was_rejected_in_review, was_rejected_in_review);
-        assert_eq!(result.url, url);
+        assert_eq!(result.annotators, Some(annotators.to_string()));
+        assert_eq!(result.reviewers, None);
+        assert_eq!(result.was_rejected_in_review, Some(was_rejected_in_review));
+        assert_eq!(result.url, Some(url.to_string()));
     }
 }
