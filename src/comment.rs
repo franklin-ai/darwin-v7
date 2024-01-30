@@ -36,34 +36,34 @@ where
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
 pub struct CommentLine {
-    pub author_id: u32,
-    pub body: String,
-    pub comment_thread_id: String,
-    pub created_by_system: bool,
-    pub id: String,
-    pub inserted_at: String,
-    pub updated_at: String,
+    pub author_id: Option<u32>,
+    pub body: Option<String>,
+    pub comment_thread_id: Option<String>,
+    pub created_by_system: Option<bool>,
+    pub id: Option<String>,
+    pub inserted_at: Option<String>,
+    pub updated_at: Option<String>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
 pub struct CommentThreadResponse {
-    pub author_id: u32,
-    pub bounding_box: BoundingBox,
-    pub comment_count: u32,
-    pub dataset_item_id: String,
-    pub first_comment: CommentLine,
-    pub id: String,
-    pub inserted_at: String,
+    pub author_id: Option<u32>,
+    pub bounding_box: Option<BoundingBox>,
+    pub comment_count: Option<u32>,
+    pub dataset_item_id: Option<String>,
+    pub first_comment: Option<CommentLine>,
+    pub id: Option<String>,
+    pub inserted_at: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub issue_data: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub issue_types: Option<String>,
-    pub last_comment_at: String,
-    pub resolved: bool,
+    pub last_comment_at: Option<String>,
+    pub resolved: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub section_index: Option<String>,
-    pub slot_name: String,
-    pub updated_at: String,
+    pub slot_name: Option<String>,
+    pub updated_at: Option<String>,
 }
 
 #[async_trait]
