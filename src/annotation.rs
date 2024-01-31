@@ -167,8 +167,8 @@ pub struct AnnotationClass {
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub annotation_types: Vec<Option<String>>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub annotation_type_ids: Option<Vec<Option<u32>>>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub annotation_type_ids: Vec<Option<u32>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dataset_id: Option<u32>,
