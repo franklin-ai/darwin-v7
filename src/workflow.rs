@@ -109,7 +109,7 @@ pub struct WorkflowTemplate {
     pub dataset_id: Option<u32>,
     pub id: Option<u32>,
     pub name: Option<String>,
-    pub workflow_stage_templates: Vec<WorkflowStageTemplate>,
+    pub workflow_stage_templates: Vec<Option<WorkflowStageTemplate>>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]

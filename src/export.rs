@@ -74,7 +74,7 @@ pub struct Item {
     pub name: Option<String>,
     pub path: Option<String>,
     pub source_info: Option<SourceInfo>,
-    pub slots: Vec<Slot>,
+    pub slots: Vec<Option<Slot>>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
