@@ -21,13 +21,13 @@ pub struct Team {
 
 #[derive(Debug, Default, Serialize, Deserialize, Dummy, PartialEq, Eq, Clone)]
 pub struct TeamMember {
-    pub id: u32,
+    pub id: Option<u32>,
     pub email: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
     pub role: Option<String>,
-    pub team_id: u32,
-    pub user_id: u32,
+    pub team_id: Option<u32>,
+    pub user_id: Option<u32>,
 }
 
 impl Display for TeamMember {
@@ -35,7 +35,7 @@ impl Display for TeamMember {
         write!(
             f,
             "{{id-{}}}{} {} ({})",
-            self.user_id,
+            self.user_id.unwrap_or_default(),
             self.first_name.as_ref().unwrap_or(&String::new()),
             self.last_name.as_ref().unwrap_or(&String::new()),
             self.email.as_ref().unwrap_or(&String::new())
@@ -45,15 +45,15 @@ impl Display for TeamMember {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct TypeCount {
-    pub count: u32,
+    pub count: Option<u32>,
     pub id: Option<u32>,
     pub name: Option<String>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy)]
 pub struct TeamAnnotationClasses {
-    pub annotation_classes: Vec<AnnotationClass>,
-    pub type_counts: Vec<TypeCount>,
+    pub annotation_classes: Vec<Option<AnnotationClass>>,
+    pub type_counts: Vec<Option<TypeCount>>,
 }
 
 impl TryFrom<(&Value, &Value)> for Team {
