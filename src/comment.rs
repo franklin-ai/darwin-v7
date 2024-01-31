@@ -2,7 +2,7 @@ use crate::classes::BoundingBox;
 use crate::client::V7Methods;
 use crate::expect_http_ok;
 use crate::item::DatasetItemV2;
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 #[allow(unused_imports)]
 use fake::{Dummy, Fake};
@@ -79,7 +79,11 @@ where
     ) -> Result<CommentThreadResponse> {
         let response = client
             .post(
-                &format!("v2/teams/{}/items/{}/comment_threads", team_slug, self.id),
+                &format!(
+                    "v2/teams/{}/items/{}/comment_threads",
+                    team_slug,
+                    self.id.as_ref().context("Dataset has no Id")?
+                ),
                 &data,
             )
             .await?;

@@ -12,8 +12,6 @@ use crate::workflow::{WorkflowBuilder, WorkflowMethods, WorkflowTemplate, Workfl
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use csv_async::AsyncReaderBuilder;
-#[allow(unused_imports)]
-use fake::{Dummy, Fake};
 use futures::io::Cursor;
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
@@ -21,12 +19,17 @@ use std::cmp::PartialEq;
 use std::collections::HashMap;
 use std::fmt::Display;
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[cfg(test)]
+use fake::Dummy;
+
+#[cfg_attr(test, derive(Dummy))]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AnnotationHotKeys {
     pub key: String,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy)]
+#[cfg_attr(test, derive(Dummy))]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Dataset {
     pub active: Option<bool>,
     pub archived: Option<bool>,
@@ -40,11 +43,11 @@ pub struct Dataset {
 
     // TODO: annotations
     #[serde(skip)]
-    pub annotation_classes: Vec<String>,
+    pub annotation_classes: Vec<Option<String>>,
 
     pub default_workflow_template_id: Option<u32>,
 
-    pub id: u32,
+    pub id: Option<u32>,
     pub inserted_at: Option<String>,
     pub instructions: Option<String>,
 
@@ -62,20 +65,21 @@ pub struct Dataset {
     pub progress: Option<f64>,
     pub public: Option<bool>,
     pub reviewers_can_annotate: Option<bool>,
-    pub slug: String,
+    pub slug: Option<String>,
     pub team_id: Option<u32>,
     pub team_slug: Option<String>,
 
     // TODO: thumbnails
     #[serde(skip)]
-    pub thumbnails: Option<Vec<String>>,
+    pub thumbnails: Vec<Option<String>>,
     pub updated_at: Option<String>,
     pub version: Option<u32>,
     pub work_size: Option<u32>,
     pub work_prioritization: Option<String>,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy)]
+#[cfg_attr(test, derive(Dummy))]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct DatasetUpdate {
     pub annotation_hotkeys: Option<HashMap<String, String>>,
     pub annotators_can_create_tags: Option<bool>,
@@ -108,25 +112,29 @@ impl From<&Dataset> for DatasetUpdate {
     }
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy)]
+#[cfg_attr(test, derive(Dummy))]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ExportMetadata {
-    pub annotation_classes: Vec<AnnotationClass>,
-    pub annotation_types: Vec<TypeCount>,
+    pub annotation_classes: Vec<Option<AnnotationClass>>,
+    pub annotation_types: Vec<Option<TypeCount>>,
 }
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy)]
+
+#[cfg_attr(test, derive(Dummy))]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Export {
-    pub name: String,
+    pub name: Option<String>,
     pub download_url: Option<String>,
-    pub format: ExportFormat,
-    pub inserted_at: String,
-    pub latest: bool,
+    pub format: Option<ExportFormat>,
+    pub inserted_at: Option<String>,
+    pub latest: Option<bool>,
     #[serde(skip_deserializing)]
     pub metadata: ExportMetadata,
     pub status: Option<String>,
-    pub version: u16,
+    pub version: Option<u16>,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[cfg_attr(test, derive(Dummy))]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum ExportFormat {
     #[default]
@@ -159,19 +167,21 @@ impl From<ExportFormat> for &str {
     }
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
 struct DatasetName {
     pub name: String,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
 struct AddDataItemsPayload {
     pub items: Vec<AddDataPayload>,
     pub storage_name: String,
 }
 
 /// Version 2.0 equivalent of `AddDataItemsPayload`
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+///
+#[cfg_attr(test, derive(Dummy))]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RegisterExistingItemPayload {
     /// Slug name of the Dataset to upload images to
     pub dataset_slug: String,
@@ -181,24 +191,28 @@ pub struct RegisterExistingItemPayload {
     pub items: Vec<ExistingSimpleItem>,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[cfg_attr(test, derive(Dummy))]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ResponseItem {
-    pub dataset_item_id: u64,
-    pub filename: String,
+    pub dataset_item_id: Option<u64>,
+    pub filename: Option<String>,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[cfg_attr(test, derive(Dummy))]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ArchiveResponseItems {
-    pub affected_item_count: i32,
+    pub affected_item_count: Option<i32>,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[cfg_attr(test, derive(Dummy))]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AddDataItemsResponse {
-    pub blocked_items: Vec<ResponseItem>,
-    pub items: Vec<ResponseItem>,
+    pub blocked_items: Vec<Option<ResponseItem>>,
+    pub items: Vec<Option<ResponseItem>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[cfg_attr(test, derive(Dummy))]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct SlotResponse {
     pub as_frames: bool,
     pub extract_views: bool,
@@ -212,26 +226,30 @@ pub struct SlotResponse {
     pub item_type: DatasetItemTypes,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[cfg_attr(test, derive(Dummy))]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RegistrationResponseItem {
-    pub id: String,
-    pub name: String,
-    pub path: String,
-    pub slots: Vec<SlotResponse>,
+    pub id: Option<String>,
+    pub name: Option<String>,
+    pub path: Option<String>,
+    pub slots: Vec<Option<SlotResponse>>,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[cfg_attr(test, derive(Dummy))]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RegisterExistingItemResponse {
-    pub blocked_items: Vec<RegistrationResponseItem>,
-    pub items: Vec<RegistrationResponseItem>,
+    pub blocked_items: Vec<Option<RegistrationResponseItem>>,
+    pub items: Vec<Option<RegistrationResponseItem>>,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[cfg_attr(test, derive(Dummy))]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
 struct ArchiveItemPayload {
     pub filters: Filter,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[cfg_attr(test, derive(Dummy))]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
 struct AssignItemPayload {
     pub assignee_id: u32,
     pub filter: Filter,
@@ -275,17 +293,18 @@ pub struct SetStagePayloadV2 {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SetStageResponse {
-    pub created_commands: u32,
+    pub created_commands: Option<u32>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[cfg_attr(test, derive(Dummy))]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ItemReport {
     /// Original filename of the item
-    pub filename: String,
+    pub filename: Option<String>,
     /// Timestamp of when item was added to the dataset
-    pub uploaded_date: String,
+    pub uploaded_date: Option<String>,
     /// Current status of the dataset
-    pub status: DatasetItemStatus,
+    pub status: Option<DatasetItemStatus>,
     /// Timestamp of when item was first entered into a workflow
     pub workflow_start_date: Option<String>,
     /// Timestamp of when work on the item was completed. null if in progress
@@ -293,23 +312,23 @@ pub struct ItemReport {
     /// For playback videos, the number of frames in the video
     pub number_of_frames: Option<u32>,
     /// Path the item was assigned in the dataset
-    pub folder: String,
+    pub folder: Option<String>,
     /// Total duration of work perform by annotators
-    pub time_spent_annotating_sec: u64,
+    pub time_spent_annotating_sec: Option<u64>,
     /// Total duration of work perform by reviewers
-    pub time_spent_reviewing_sec: u64,
+    pub time_spent_reviewing_sec: Option<u64>,
     /// Total duration of automation actions performed in annotate stages
-    pub automation_time_annotating_sec: u64,
+    pub automation_time_annotating_sec: Option<u64>,
     /// Total duration of automation actions performed in review stages
-    pub automation_time_reviewing_sec: u64,
+    pub automation_time_reviewing_sec: Option<u64>,
     /// Emails of all annotators who performed work on this item, joined by semicolon
-    pub annotators: String,
+    pub annotators: Option<String>,
     /// Emails of all reviewers who performed work on this item, joined by semicolon
-    pub reviewers: String,
+    pub reviewers: Option<String>,
     /// True if item was every rejected in any review stage
-    pub was_rejected_in_review: bool,
+    pub was_rejected_in_review: Option<bool>,
     /// Darwin Workview URL for the item
-    pub url: String,
+    pub url: Option<String>,
 }
 
 pub async fn item_reports_from_bytes(contents: &[u8]) -> Result<Vec<ItemReport>> {
@@ -419,7 +438,7 @@ where
         include_export_token: bool,
         filter: Option<&Filter>,
     ) -> Result<()>;
-    async fn list_exports(&self, client: &C) -> Result<Vec<Export>>;
+    async fn list_exports(&self, client: &C) -> Result<Vec<Option<Export>>>;
 }
 
 #[async_trait]
@@ -427,9 +446,9 @@ pub trait DatasetDescribeMethods<C>
 where
     C: V7Methods,
 {
-    async fn list_datasets(client: &C) -> Result<Vec<Dataset>>;
+    async fn list_datasets(client: &C) -> Result<Vec<Option<Dataset>>>;
     #[deprecated = "V2 of the V7 API requires use of `list_dataset_items_v2`"]
-    async fn list_dataset_items(&self, client: &C) -> Result<Vec<DatasetItem>>;
+    async fn list_dataset_items(&self, client: &C) -> Result<Vec<Option<DatasetItem>>>;
     async fn list_dataset_items_v2(&self, client: &C) -> Result<Item>;
     async fn show_dataset(client: &C, id: &u32) -> Result<Dataset>;
 }
@@ -507,7 +526,10 @@ where
 
     async fn archive_dataset(&self, client: &C) -> Result<Dataset> {
         let response = client
-            .put::<String>(&format!("datasets/{}/archive", &self.id), None)
+            .put::<String>(
+                &format!("datasets/{}/archive", &self.id.context("Id required")?),
+                None,
+            )
             .await?;
 
         expect_http_ok!(response, Dataset)
@@ -526,7 +548,10 @@ where
         };
 
         let response = client
-            .post(&format!("datasets/{}/assign_items", self.id), &payload)
+            .post(
+                &format!("datasets/{}/assign_items", self.id.context("Id required")?),
+                &payload,
+            )
             .await?;
 
         let status = response.status();
@@ -546,7 +571,10 @@ where
                                          // so we have to replicate the rest of the existing settings
 
         let response = client
-            .put(&format!("datasets/{}", self.id), Some(&payload))
+            .put(
+                &format!("datasets/{}", self.id.context("Id required")?),
+                Some(&payload),
+            )
             .await?;
         let status = response.status();
 
@@ -573,7 +601,7 @@ where
             self.team_slug
                 .as_ref()
                 .context("Dataset is missing team slug")?,
-            self.slug
+            self.slug.as_ref().context("Dataset is missing slug")?
         );
 
         let response = client.put(&endpoint, Some(&api_payload)).await?;
@@ -589,7 +617,11 @@ where
         external_storage_slug: String,
     ) -> Result<RegisterExistingItemResponse> {
         let api_payload = RegisterExistingItemPayload {
-            dataset_slug: self.slug.to_string(),
+            dataset_slug: self
+                .slug
+                .as_ref()
+                .context("Dataset is missing slug")?
+                .to_string(),
             storage_slug: external_storage_slug,
             items: data,
         };
@@ -612,7 +644,10 @@ where
         let mut payload = DatasetUpdate::from(self);
         payload.annotation_hotkeys = Some(hotkeys);
         let response = client
-            .put(&format!("datasets/{}", self.id), Some(&payload))
+            .put(
+                &format!("datasets/{}", self.id.context("Dataset is missing Id")?),
+                Some(&payload),
+            )
             .await?;
         let status = response.status();
         if status != 200 {
@@ -643,7 +678,7 @@ where
         let endpoint = format!(
             "v2/teams/{team_slug}/items/{item_id}/import",
             team_slug = self.team_slug.as_ref().with_context(|| format!(
-                "Dataset is missing team slug. dataset slug: {}",
+                "Dataset is missing team slug. dataset slug: {:?}",
                 self.slug
             ))?
         );
@@ -673,7 +708,7 @@ where
         let endpoint = format!(
             "v2/teams/{}/datasets/{}/exports",
             self.team_slug.as_ref().context("Missing team slug")?,
-            self.slug
+            self.slug.as_ref().context("Dataset is missing slug")?
         );
 
         let payload = GenerateExportPayload {
@@ -697,16 +732,16 @@ where
         Ok(())
     }
 
-    async fn list_exports(&self, client: &C) -> Result<Vec<Export>> {
+    async fn list_exports(&self, client: &C) -> Result<Vec<Option<Export>>> {
         let endpoint = format!(
             "v2/teams/{}/datasets/{}/exports",
             self.team_slug.as_ref().context("Missing team slug")?,
-            self.slug
+            self.slug.as_ref().context("Dataset is missing slug")?
         );
 
         let response = client.get(&endpoint).await?;
 
-        expect_http_ok!(response, Vec<Export>)
+        expect_http_ok!(response, Vec<Option<Export>>)
     }
 }
 
@@ -715,16 +750,21 @@ impl<C> DatasetDescribeMethods<C> for Dataset
 where
     C: V7Methods + std::marker::Sync,
 {
-    async fn list_datasets(client: &C) -> Result<Vec<Dataset>> {
+    async fn list_datasets(client: &C) -> Result<Vec<Option<Dataset>>> {
         let response = client.get("datasets").await?;
 
-        expect_http_ok!(response, Vec<Dataset>)
+        expect_http_ok!(response, Vec<Option<Dataset>>)
     }
 
-    async fn list_dataset_items(&self, client: &C) -> Result<Vec<DatasetItem>> {
-        let response = client.get(&format!("datasets/{}/items", self.id)).await?;
+    async fn list_dataset_items(&self, client: &C) -> Result<Vec<Option<DatasetItem>>> {
+        let response = client
+            .get(&format!(
+                "datasets/{}/items",
+                self.id.context("Dataset is missing Id")?
+            ))
+            .await?;
 
-        expect_http_ok!(response, Vec<DatasetItem>)
+        expect_http_ok!(response, Vec<Option<DatasetItem>>)
     }
 
     async fn list_dataset_items_v2(&self, client: &C) -> Result<Item> {
@@ -732,7 +772,7 @@ where
             .get(&format!(
                 "v2/teams/{}/items?dataset_ids={}",
                 self.team_slug.as_ref().context("Missing team slug")?,
-                self.id
+                self.id.context("Dataset is missing Id")?
             ))
             .await?;
 
@@ -758,7 +798,10 @@ where
 
         let response = client
             .put(
-                &format!("datasets/{}/items/move_to_new", self.id),
+                &format!(
+                    "datasets/{}/items/move_to_new",
+                    self.id.context("Dataset missing Id")?
+                ),
                 Some(&payload),
             )
             .await?;
@@ -780,7 +823,10 @@ where
         };
 
         let response = client
-            .put(&format!("datasets/{}/set_stage", self.id), Some(&payload))
+            .put(
+                &format!("datasets/{}/set_stage", self.id.context("Data missing Id")?),
+                Some(&payload),
+            )
             .await?;
 
         let status = response.status();
@@ -800,7 +846,10 @@ where
     ) -> Result<WorkflowTemplate> {
         let response = client
             .post(
-                &format!("datasets/{}/workflow_templates", self.id),
+                &format!(
+                    "datasets/{}/workflow_templates",
+                    self.id.context("Dataset is missing Id")?
+                ),
                 workflow,
             )
             .await?;
@@ -828,7 +877,8 @@ where
 
         let endpoint = format!(
             "datasets/{}/default_workflow_template/{}",
-            self.id, workflow_id
+            self.id.context("Dataset is missing Id")?,
+            workflow_id
         );
         let payload: Option<&WorkflowTemplate> = None;
         let response = client.put(&endpoint, payload).await?;
@@ -863,7 +913,7 @@ where
     ) -> Result<SetStageResponse> {
         let filters = if filters.is_none() {
             SetStageFilter {
-                dataset_ids: vec![self.id],
+                dataset_ids: vec![self.id.context("Dataset missing Id")?],
                 select_all: true,
                 workflow_stage_ids: None,
             }
@@ -892,7 +942,7 @@ where
         let endpoint = format!(
             "teams/{}/datasets/{}/item_reports",
             self.team_slug.as_ref().context("Missing team slug")?,
-            self.slug
+            self.slug.as_ref().context("Dataset missing slug")?
         );
         let response = client.get(&endpoint).await?;
         let status = response.status();
@@ -909,7 +959,7 @@ impl Display for Dataset {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{}:{}/{}",
+            "{:?}:{}/{:?}",
             self.id,
             self.team_slug.as_ref().unwrap_or(&"team-slug".to_string()),
             self.slug
@@ -924,6 +974,10 @@ mod test_client_calls {
     use crate::client::V7Client;
 
     use fake::{Fake, Faker};
+
+    // Utilizing Faker with an AlwaysTrueRng to guarantee that all Option types are populated with Some values
+    // This ensures consistent data generation where no field is left as None
+    use fake::utils::AlwaysTrueRng;
     use serde_json::json;
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -938,7 +992,7 @@ mod test_client_calls {
             "api-key".to_string(),
             "some-team".to_string(),
         )
-        .unwrap();
+        .expect("Failed to get V7Client");
 
         Mock::given(method("GET"))
             .and(path("/datasets"))
@@ -946,13 +1000,24 @@ mod test_client_calls {
             .mount(&mock_server)
             .await;
 
-        let datasets = Dataset::list_datasets(&client).await.unwrap();
+        let datasets = Dataset::list_datasets(&client)
+            .await
+            .expect("Failed to list datasets");
 
         // Pick a few values to avoid f64 comparison issues
         assert_eq!(datasets.len(), mock_data.len());
-        assert_eq!(datasets[0].id, mock_data[0].id);
-        assert_eq!(datasets[0].slug, mock_data[0].slug);
-        assert_eq!(datasets[1].inserted_at, mock_data[1].inserted_at);
+        assert_eq!(
+            datasets[0].as_ref().expect("Expected dataset").id,
+            mock_data[0].id
+        );
+        assert_eq!(
+            datasets[0].as_ref().expect("Expected dataset").slug,
+            mock_data[0].slug
+        );
+        assert_eq!(
+            datasets[1].as_ref().expect("Expected dataset").inserted_at,
+            mock_data[1].inserted_at
+        );
     }
 
     #[tokio::test]
@@ -969,7 +1034,7 @@ mod test_client_calls {
             "api-key".to_string(),
             "some-team".to_string(),
         )
-        .unwrap();
+        .expect("Failed to get V7Client");
 
         Dataset::list_datasets(&client)
             .await
@@ -990,7 +1055,7 @@ mod test_client_calls {
             "api-key".to_string(),
             "some-team".to_string(),
         )
-        .unwrap();
+        .expect("Failed to get V7Client");
 
         Dataset::list_datasets(&client)
             .await
@@ -1000,8 +1065,10 @@ mod test_client_calls {
     #[tokio::test]
     async fn test_list_dataset_items() {
         let mock_server = MockServer::start().await;
-        let mock_data: Dataset = Faker.fake();
-        let dset_id = mock_data.id;
+        let mut rng = AlwaysTrueRng::default();
+        let mock_data: Dataset = Faker.fake_with_rng(&mut rng);
+
+        let dset_id = mock_data.id.expect("Id must be set");
 
         // Just generate two random values for comparison
         let mock_result_vec: Vec<DatasetItem> = fake::vec![DatasetItem; 2];
@@ -1011,7 +1078,7 @@ mod test_client_calls {
             "api-key".to_string(),
             "some-team".to_string(),
         )
-        .unwrap();
+        .expect("Failed to get V7Client");
 
         Mock::given(method("GET"))
             .and(path(format!("/datasets/{dset_id}/items")))
@@ -1020,14 +1087,23 @@ mod test_client_calls {
             .await;
 
         #[allow(deprecated)]
-        let result: Vec<DatasetItem> = mock_data.list_dataset_items(&client).await.unwrap();
+        let result: Vec<Option<DatasetItem>> = mock_data
+            .list_dataset_items(&client)
+            .await
+            .expect("Failed to list dataset items");
 
         // Only compare a few values, this is mostly testing the endpoint
         // invocation and not serde.
         assert_eq!(result.len(), mock_result_vec.len());
-        assert_eq!(result[0].status, mock_result_vec[0].status);
         assert_eq!(
-            result[result.len() - 1].id,
+            result[0].as_ref().expect("Expected dataset").status,
+            mock_result_vec[0].status
+        );
+        assert_eq!(
+            result[result.len() - 1]
+                .as_ref()
+                .expect("Expected dataset")
+                .id,
             mock_result_vec[mock_result_vec.len() - 1].id
         );
     }
@@ -1035,11 +1111,12 @@ mod test_client_calls {
     #[tokio::test]
     async fn test_archive_dataset_items() {
         let mock_server = MockServer::start().await;
-        let mut mock_data: Dataset = Faker.fake();
+        let mut rng = AlwaysTrueRng::default();
+        let mut mock_data: Dataset = Faker.fake_with_rng(&mut rng);
         let team_slug = mock_data.id;
-        mock_data.team_slug = Some(team_slug.to_string());
+        mock_data.team_slug = team_slug.map(|s| s.to_string());
 
-        let dset_id: Option<Vec<u32>> = Some(vec![mock_data.id]);
+        let dset_id: Option<Vec<u32>> = Some(vec![mock_data.id.expect("Id must be set")]);
         let complete_status: Option<Vec<String>> = Some(vec!["Complete".to_string()]);
 
         let filter = Filter {
@@ -1053,26 +1130,34 @@ mod test_client_calls {
             "api-key".to_string(),
             "some-team".to_string(),
         )
-        .unwrap();
+        .expect("Failed to get V7Client");
 
         Mock::given(method("POST"))
-            .and(path(format!("v2/teams/{team_slug}/items/archive")))
+            .and(path(format!(
+                "v2/teams/{}/items/archive",
+                team_slug.expect("Team slug should be set")
+            )))
             .respond_with(ResponseTemplate::new(200).set_body_json(json!({
                 "affected_item_count": 1,
             })))
             .mount(&mock_server)
             .await;
 
-        let result = mock_data.archive_items(&client, &filter).await.unwrap();
+        let result = mock_data
+            .archive_items(&client, &filter)
+            .await
+            .expect("Failed to archive items");
 
-        assert_eq!(result.affected_item_count, 1);
+        assert_eq!(result.affected_item_count, Some(1));
     }
 
     #[tokio::test]
     async fn test_list_dataset_items_status_error() {
         let mock_server = MockServer::start().await;
-        let mock_data: Dataset = Faker.fake();
-        let dset_id = mock_data.id;
+
+        let mut rng = AlwaysTrueRng::default();
+        let mock_data: Dataset = Faker.fake_with_rng(&mut rng);
+        let dset_id = mock_data.id.expect("Id must be set");
 
         Mock::given(method("GET"))
             .and(path(format!("/datasets/{dset_id}/items")))
@@ -1085,7 +1170,7 @@ mod test_client_calls {
             "api-key".to_string(),
             "some-team".to_string(),
         )
-        .unwrap();
+        .expect("Failed to get V7 Client");
 
         #[allow(deprecated)]
         mock_data
@@ -1100,8 +1185,12 @@ mod test_client_calls {
         let mock_data = "filename,uploaded_date,status,workflow_start_date,workflow_complete_date,number_of_frames,folder,time_spent_annotating_sec,time_spent_reviewing_sec,automation_time_annotating_sec,automation_time_reviewing_sec,annotators,reviewers,was_rejected_in_review,url
 somefilename,2023-05-10 14:15:27,complete,2023-05-10 14:16:17,2023-05-17 01:28:13,,/,320,1,2,3,kevin@mail.com,,false,https://darwin.v7labs.com/workview?dataset=123456&image=789";
 
-        let mut dataset: Dataset = Faker.fake();
-        let dataset_slug = dataset.slug.clone();
+        let mut rng = AlwaysTrueRng::default();
+        let mut dataset: Dataset = Faker.fake_with_rng(&mut rng);
+        let dataset_slug = dataset
+            .slug
+            .clone()
+            .expect("Dataset slug should not be null");
         let team_slug = "some-team";
         dataset.team_slug = Some(team_slug.to_string());
 
@@ -1118,15 +1207,18 @@ somefilename,2023-05-10 14:15:27,complete,2023-05-10 14:16:17,2023-05-17 01:28:1
             "api-key".to_string(),
             "some-team".to_string(),
         )
-        .unwrap();
+        .expect("Failed to create V7 client");
 
-        let results = dataset.get_item_reports(&client).await.unwrap();
+        let results = dataset
+            .get_item_reports(&client)
+            .await
+            .expect("Failed to get item reports");
 
         assert_eq!(results.len(), 1);
 
-        let result = results.first().unwrap();
+        let result = results.first().expect("Get item reports had no result");
 
-        assert_eq!(result.filename, "somefilename".to_string());
+        assert_eq!(result.filename, Some("somefilename".to_string()));
     }
 
     #[tokio::test]
@@ -1172,14 +1264,16 @@ somefilename,2023-05-10 14:15:27,complete,2023-05-10 14:16:17,2023-05-17 01:28:1
             url
         ));
 
-        let results = item_reports_from_bytes(content.as_bytes()).await.unwrap();
+        let results = item_reports_from_bytes(content.as_bytes())
+            .await
+            .expect("Failed to get item reports from bytes");
         assert_eq!(results.len(), 1);
 
-        let result = results.first().unwrap();
+        let result = results.first().expect("Item report results were empty");
 
-        assert_eq!(result.filename, filename.to_string());
-        assert_eq!(result.uploaded_date, uploaded_date.to_string());
-        assert_eq!(result.status, DatasetItemStatus::Complete);
+        assert_eq!(result.filename, Some(filename.to_string()));
+        assert_eq!(result.uploaded_date, Some(uploaded_date.to_string()));
+        assert_eq!(result.status, Some(DatasetItemStatus::Complete));
         assert_eq!(
             result.workflow_start_date,
             Some(workflow_start_date.to_string())
@@ -1189,20 +1283,26 @@ somefilename,2023-05-10 14:15:27,complete,2023-05-10 14:16:17,2023-05-17 01:28:1
             Some(workflow_complete_date.to_string())
         );
         assert_eq!(result.number_of_frames, None);
-        assert_eq!(result.folder, folder.to_string());
-        assert_eq!(result.time_spent_annotating_sec, time_spent_annotating_sec);
-        assert_eq!(result.time_spent_reviewing_sec, time_spent_reviewing_sec);
+        assert_eq!(result.folder, Some(folder.to_string()));
+        assert_eq!(
+            result.time_spent_annotating_sec,
+            Some(time_spent_annotating_sec)
+        );
+        assert_eq!(
+            result.time_spent_reviewing_sec,
+            Some(time_spent_reviewing_sec)
+        );
         assert_eq!(
             result.automation_time_annotating_sec,
-            automation_time_annotating_sec
+            Some(automation_time_annotating_sec)
         );
         assert_eq!(
             result.automation_time_reviewing_sec,
-            automation_time_reviewing_sec
+            Some(automation_time_reviewing_sec)
         );
-        assert_eq!(result.annotators, annotators.to_string());
-        assert_eq!(result.reviewers, reviewers.to_string());
-        assert_eq!(result.was_rejected_in_review, was_rejected_in_review);
-        assert_eq!(result.url, url);
+        assert_eq!(result.annotators, Some(annotators.to_string()));
+        assert_eq!(result.reviewers, None);
+        assert_eq!(result.was_rejected_in_review, Some(was_rejected_in_review));
+        assert_eq!(result.url, Some(url.to_string()));
     }
 }

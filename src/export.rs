@@ -71,10 +71,10 @@ pub struct JsonExport {
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct Item {
-    pub name: String,
-    pub path: String,
-    pub source_info: SourceInfo,
-    pub slots: Vec<Slot>,
+    pub name: Option<String>,
+    pub path: Option<String>,
+    pub source_info: Option<SourceInfo>,
+    pub slots: Vec<Option<Slot>>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
