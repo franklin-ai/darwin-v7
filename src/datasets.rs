@@ -12,6 +12,7 @@ use crate::workflow::{WorkflowBuilder, WorkflowMethods, WorkflowTemplate, Workfl
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use csv_async::AsyncReaderBuilder;
+use fake::Dummy;
 use futures::io::Cursor;
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
@@ -19,17 +20,13 @@ use std::cmp::PartialEq;
 use std::collections::HashMap;
 use std::fmt::Display;
 
-#[cfg(test)]
-use fake::Dummy;
-
 #[cfg_attr(test, derive(Dummy))]
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AnnotationHotKeys {
     pub key: String,
 }
 
-#[cfg_attr(test, derive(Dummy))]
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Dummy, Serialize, Deserialize)]
 pub struct Dataset {
     pub active: Option<bool>,
     pub archived: Option<bool>,
