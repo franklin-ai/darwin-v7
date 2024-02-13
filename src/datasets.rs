@@ -26,6 +26,7 @@ pub struct AnnotationHotKeys {
     pub key: String,
 }
 
+#[cfg_attr(test, derive(Dummy))]
 #[derive(Debug, Default, Clone, Dummy, Serialize, Deserialize)]
 pub struct Dataset {
     pub active: Option<bool>,
