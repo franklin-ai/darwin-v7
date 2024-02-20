@@ -19,12 +19,12 @@ rand = "0.8.5"
 uuid = { version = "1.7", features = ["v4", "serde"] }
 async-trait = "0.1"
 strum = { version = "0.26", features = ["derive"] }
-strum_macros = "0.24"
+strum_macros = "0.26"
 log = "0.4"
 futures = "0.3"
 csv-async = "1.2"
 
 [dev-dependencies]
-tempfile = "3.9"
-wiremock = "0.5"
-tokio = { version = "1.35", features = ["full"] }
+tempfile = "3.10"
+wiremock = "0.6"
+tokio = { version = "1.36", features = ["full"] }
