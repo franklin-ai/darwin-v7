@@ -128,7 +128,7 @@ impl Dummy<fake::Faker> for Levels {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct Image {
     pub external: Option<bool>,
     pub format: Option<String>,
@@ -143,7 +143,7 @@ pub struct Image {
     pub url: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct DatasetImage {
     pub dataset_id: Option<u32>,
     pub dataset_video_id: Option<u32>,
@@ -315,7 +315,7 @@ pub struct ExistingSimpleItem {
     pub slots: Vec<Slot>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy)]
 pub struct DatasetItem {
     pub archived: Option<bool>,
     pub archived_reason: Option<String>,

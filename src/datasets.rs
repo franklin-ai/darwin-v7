@@ -976,6 +976,7 @@ mod test_client_calls {
 
     // Utilizing Faker with an AlwaysTrueRng to guarantee that all Option types are populated with Some values
     // This ensures consistent data generation where no field is left as None
+    use crate::item::{DatasetImage, Image, Levels};
     use fake::utils::AlwaysTrueRng;
     use serde_json::json;
     use wiremock::matchers::{method, path};
@@ -1069,8 +1070,27 @@ mod test_client_calls {
 
         let dset_id = mock_data.id.expect("Id must be set");
 
+        let mock_dataset_item = DatasetItem {
+            dataset_id: Some(987),
+            dataset_image: Some(DatasetImage {
+                dataset_id: Some(987),
+                image: Some(Image {
+                    levels: Some(Levels {
+                        image_levels: Default::default(),
+                        base_key: Some("mock".to_string()),
+                    }),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            }),
+
+            id: Some(123),
+
+            ..Default::default()
+        };
+
         // Just generate two random values for comparison
-        let mock_result_vec: Vec<DatasetItem> = fake::vec![DatasetItem; 2];
+        let mock_result_vec: Vec<DatasetItem> = vec![mock_dataset_item; 2];
 
         let client: V7Client = V7Client::new(
             format!("{}/", mock_server.uri()),
