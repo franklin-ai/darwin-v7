@@ -862,7 +862,11 @@ where
             .await?;
         // 201 is correct operation for this endpoint
         if response.status() != 201 {
-            bail!("Invalid status code {}", response.status())
+            bail!(
+                "Invalid status code {}. Response: {}",
+                response.status(),
+                response.text().await?
+            )
         }
         Ok(response.json().await?)
     }
