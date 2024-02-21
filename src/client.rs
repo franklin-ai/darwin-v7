@@ -1,5 +1,5 @@
 use crate::{config::Config, team::Team};
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result};
 use async_trait::async_trait;
 use log::debug;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE};
@@ -103,24 +103,6 @@ pub struct V7Client {
     api_key: String,
     team: String,
     client: RawClient,
-}
-
-#[derive(Debug, Default, Clone)]
-pub enum ApiVersion {
-    #[default]
-    V1,
-    V2,
-}
-
-impl ApiVersion {
-    pub fn try_from(version: &str) -> Result<Self> {
-        let api_version = match version {
-            "v1" => ApiVersion::V1,
-            "v2" => ApiVersion::V2,
-            _ => bail!(format!("Error: {} is not a valid API version", version)),
-        };
-        Ok(api_version)
-    }
 }
 
 #[async_trait]

@@ -40,14 +40,14 @@ impl Display for StageType {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
-pub struct TemplateMetadata {
-    pub assignable_to: Option<String>,
-    pub base_sampling_rate: Option<f64>,
-    pub parallel: Option<u32>,
-    pub user_sampling_rate: Option<f64>,
-    pub readonly: Option<bool>,
-}
+// #[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
+// pub struct TemplateMetadata {
+//     pub assignable_to: Option<String>,
+//     pub base_sampling_rate: Option<f64>,
+//     pub parallel: Option<u32>,
+//     pub user_sampling_rate: Option<f64>,
+//     pub readonly: Option<bool>,
+// }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct MetaData {
@@ -57,23 +57,23 @@ pub struct MetaData {
     pub review_status_modified_at: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
-pub struct Stage {
-    pub assignee_id: Option<u32>,
-    pub completed: Option<bool>,
-    pub completes_at: Option<String>,
-    pub dataset_item_id: Option<u32>,
-    pub id: Option<u32>,
-    pub metadata: Option<MetaData>,
-    pub number: Option<u32>,
-    pub skipped: Option<bool>,
-    pub skipped_reason: Option<String>,
-    pub template_metadata: Option<TemplateMetadata>,
-    #[serde(rename = "type")]
-    pub stage_type: Option<StageType>,
-    pub workflow_id: Option<u32>,
-    pub workflow_stage_template_id: Option<u32>,
-}
+// #[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
+// pub struct Stage {
+//     pub assignee_id: Option<u32>,
+//     pub completed: Option<bool>,
+//     pub completes_at: Option<String>,
+//     pub dataset_item_id: Option<u32>,
+//     pub id: Option<u32>,
+//     pub metadata: Option<MetaData>,
+//     pub number: Option<u32>,
+//     pub skipped: Option<bool>,
+//     pub skipped_reason: Option<String>,
+//     pub template_metadata: Option<TemplateMetadata>,
+//     #[serde(rename = "type")]
+//     pub stage_type: Option<StageType>,
+//     pub workflow_id: Option<u32>,
+//     pub workflow_stage_template_id: Option<u32>,
+// }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
 pub struct TemplateAssignee {
@@ -81,36 +81,24 @@ pub struct TemplateAssignee {
     pub sampling_rate: Option<f64>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
-pub struct WorkflowStageTemplate {
-    pub id: Option<u32>,
-    pub metadata: Option<TemplateMetadata>,
-    pub name: Option<String>,
-    pub workflow_stage_template_assignees: Vec<Option<TemplateAssignee>>,
-    pub stage_number: Option<usize>,
-    #[serde(rename = "type")]
-    pub stage_type: Option<StageType>,
-    pub workflow_template_id: Option<u32>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
-pub struct Workflow {
-    pub current_stage_number: Option<u32>,
-    pub current_workflow_stage_template_id: Option<u32>,
-    pub dataset_item_id: Option<u32>,
-    pub id: Option<u32>,
-    pub stages: HashMap<u32, Vec<Option<Stage>>>,
-    pub status: Option<String>, // This can probably be an enum
-    pub workflow_template_id: Option<u32>,
-}
-
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy)]
-pub struct WorkflowTemplate {
-    pub dataset_id: Option<u32>,
-    pub id: Option<u32>,
-    pub name: Option<String>,
-    pub workflow_stage_templates: Vec<Option<WorkflowStageTemplate>>,
-}
+// #[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
+// pub struct WorkflowStageTemplate {
+//     pub id: Option<u32>,
+//     pub metadata: Option<TemplateMetadata>,
+//     pub name: Option<String>,
+//     pub workflow_stage_template_assignees: Vec<Option<TemplateAssignee>>,
+//     pub stage_number: Option<usize>,
+//     #[serde(rename = "type")]
+//     pub stage_type: Option<StageType>,
+//     pub workflow_template_id: Option<u32>,
+// }
+// #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy)]
+// pub struct WorkflowTemplate {
+//     pub dataset_id: Option<u32>,
+//     pub id: Option<u32>,
+//     pub name: Option<String>,
+//     pub workflow_stage_templates: Vec<Option<WorkflowStageTemplate>>,
+// }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct WorkflowBody {
@@ -123,18 +111,18 @@ pub struct LocatedWorkflowComments {
     pub workflow_comments: Vec<WorkflowBody>,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
-pub struct WorkflowCommentThread {
-    pub author_id: Option<u32>,
-    pub bounding_box: Option<BoundingBox>,
-    pub comment_count: Option<u32>,
-    pub frame_index: Option<u32>,
-    pub id: Option<u32>,
-    pub inserted_at: Option<String>,
-    pub resolved: Option<bool>,
-    pub updated_at: Option<String>,
-    pub workflow_id: Option<u32>,
-}
+// #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
+// pub struct WorkflowCommentThread {
+//     pub author_id: Option<u32>,
+//     pub bounding_box: Option<BoundingBox>,
+//     pub comment_count: Option<u32>,
+//     pub frame_index: Option<u32>,
+//     pub id: Option<u32>,
+//     pub inserted_at: Option<String>,
+//     pub resolved: Option<bool>,
+//     pub updated_at: Option<String>,
+//     pub workflow_id: Option<u32>,
+// }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 struct UserId {
@@ -350,73 +338,73 @@ where
     }
 }
 
-impl Workflow {
-    pub async fn assign<C>(&self, client: &C, user_id: &u32) -> Result<Workflow>
-    where
-        C: V7Methods,
-    {
-        let user = UserId { user_id: *user_id };
+// impl Workflow {
+    // pub async fn assign<C>(&self, client: &C, user_id: &u32) -> Result<Workflow>
+    // where
+    //     C: V7Methods,
+    // {
+    //     let user = UserId { user_id: *user_id };
+    //
+    //     let response = client
+    //         .post(
+    //             &format!("workflow_stages/{}/assign", self.id.context("Id required")?),
+    //             &user,
+    //         )
+    //         .await?;
+    //
+    //     expect_http_ok!(response, Workflow)
+    // }
 
-        let response = client
-            .post(
-                &format!("workflow_stages/{}/assign", self.id.context("Id required")?),
-                &user,
-            )
-            .await?;
+    // /// Warning undocumented
+    // pub async fn add_comment<C>(
+    //     &self,
+    //     client: &C,
+    //     comments: &LocatedWorkflowComments,
+    // ) -> Result<WorkflowCommentThread>
+    // where
+    //     C: V7Methods,
+    // {
+    //     let response = client
+    //         .post(
+    //             &format!(
+    //                 "workflows/{}/workflow_comment_threads",
+    //                 self.id.context("Id required")?
+    //             ),
+    //             comments,
+    //         )
+    //         .await?;
+    //
+    //     expect_http_ok!(response, WorkflowCommentThread)
+    // }
+// }
 
-        expect_http_ok!(response, Workflow)
-    }
+// impl WorkflowTemplate {
+//     pub async fn get<C>(client: &C, id: &u32) -> Result<WorkflowTemplate>
+//     where
+//         C: V7Methods,
+//     {
+//         let response = client.get(&format!("workflow_templates/{}", id)).await?;
+//
+//         expect_http_ok!(response, WorkflowTemplate)
+//     }
+// }
 
-    /// Warning undocumented
-    pub async fn add_comment<C>(
-        &self,
-        client: &C,
-        comments: &LocatedWorkflowComments,
-    ) -> Result<WorkflowCommentThread>
-    where
-        C: V7Methods,
-    {
-        let response = client
-            .post(
-                &format!(
-                    "workflows/{}/workflow_comment_threads",
-                    self.id.context("Id required")?
-                ),
-                comments,
-            )
-            .await?;
-
-        expect_http_ok!(response, WorkflowCommentThread)
-    }
-}
-
-impl WorkflowTemplate {
-    pub async fn get<C>(client: &C, id: &u32) -> Result<WorkflowTemplate>
-    where
-        C: V7Methods,
-    {
-        let response = client.get(&format!("workflow_templates/{}", id)).await?;
-
-        expect_http_ok!(response, WorkflowTemplate)
-    }
-}
-
-impl WorkflowStageTemplate {
-    pub async fn assign<C>(&self, client: &C) -> Result<WorkflowStageTemplate>
-    where
-        C: V7Methods,
-    {
-        let id = self
-            .id
-            .as_ref()
-            .context("WorkflowStageTemplate id not specified")?;
-        let response = client
-            .put(&format!("workflow_stage_templates/{}", id), Some(&self))
-            .await?;
-
-        expect_http_ok!(response, WorkflowStageTemplate)
-    }
-}
+// impl WorkflowStageTemplate {
+//     pub async fn assign<C>(&self, client: &C) -> Result<WorkflowStageTemplate>
+//     where
+//         C: V7Methods,
+//     {
+//         let id = self
+//             .id
+//             .as_ref()
+//             .context("WorkflowStageTemplate id not specified")?;
+//         let response = client
+//             .put(&format!("workflow_stage_templates/{}", id), Some(&self))
+//             .await?;
+//
+//         expect_http_ok!(response, WorkflowStageTemplate)
+//     }
+// }
 
 #[cfg(test)]
 mod test_serde {
@@ -466,22 +454,22 @@ mod test_serde {
         );
     }
 
-    #[test]
-    fn test_template_metadata() {
-        let contents = "{
-            \"assignable_to\": \"any_user\",
-            \"base_sampling_rate\": 1.0,
-            \"parallel\": 1,
-            \"user_sampling_rate\": 1.0
-        }";
-
-        let template_meta: TemplateMetadata = serde_json::from_str(contents).unwrap();
-
-        assert_eq!(template_meta.assignable_to, Some("any_user".to_string()));
-        assert_eq!(template_meta.base_sampling_rate, Some(1.0));
-        assert_eq!(template_meta.parallel, Some(1));
-        assert_eq!(template_meta.user_sampling_rate, Some(1.0));
-    }
+    // #[test]
+    // fn test_template_metadata() {
+    //     let contents = "{
+    //         \"assignable_to\": \"any_user\",
+    //         \"base_sampling_rate\": 1.0,
+    //         \"parallel\": 1,
+    //         \"user_sampling_rate\": 1.0
+    //     }";
+    //
+    //     let template_meta: TemplateMetadata = serde_json::from_str(contents).unwrap();
+    //
+    //     assert_eq!(template_meta.assignable_to, Some("any_user".to_string()));
+    //     assert_eq!(template_meta.base_sampling_rate, Some(1.0));
+    //     assert_eq!(template_meta.parallel, Some(1));
+    //     assert_eq!(template_meta.user_sampling_rate, Some(1.0));
+    // }
 
     #[test]
     fn test_display_stage_type() {
@@ -537,40 +525,42 @@ mod test_serde {
 
     #[test]
     fn test_ser_stage() {
-        let contents = r#"
-        {
-            "assignee_id": 12974,
-            "completed": false,
-            "completes_at": null,
-            "dataset_item_id": 650713507,
-            "id": 115470255,
-            "metadata": {},
-            "number": 1,
-            "skipped": false,
-            "skipped_reason": null,
-            "template_metadata": {
-                "assignable_to": "any_user",
-                "base_sampling_rate": 1.0,
-                "parallel": 1,
-                "user_sampling_rate": 1.0
-            },
-            "type": "annotate",
-            "workflow_id": 43051890,
-            "workflow_stage_template_id": 166366
-        }
-        "#;
+        // let contents = r#"
+        // {
+        //     "assignee_id": 12974,
+        //     "completed": false,
+        //     "completes_at": null,
+        //     "dataset_item_id": 650713507,
+        //     "id": 115470255,
+        //     "metadata": {},
+        //     "number": 1,
+        //     "skipped": false,
+        //     "skipped_reason": null,
+        //     "template_metadata": {
+        //         "assignable_to": "any_user",
+        //         "base_sampling_rate": 1.0,
+        //         "parallel": 1,
+        //         "user_sampling_rate": 1.0
+        //     },
+        //     "type": "annotate",
+        //     "workflow_id": 43051890,
+        //     "workflow_stage_template_id": 166366
+        // }
+        // "#;
+        //
+        // let stage: Stage = serde_json::from_str(contents).unwrap();
+        //
+        // assert_eq!(stage.assignee_id, Some(12974));
+        // assert_eq!(stage.completed, Some(false));
+        // assert_eq!(stage.completes_at, None);
+        // assert_eq!(stage.id, Some(115470255));
+        // assert_eq!(stage.metadata.unwrap().ready_for_completion, None);
+        // assert_eq!(
+        //     stage.template_metadata.unwrap().assignable_to,
+        //     Some("any_user".to_string())
+        // );
+        // assert_eq!(stage.stage_type, Some(StageType::Annotate));
 
-        let stage: Stage = serde_json::from_str(contents).unwrap();
-
-        assert_eq!(stage.assignee_id, Some(12974));
-        assert_eq!(stage.completed, Some(false));
-        assert_eq!(stage.completes_at, None);
-        assert_eq!(stage.id, Some(115470255));
-        assert_eq!(stage.metadata.unwrap().ready_for_completion, None);
-        assert_eq!(
-            stage.template_metadata.unwrap().assignable_to,
-            Some("any_user".to_string())
-        );
-        assert_eq!(stage.stage_type, Some(StageType::Annotate));
+        //FIXME
     }
 }

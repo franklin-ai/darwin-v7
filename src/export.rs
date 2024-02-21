@@ -13,31 +13,6 @@ pub struct Annotator {
     // or reviewer
     pub full_name: String,
 }
-
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
-
-pub struct ImageExport {
-    // Internal filename on Darwin
-    pub filename: String,
-    // Height of the image
-    pub height: u32,
-    // Original filename
-    pub original_filename: String,
-    // Path of file within Darwin
-    pub path: String,
-    // Sequence number is a monotonic increasing number
-    // for each file uploaded int a Darwin Dataset.
-    //seq: u64,
-    // The URL of the image thumbnail
-    pub thumbnail_url: String,
-    //THe URL within V7 of the image
-    pub url: String,
-    // Width of the image
-    pub width: u32,
-    // The URL of the image on Darwin
-    pub workview_url: String,
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ImageAnnotation {
     // ID of the annotation
@@ -60,13 +35,6 @@ pub struct ImageAnnotation {
     // Annotation Type
     #[serde(skip_serializing_if = "Option::is_none")]
     pub text: Option<Text>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct JsonExport {
-    pub annotations: Vec<ImageAnnotation>,
-    pub dataset: String,
-    pub image: ImageExport,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
