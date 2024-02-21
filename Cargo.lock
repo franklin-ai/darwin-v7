@@ -333,7 +333,8 @@ checksum = "1c25829bde82205da46e1823b2259db6273379f626fc211f126f65654a2669be"
 dependencies = [
  "deunicode",
  "dummy",
- "rand",
+ "rand 0.8.5",
+ "rand_core 0.6.4",
  "uuid",
 ]
 

@@ -22,13 +22,13 @@ pub struct AnnotationClassMetadata {
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, Default)]
 pub struct BoundingBox {
     // Height of the bounding box
-    pub h: f32,
+    pub h: Option<f32>,
     // Width of the bounding box
-    pub w: f32,
+    pub w: Option<f32>,
     // Left-most coordinate of the bounding box
-    pub x: f32,
+    pub x: Option<f32>,
     // Top-most coordinate of the bounding box
-    pub y: f32,
+    pub y: Option<f32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, Default)]
@@ -156,7 +156,7 @@ impl AnnotationType {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct AnnotationDataset {
-    pub id: u32,
+    pub id: Option<u32>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy)]
@@ -165,16 +165,16 @@ pub struct AnnotationClass {
     pub annotation_class_image_url: Option<String>,
 
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub annotation_types: Vec<String>,
+    pub annotation_types: Vec<Option<String>>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub annotation_type_ids: Option<Vec<u32>>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub annotation_type_ids: Vec<Option<u32>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dataset_id: Option<u32>,
 
     // #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub datasets: Vec<AnnotationDataset>,
+    pub datasets: Vec<Option<AnnotationDataset>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<u32>,
@@ -186,7 +186,7 @@ pub struct AnnotationClass {
     pub description: Option<String>,
 
     // #[serde(skip_serializing_if = "Option::is_none")]
-    pub images: Vec<String>, // TODO: find out what this type is
+    pub images: Vec<Option<String>>, // TODO: find out what this type is
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub inserted_at: Option<String>,
