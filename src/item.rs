@@ -316,13 +316,12 @@ pub struct ExistingSimpleItem {
 }
 
 impl Display for DatasetItemV2 {
-    fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // write!(
-        //     f,
-        //     "{{id-{:?}}}:{:?}/{:?}[{:?}]",
-        //     self.id, self.filename, self.status, self.item_type
-        // )
-        todo!()
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{{id-{:?}}}:{:?}/{:?}[{:?}]",
+            self.id, self.name, self.status, self.slot_types
+        )
     }
 }
 
@@ -360,7 +359,7 @@ pub struct DatasetItemLayout {
     pub version: Option<u32>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, Dummy)]
 pub struct DatasetItemV2 {
     pub archived: Option<bool>,
     pub cursor: Option<String>,
@@ -381,7 +380,7 @@ pub struct DatasetItemV2 {
     pub workflow_status: Option<StageType>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, Dummy)]
 pub struct ItemPage {
     pub count: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -389,7 +388,7 @@ pub struct ItemPage {
     pub previous: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, Dummy)]
 pub struct Item {
     pub items: Vec<Option<DatasetItemV2>>,
     pub page: ItemPage,
@@ -455,127 +454,6 @@ mod test_serde {
         serde_json::from_str::<Levels>(r#"{"key": "value"}"#)
             .expect_err("a map with keys '0'..'N' and 'base_key'");
     }
-
-    // #[test]
-    // fn test_shortened_item() {
-    //     let contents = r#"
-    // {
-    //     "archived": false,
-    //     "archived_reason": null,
-    //     "current_workflow": {
-    //         "current_stage_number": 4,
-    //         "current_workflow_stage_template_id": 166369,
-    //         "dataset_item_id": 650713507,
-    //         "id": 43051890,
-    //         "stages": {
-    //             "1": [
-    //                 {
-    //                     "assignee_id": 12974,
-    //                     "completed": false,
-    //                     "completes_at": null,
-    //                     "dataset_item_id": 650713507,
-    //                     "id": 115470255,
-    //                     "metadata": {},
-    //                     "number": 1,
-    //                     "skipped": false,
-    //                     "skipped_reason": null,
-    //                     "template_metadata": {
-    //                         "assignable_to": "any_user",
-    //                         "base_sampling_rate": 1.0,
-    //                         "parallel": 1,
-    //                         "user_sampling_rate": 1.0
-    //                     },
-    //                     "type": "annotate",
-    //                     "workflow_id": 43051890,
-    //                     "workflow_stage_template_id": 166366
-    //                 }
-    //             ]
-    //         },
-    //         "status": "complete",
-    //         "workflow_template_id": 53975
-    //     },
-    //     "current_workflow_id": 43051890,
-    //     "dataset_id": 587733,
-    //     "dataset_image": {
-    //         "dataset_id": 587733,
-    //         "dataset_video_id": null,
-    //         "id": 646799980,
-    //         "image": {
-    //             "external": true,
-    //             "format": "tiled",
-    //             "height": 44038,
-    //             "id": 620657191,
-    //             "key": "9841162f-3f4c-4434-be99-2c2d26c6856b",
-    //             "levels": {
-    //                 "0": {
-    //                     "format": "png",
-    //                     "pixel_ratio": 1,
-    //                     "tile_height": 2048,
-    //                     "tile_width": 2048,
-    //                     "x_tiles": 82,
-    //                     "y_tiles": 22
-    //                 },
-    //                 "base_key": "some-base-key.jpg"
-    //             },
-    //             "original_filename": "9841162f-3f4c-4434-be99-2c2d26c6856b",
-    //             "thumbnail_url": "https://great-thumbnail.thing.foo",
-    //             "uploaded": true,
-    //             "url": "https://url-to.thing.foo",
-    //             "width": 166918
-    //         },
-    //         "seq": 1,
-    //         "set": 1669945183
-    //     },
-    //     "dataset_image_id": 646799980,
-    //     "dataset_video": null,
-    //     "dataset_video_id": null,
-    //     "file_size": 0,
-    //     "filename": "9841162f-3f4c-4434-be99-2c2d26c6856b",
-    //     "height": 44038,
-    //     "id": 650713507,
-    //     "inserted_at": "2022-12-02T01:39:43",
-    //     "labels": [
-    //         189358,
-    //         189395,
-    //         189403
-    //     ],
-    //     "path": "/",
-    //     "priority": 0,
-    //     "seq": 1,
-    //     "set": 1669945183,
-    //     "status": "complete",
-    //     "type": "image",
-    //     "updated_at": "2022-12-14T00:28:33",
-    //     "width": 166918
-    // }
-    //     "#;
-    //
-    //     let ser_item: DatasetItem = serde_json::from_str(contents).unwrap();
-    //
-    //     assert_eq!(ser_item.status, Some(DatasetItemStatus::Complete));
-    //     assert_eq!(ser_item.dataset_image_id, Some(646799980));
-    //     assert_eq!(ser_item.labels.unwrap().len(), 3);
-    //     assert!(ser_item
-    //         .current_workflow
-    //         .unwrap()
-    //         .stages
-    //         .keys()
-    //         .copied()
-    //         .any(|x| x == 1));
-    //
-    //     let level_0 = ser_item
-    //         .dataset_image
-    //         .expect("Image expected")
-    //         .image
-    //         .expect("levels expected")
-    //         .levels
-    //         .unwrap();
-    //     assert_eq!(
-    //         level_0.image_levels.get(&0).unwrap().format,
-    //         "png".to_string()
-    //     );
-    //     assert_eq!(level_0.base_key, Some("some-base-key.jpg".to_string()));
-    // }
 
     #[test]
     fn test_dataset_item_v2() {
