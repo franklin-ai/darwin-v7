@@ -7,11 +7,10 @@ use crate::expect_http_ok;
 use crate::filter::Filter;
 use crate::imports::AnnotationImport;
 use crate::item::{
-    AddDataPayload, DataPayloadLevel, DatasetItem, DatasetItemStatus, DatasetItemTypes,
-    ExistingSimpleItem, Item,
+    AddDataPayload, DataPayloadLevel, DatasetItemStatus, DatasetItemTypes, ExistingSimpleItem, Item,
 };
 use crate::team::TypeCount;
-use crate::workflow::{WorkflowBuilder, WorkflowMethods, WorkflowTemplate, WorkflowV2};
+use crate::workflow::{WorkflowBuilder, WorkflowMethods, WorkflowV2};
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use csv_async::AsyncReaderBuilder;
@@ -372,7 +371,6 @@ pub trait DatasetArchiveMethods<C>
 where
     C: V7Methods,
 {
-    // async fn archive_all_files(&self, client: &C) -> Result<()>;
     async fn archive_items(&self, client: &C, filter: &Filter) -> Result<ArchiveResponseItems>;
     async fn archive_dataset(&self, client: &C) -> Result<Dataset>;
 }
@@ -446,8 +444,6 @@ where
     C: V7Methods,
 {
     async fn list_datasets(client: &C) -> Result<Vec<Option<Dataset>>>;
-    #[deprecated = "V2 of the V7 API requires use of `list_dataset_items_v2`"]
-    async fn list_dataset_items(&self, client: &C) -> Result<Vec<Option<DatasetItem>>>;
     async fn list_dataset_items_v2(&self, client: &C) -> Result<Item>;
     async fn show_dataset(client: &C, id: &u32) -> Result<Dataset>;
 }
@@ -458,18 +454,7 @@ where
     C: V7Methods,
 {
     async fn reset_to_new(&self, client: &C, filter: &Filter) -> Result<()>;
-    async fn set_stage(&self, client: &C, stage_template_id: &u32, filter: &Filter) -> Result<()>;
-    async fn set_workflow(
-        &self,
-        client: &C,
-        workflow: &WorkflowTemplate,
-    ) -> Result<WorkflowTemplate>;
     async fn set_workflow_v2(&self, client: &C, workflow: &WorkflowBuilder) -> Result<WorkflowV2>;
-    async fn set_default_workflow(
-        &self,
-        client: &C,
-        workflow: &WorkflowTemplate,
-    ) -> Result<Dataset>;
     async fn get_workflow_v2(&self, client: &C) -> Result<Option<WorkflowV2>>;
     async fn set_stage_v2(
         &self,
@@ -493,19 +478,6 @@ impl<C> DatasetArchiveMethods<C> for Dataset
 where
     C: V7Methods + std::marker::Sync,
 {
-    // async fn archive_all_files(&self, client: &C) -> Result<()> {
-    //     let item_ids: Vec<u32> = Dataset::list_dataset_items(client)
-    //         .await?
-    //         .iter()
-    //         .filter(|x| !x.archived)
-    //         .map(|x| x.id.clone())
-    //         .collect();
-    //     let mut filter = Filter::default();
-    //     filter.dataset_item_ids = Some(item_ids);
-
-    //     self.archive_items(client, &filter).await
-    // }
-
     /// The docs say a reason is required, but the call actually fails if it is provided
     /// https://docs.v7labs.com/v1.0/reference/archive
     async fn archive_items(&self, client: &C, filter: &Filter) -> Result<ArchiveResponseItems> {
@@ -608,7 +580,6 @@ where
         expect_http_ok!(response, AddDataItemsResponse)
     }
 
-    // V7 Version 2
     async fn register_items_to_dataset(
         &self,
         client: &C,
@@ -754,18 +725,6 @@ where
 
         expect_http_ok!(response, Vec<Option<Dataset>>)
     }
-
-    async fn list_dataset_items(&self, client: &C) -> Result<Vec<Option<DatasetItem>>> {
-        let response = client
-            .get(&format!(
-                "datasets/{}/items",
-                self.id.context("Dataset is missing Id")?
-            ))
-            .await?;
-
-        expect_http_ok!(response, Vec<Option<DatasetItem>>)
-    }
-
     async fn list_dataset_items_v2(&self, client: &C) -> Result<Item> {
         let response = client
             .get(&format!(
@@ -815,47 +774,6 @@ where
         Ok(())
     }
 
-    async fn set_stage(&self, client: &C, stage_template_id: &u32, filter: &Filter) -> Result<()> {
-        let payload = SetStagePayload {
-            workflow_stage_template_id: *stage_template_id,
-            filter: filter.clone(),
-        };
-
-        let response = client
-            .put(
-                &format!("datasets/{}/set_stage", self.id.context("Data missing Id")?),
-                Some(&payload),
-            )
-            .await?;
-
-        let status = response.status();
-
-        // 204 is correct operation for this endpoint
-        if status != 204 {
-            bail!("Invalid status code {status}")
-        }
-
-        Ok(())
-    }
-
-    async fn set_workflow(
-        &self,
-        client: &C,
-        workflow: &WorkflowTemplate,
-    ) -> Result<WorkflowTemplate> {
-        let response = client
-            .post(
-                &format!(
-                    "datasets/{}/workflow_templates",
-                    self.id.context("Dataset is missing Id")?
-                ),
-                workflow,
-            )
-            .await?;
-
-        expect_http_ok!(response, WorkflowTemplate)
-    }
-
     async fn set_workflow_v2(&self, client: &C, workflow: &WorkflowBuilder) -> Result<WorkflowV2> {
         let response = client
             .post(&format!("v2/teams/{}/workflows", client.team()), workflow)
@@ -870,25 +788,6 @@ where
         }
         Ok(response.json().await?)
     }
-
-    async fn set_default_workflow(
-        &self,
-        client: &C,
-        workflow: &WorkflowTemplate,
-    ) -> Result<Dataset> {
-        let workflow_id = workflow.id.as_ref().context("Workflow id not provided")?;
-
-        let endpoint = format!(
-            "datasets/{}/default_workflow_template/{}",
-            self.id.context("Dataset is missing Id")?,
-            workflow_id
-        );
-        let payload: Option<&WorkflowTemplate> = None;
-        let response = client.put(&endpoint, payload).await?;
-
-        expect_http_ok!(response, Dataset)
-    }
-
     async fn get_workflow_v2(&self, client: &C) -> Result<Option<WorkflowV2>> {
         let workflows = WorkflowV2::get_workflows(client).await?;
         let dataset_name = self.name.as_ref().context("Missing dataset name")?;
@@ -972,7 +871,6 @@ impl Display for Dataset {
 
 #[cfg(test)]
 mod test_client_calls {
-
     use super::*;
     use crate::client::V7Client;
 
@@ -980,10 +878,10 @@ mod test_client_calls {
 
     // Utilizing Faker with an AlwaysTrueRng to guarantee that all Option types are populated with Some values
     // This ensures consistent data generation where no field is left as None
-    use crate::item::{DatasetImage, Image, Levels};
+    use crate::item::DatasetItemV2;
     use fake::utils::AlwaysTrueRng;
     use serde_json::json;
-    use wiremock::matchers::{method, path};
+    use wiremock::matchers::{method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     #[tokio::test]
@@ -1070,31 +968,22 @@ mod test_client_calls {
     async fn test_list_dataset_items() {
         let mock_server = MockServer::start().await;
         let mut rng = AlwaysTrueRng::default();
-        let mock_data: Dataset = Faker.fake_with_rng(&mut rng);
+        let mut mock_data: Dataset = Faker.fake_with_rng(&mut rng);
+        mock_data.team_slug = Some("some-team".to_string());
 
         let dset_id = mock_data.id.expect("Id must be set");
 
-        let mock_dataset_item = DatasetItem {
-            dataset_id: Some(987),
-            dataset_image: Some(DatasetImage {
-                dataset_id: Some(987),
-                image: Some(Image {
-                    levels: Some(Levels {
-                        image_levels: Default::default(),
-                        base_key: Some("mock".to_string()),
-                    }),
-                    ..Default::default()
-                }),
+        // Just generate two random values for comparison
+        // let mock_result_vec: Vec<DatasetItemV2> = vec![mock_dataset_item; 2];
+        let mock_result: Item = Item {
+            items: vec![Some(DatasetItemV2 {
+                id: Some("123".to_string()),
                 ..Default::default()
-            }),
-
-            id: Some(123),
-
+            })],
             ..Default::default()
         };
 
-        // Just generate two random values for comparison
-        let mock_result_vec: Vec<DatasetItem> = vec![mock_dataset_item; 2];
+        let mock_items: Vec<_> = mock_result.items.iter().flatten().collect();
 
         let client: V7Client = V7Client::new(
             format!("{}/", mock_server.uri()),
@@ -1104,30 +993,25 @@ mod test_client_calls {
         .expect("Failed to get V7Client");
 
         Mock::given(method("GET"))
-            .and(path(format!("/datasets/{dset_id}/items")))
-            .respond_with(ResponseTemplate::new(200).set_body_json(mock_result_vec.clone()))
+            .and(path("/v2/teams/some-team/items"))
+            .and(query_param("dataset_ids".to_string(), dset_id.to_string()))
+            .respond_with(ResponseTemplate::new(200).set_body_json(mock_result.clone()))
             .mount(&mock_server)
             .await;
 
-        #[allow(deprecated)]
-        let result: Vec<Option<DatasetItem>> = mock_data
-            .list_dataset_items(&client)
+        let result = mock_data
+            .list_dataset_items_v2(&client)
             .await
             .expect("Failed to list dataset items");
+        let expected_items: Vec<_> = result.items.iter().flatten().collect();
 
         // Only compare a few values, this is mostly testing the endpoint
         // invocation and not serde.
-        assert_eq!(result.len(), mock_result_vec.len());
+        assert_eq!(expected_items.len(), mock_items.len());
+        assert_eq!(expected_items[0].status, mock_items[0].status);
         assert_eq!(
-            result[0].as_ref().expect("Expected dataset").status,
-            mock_result_vec[0].status
-        );
-        assert_eq!(
-            result[result.len() - 1]
-                .as_ref()
-                .expect("Expected dataset")
-                .id,
-            mock_result_vec[mock_result_vec.len() - 1].id
+            expected_items[expected_items.len() - 1].id,
+            mock_items[mock_items.len() - 1].id
         );
     }
 
@@ -1183,7 +1067,8 @@ mod test_client_calls {
         let dset_id = mock_data.id.expect("Id must be set");
 
         Mock::given(method("GET"))
-            .and(path(format!("/datasets/{dset_id}/items")))
+            .and(path("/v2/teams/some-team/items"))
+            .and(query_param("dataset_ids".to_string(), dset_id.to_string()))
             .respond_with(ResponseTemplate::new(412))
             .mount(&mock_server)
             .await;
@@ -1195,9 +1080,8 @@ mod test_client_calls {
         )
         .expect("Failed to get V7 Client");
 
-        #[allow(deprecated)]
         mock_data
-            .list_dataset_items(&client)
+            .list_dataset_items_v2(&client)
             .await
             .expect_err("Invalid status code 412");
     }

@@ -1,4 +1,3 @@
-use crate::classes::BoundingBox;
 use crate::client::V7Methods;
 use crate::expect_http_ok;
 use anyhow::{bail, Context, Result};
@@ -40,15 +39,6 @@ impl Display for StageType {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
-pub struct TemplateMetadata {
-    pub assignable_to: Option<String>,
-    pub base_sampling_rate: Option<f64>,
-    pub parallel: Option<u32>,
-    pub user_sampling_rate: Option<f64>,
-    pub readonly: Option<bool>,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct MetaData {
     pub ready_for_completion: Option<bool>,
@@ -58,89 +48,10 @@ pub struct MetaData {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
-pub struct Stage {
-    pub assignee_id: Option<u32>,
-    pub completed: Option<bool>,
-    pub completes_at: Option<String>,
-    pub dataset_item_id: Option<u32>,
-    pub id: Option<u32>,
-    pub metadata: Option<MetaData>,
-    pub number: Option<u32>,
-    pub skipped: Option<bool>,
-    pub skipped_reason: Option<String>,
-    pub template_metadata: Option<TemplateMetadata>,
-    #[serde(rename = "type")]
-    pub stage_type: Option<StageType>,
-    pub workflow_id: Option<u32>,
-    pub workflow_stage_template_id: Option<u32>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
 pub struct TemplateAssignee {
     pub assignee_id: Option<u32>,
     pub sampling_rate: Option<f64>,
 }
-
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
-pub struct WorkflowStageTemplate {
-    pub id: Option<u32>,
-    pub metadata: Option<TemplateMetadata>,
-    pub name: Option<String>,
-    pub workflow_stage_template_assignees: Vec<Option<TemplateAssignee>>,
-    pub stage_number: Option<usize>,
-    #[serde(rename = "type")]
-    pub stage_type: Option<StageType>,
-    pub workflow_template_id: Option<u32>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
-pub struct Workflow {
-    pub current_stage_number: Option<u32>,
-    pub current_workflow_stage_template_id: Option<u32>,
-    pub dataset_item_id: Option<u32>,
-    pub id: Option<u32>,
-    pub stages: HashMap<u32, Vec<Option<Stage>>>,
-    pub status: Option<String>, // This can probably be an enum
-    pub workflow_template_id: Option<u32>,
-}
-
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy)]
-pub struct WorkflowTemplate {
-    pub dataset_id: Option<u32>,
-    pub id: Option<u32>,
-    pub name: Option<String>,
-    pub workflow_stage_templates: Vec<Option<WorkflowStageTemplate>>,
-}
-
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
-pub struct WorkflowBody {
-    pub body: String,
-}
-
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
-pub struct LocatedWorkflowComments {
-    pub bounding_box: BoundingBox,
-    pub workflow_comments: Vec<WorkflowBody>,
-}
-
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
-pub struct WorkflowCommentThread {
-    pub author_id: Option<u32>,
-    pub bounding_box: Option<BoundingBox>,
-    pub comment_count: Option<u32>,
-    pub frame_index: Option<u32>,
-    pub id: Option<u32>,
-    pub inserted_at: Option<String>,
-    pub resolved: Option<bool>,
-    pub updated_at: Option<String>,
-    pub workflow_id: Option<u32>,
-}
-
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
-struct UserId {
-    pub user_id: u32,
-}
-
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct FilterAssignItemPayload {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -350,74 +261,6 @@ where
     }
 }
 
-impl Workflow {
-    pub async fn assign<C>(&self, client: &C, user_id: &u32) -> Result<Workflow>
-    where
-        C: V7Methods,
-    {
-        let user = UserId { user_id: *user_id };
-
-        let response = client
-            .post(
-                &format!("workflow_stages/{}/assign", self.id.context("Id required")?),
-                &user,
-            )
-            .await?;
-
-        expect_http_ok!(response, Workflow)
-    }
-
-    /// Warning undocumented
-    pub async fn add_comment<C>(
-        &self,
-        client: &C,
-        comments: &LocatedWorkflowComments,
-    ) -> Result<WorkflowCommentThread>
-    where
-        C: V7Methods,
-    {
-        let response = client
-            .post(
-                &format!(
-                    "workflows/{}/workflow_comment_threads",
-                    self.id.context("Id required")?
-                ),
-                comments,
-            )
-            .await?;
-
-        expect_http_ok!(response, WorkflowCommentThread)
-    }
-}
-
-impl WorkflowTemplate {
-    pub async fn get<C>(client: &C, id: &u32) -> Result<WorkflowTemplate>
-    where
-        C: V7Methods,
-    {
-        let response = client.get(&format!("workflow_templates/{}", id)).await?;
-
-        expect_http_ok!(response, WorkflowTemplate)
-    }
-}
-
-impl WorkflowStageTemplate {
-    pub async fn assign<C>(&self, client: &C) -> Result<WorkflowStageTemplate>
-    where
-        C: V7Methods,
-    {
-        let id = self
-            .id
-            .as_ref()
-            .context("WorkflowStageTemplate id not specified")?;
-        let response = client
-            .put(&format!("workflow_stage_templates/{}", id), Some(&self))
-            .await?;
-
-        expect_http_ok!(response, WorkflowStageTemplate)
-    }
-}
-
 #[cfg(test)]
 mod test_serde {
     use super::*;
@@ -464,23 +307,6 @@ mod test_serde {
             meta.review_status_modified_at,
             Some("2022-12-14T00:28:28.759303".to_string())
         );
-    }
-
-    #[test]
-    fn test_template_metadata() {
-        let contents = "{
-            \"assignable_to\": \"any_user\",
-            \"base_sampling_rate\": 1.0,
-            \"parallel\": 1,
-            \"user_sampling_rate\": 1.0
-        }";
-
-        let template_meta: TemplateMetadata = serde_json::from_str(contents).unwrap();
-
-        assert_eq!(template_meta.assignable_to, Some("any_user".to_string()));
-        assert_eq!(template_meta.base_sampling_rate, Some(1.0));
-        assert_eq!(template_meta.parallel, Some(1));
-        assert_eq!(template_meta.user_sampling_rate, Some(1.0));
     }
 
     #[test]
@@ -539,38 +365,69 @@ mod test_serde {
     fn test_ser_stage() {
         let contents = r#"
         {
-            "assignee_id": 12974,
-            "completed": false,
-            "completes_at": null,
-            "dataset_item_id": 650713507,
-            "id": 115470255,
-            "metadata": {},
-            "number": 1,
-            "skipped": false,
-            "skipped_reason": null,
-            "template_metadata": {
-                "assignable_to": "any_user",
-                "base_sampling_rate": 1.0,
-                "parallel": 1,
-                "user_sampling_rate": 1.0
+            "assignable_users": [],
+            "config": {
+              "allowed_class_ids": null,
+              "annotation_group_id": null,
+              "assignable_to": "anyone",
+              "authorization_header": null,
+              "auto_instantiate": false,
+              "champion_stage_id": null,
+              "class_mapping": [],
+              "dataset_id": null,
+              "from_non_default_v1_template": null,
+              "include_annotations": false,
+              "initial": false,
+              "iou_thresholds": null,
+              "model_id": null,
+              "model_type": "gust",
+              "parallel_stage_ids": null,
+              "readonly": false,
+              "retry_if_fails": false,
+              "rules": [],
+              "skippable": true,
+              "test_stage_id": null,
+              "threshold": null,
+              "url": null,
+              "x": 3746,
+              "y": 2896
             },
-            "type": "annotate",
-            "workflow_id": 43051890,
-            "workflow_stage_template_id": 166366
+            "edges": [
+              {
+                "id": "fe2370d3-4091-4c35-83fe-871c9dc45f45",
+                "name": "reject",
+                "source_stage_id": "9bba4506-694d-4dd3-afd8-ab354c5a21ba",
+                "target_stage_id": "c95b5763-6da2-417a-bc06-106a45240ac0"
+              },
+              {
+                "id": "5b233988-46f7-4009-955d-4dbd89239d1e",
+                "name": "approve",
+                "source_stage_id": "9bba4506-694d-4dd3-afd8-ab354c5a21ba",
+                "target_stage_id": "3175bb69-b14e-4255-8bb3-3f19411dab4a"
+              }
+            ],
+            "id": "9bba4506-694d-4dd3-afd8-ab354c5a21ba",
+            "name": "Review",
+            "type": "review"
         }
         "#;
 
-        let stage: Stage = serde_json::from_str(contents).unwrap();
+        let stage: WorkflowStageV2 = serde_json::from_str(contents).unwrap();
 
-        assert_eq!(stage.assignee_id, Some(12974));
-        assert_eq!(stage.completed, Some(false));
-        assert_eq!(stage.completes_at, None);
-        assert_eq!(stage.id, Some(115470255));
-        assert_eq!(stage.metadata.unwrap().ready_for_completion, None);
+        assert_eq!(stage.stage_type, Some(StageType::Review));
         assert_eq!(
-            stage.template_metadata.unwrap().assignable_to,
-            Some("any_user".to_string())
+            stage.id,
+            Some("9bba4506-694d-4dd3-afd8-ab354c5a21ba".to_string())
         );
-        assert_eq!(stage.stage_type, Some(StageType::Annotate));
+        assert_eq!(
+            stage.edges[0]
+                .clone()
+                .expect("Missing edge")
+                .source_stage_id,
+            stage.edges[1]
+                .clone()
+                .expect("Missing edge")
+                .source_stage_id
+        )
     }
 }
