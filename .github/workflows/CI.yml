@@ -63,6 +63,25 @@ jobs:
           command: clippy
           args: -- -D warnings
 
+  deny:
+    name: cargo-deny
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2.29.4
+        with:
+          tool: cargo-deny
+      - uses: actions-rs/cargo@v1
+        with:
+          command: deny
+          args: check advisories bans licenses sources
+
   build:
     name: Build
     runs-on: ubuntu-latest
