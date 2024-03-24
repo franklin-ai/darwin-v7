@@ -1,0 +1,37 @@
+# See https://embarkstudios.github.io/cargo-deny/cli/init.html
+# for details on these configuration options.
+
+[advisories]
+version = 2
+yanked = "deny"
+
+[licenses]
+version = 2
+allow = [
+  "MIT",
+  "Apache-2.0",
+  # You can safely enable these licenses if needed:
+  # "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  # "MPL-2.0",
+  # "OpenSSL",
+  "Unicode-DFS-2016",
+  # "CC0-1.0",
+  "Zlib",
+  "Unlicense",
+]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+
+[[bans.deny]]
+name = "openssl-src"
+
+[sources]
+allow-git = [
+  "https://github.com/rust-lang/crates.io-index",
+]
+unknown-git = "deny"
+unknown-registry = "deny"
