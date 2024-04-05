@@ -23,7 +23,7 @@ allow = [
 ]
 
 [bans]
-multiple-versions = "warn"
+multiple-versions = "allow"
 wildcards = "deny"
 
 [[bans.deny]]
