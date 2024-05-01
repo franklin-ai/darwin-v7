@@ -20,7 +20,7 @@ uuid = { version = "1.8", features = ["v4", "serde"] }
 async-trait = "0.1"
 strum = { version = "0.26", features = ["derive"] }
 strum_macros = "0.26"
-log = "0.4"
+log = "0.4.21"
 futures = "0.3"
 csv-async = "1.3"
 
