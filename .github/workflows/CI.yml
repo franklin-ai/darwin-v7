@@ -74,7 +74,7 @@ jobs:
           toolchain: stable
           override: true
       - name: Install cargo-deny
-        uses: taiki-e/install-action@v2.33.0
+        uses: taiki-e/install-action@v2.33.19
         with:
           tool: cargo-deny
       - uses: actions-rs/cargo@v1
