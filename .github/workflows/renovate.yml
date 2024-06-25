@@ -32,8 +32,6 @@ jobs:
         with:
           configurationFile: renovate.json
           token: "${{ steps.get_token.outputs.token }}"
-        env:
-          RENOVATE_ROSALIND_CLOUDSMITH_API: ${{secrets.ROSALIND_CLOUDSMITH_API}}
 
       - name: Set if main BRANCH_NAME
         if: failure() && github.ref == 'refs/heads/main'
