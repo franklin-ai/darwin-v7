@@ -1,5 +1,4 @@
 on:
-  pull_request:
   workflow_dispatch:
   schedule:
     # every day at 2:30AM
