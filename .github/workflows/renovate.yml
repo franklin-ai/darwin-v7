@@ -26,10 +26,11 @@ jobs:
           echo "https://${{ secrets.ROSALIND_CLOUDSMITH_USERNAME }}:${{ secrets.ROSALIND_CLOUDSMITH_API }}@dl.cloudsmith.io" > ~/.git-credentials
         shell: bash
 
-      - name: Run Self-hosted Renovate
-        run: |
-          cd renovate && npm ci && npm run renovate -- --token ${{ steps.get_token.outputs.token }}
-        shell: bash
+      - name: Self-hosted Renovate
+        uses: renovatebot/github-action@v40.1.12
+        with:
+          configurationFile: renovate-self-hosted.js
+          token: "${{ steps.get_token.outputs.token }}"
 
       - name: Set if main BRANCH_NAME
         if: failure() && github.ref == 'refs/heads/main'
