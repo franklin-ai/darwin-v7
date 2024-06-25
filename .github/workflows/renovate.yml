@@ -30,7 +30,7 @@ jobs:
       - name: Self-hosted Renovate
         uses: renovatebot/github-action@v40.1.12
         with:
-          configurationFile: renovate.json
+          configurationFile: renovate-self-hosted.js
           token: "${{ steps.get_token.outputs.token }}"
 
       - name: Set if main BRANCH_NAME

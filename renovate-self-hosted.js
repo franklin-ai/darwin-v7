@@ -4,6 +4,6 @@
  * See .github/workflows/renovate.yml
  */
 module.exports = {
-  autodiscover: false,
+  platform: "github",
   repositories: ["franklin-ai/darwin-v7"],
 };
