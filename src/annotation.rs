@@ -4,7 +4,7 @@ use fake::{Dummy, Fake};
 use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use strum_macros::{Display, EnumString};
+use strum::{Display, EnumString};
 
 use crate::client::V7Methods;
 use crate::expect_http_ok;
