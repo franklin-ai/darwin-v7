@@ -14,7 +14,7 @@ Another goal of this crate is to facilitate some ergonomic improvements to the [
 This project is completely independent of the [Python package](https://darwin-py-sdk.v7labs.com/) provided by V7 labs and is being written using a combination of the publicly available V7 documentation, previous experience and a thorough use of web browser inspectors.
 
 
-## :building_construction: State of API Compatibility
+## 🏗️ State of API Compatibility
 
 The following table summarises the current state of the API compatibility for the crate.
 
