@@ -272,7 +272,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_raw_client_get() {
-        // Setup the mock endpoint
+        // Setup the mock HTTP endpoint
+        // Note wiremock doesnt support HTTPS https://github.com/LukeMathWalker/wiremock-rs/issues/58
         let mock_server = MockServer::start().await;
 
         let api_key = "api-key-1234".to_string();

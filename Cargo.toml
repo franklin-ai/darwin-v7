@@ -6,12 +6,15 @@ license = "MIT"
 description = "Unofficial rust client for the [V7 annotation platform](https://darwin.v7labs.com/)"
 repository = "https://github.com/franklin-ai/darwin-v7"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = ["native-tls"]
+native-tls = ["reqwest/native-tls"]
+rustls-tls = ["reqwest/rustls-tls"]
 
 [dependencies]
 anyhow = "1.0"
-fake = { version = "2.9", features = ["derive", "uuid", "always-true-rng"] }
-reqwest = { version = "0.12", features = ["json"] }
+fake = { version = "2.9", features = ["derive", "always-true-rng"] }
+reqwest = { version = "0.12", features = ["http2", "json", "macos-system-configuration"], default-features = false }
 serde = { version = "1.0.200", features = ["derive"] }
 serde_json = "1.0"
 serde_yaml = "0.9"
@@ -20,7 +23,6 @@ rand = "0.8.5"
 uuid = { version = "1.8", features = ["v4", "serde"] }
 async-trait = "0.1"
 strum = { version = "0.26", features = ["derive"] }
-strum_macros = "0.26"
 log = "0.4"
 futures = "0.3"
 csv-async = "1.3"
