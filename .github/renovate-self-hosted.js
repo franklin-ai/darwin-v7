@@ -5,7 +5,8 @@
  */
 module.exports = {
   autodiscover: false,
-  platform: "github",
+  extends: ['config:recommended'],
+  platform: 'github',
   repositories: ["franklin-ai/darwin-v7"],
   prConcurrentLimit: 20,
   prCommitsPerRunLimit: 10,
