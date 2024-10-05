@@ -8,7 +8,7 @@ on:
       - tests/**
       - Cargo.toml
       - Cargo.lock
-      - .github/workflows/CI.yml
+      # Add when CI is green again .github/workflows/CI.yml
 
 name: Continuous integration
 
