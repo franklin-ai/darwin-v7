@@ -4,6 +4,11 @@
  * See .github/workflows/renovate.yml
  */
 module.exports = {
-  platform: "github",
+  autodiscover: false,
+  extends: ['config:recommended'],
+  platform: 'github',
   repositories: ["franklin-ai/darwin-v7"],
+  branchConcurrentLimit: 20,
+  prConcurrentLimit: 20,
+  prCommitsPerRunLimit: 10,
 };
