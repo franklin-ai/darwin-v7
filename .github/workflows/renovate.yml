@@ -35,6 +35,8 @@ jobs:
         with:
           configurationFile: .github/renovate-self-hosted.js
           token: "${{ steps.get_token.outputs.token }}"
+        env:
+          LOG_LEVEL: debug
 
       - name: Set if main BRANCH_NAME
         if: failure() && github.ref == 'refs/heads/main'
