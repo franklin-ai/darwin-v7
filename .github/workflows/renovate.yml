@@ -1,5 +1,9 @@
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/renovate-self-hosted.js
+      - .github/workflows/renovate.yml
   schedule:
     # every day at 2:30AM
     - cron: "30 14 * * *"
@@ -9,7 +13,7 @@ name: Renovate
 jobs:
   check_dependencies:
     name: Check dependencies
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: GitHub App token
         id: get_token
@@ -29,7 +33,7 @@ jobs:
       - name: Self-hosted Renovate
         uses: renovatebot/github-action@v40.1.12
         with:
-          configurationFile: renovate-self-hosted.js
+          configurationFile: .github/renovate-self-hosted.js
           token: "${{ steps.get_token.outputs.token }}"
 
       - name: Set if main BRANCH_NAME
