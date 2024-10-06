@@ -12,6 +12,22 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: check
+          args: --all-features
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1.8.0
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+      # Repeat with --all-features
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --all-features
 
   test:
     name: Test Suite
@@ -22,6 +38,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
+          args: --all-features
 
   fmt:
     name: Rustfmt
@@ -47,7 +64,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: -- -D warnings
+          args: --all-features -- -D warnings
 
   deny:
     name: cargo-deny
@@ -63,22 +80,3 @@ jobs:
         with:
           command: deny
           args: check advisories bans licenses sources
-
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Cache Rust build artifacts
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            ~/.cargo/advisory-dbs/
-            ./target/
-          key: cargo-build-debug-${{ hashFiles('**/Cargo.*') }}
-          restore-keys: |
-            cargo-build-debug- 
