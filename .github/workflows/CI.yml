@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rust-lang/setup-rust-toolchain@v1.8.0
+      - uses: actions-rust-lang/setup-rust-toolchain@v1.10.1
       - uses: actions-rs/cargo@v1
         with:
           command: check
@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rust-lang/setup-rust-toolchain@v1.8.0
+      - uses: actions-rust-lang/setup-rust-toolchain@v1.10.1
       - uses: actions-rs/cargo@v1
         with:
           command: build
@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rust-lang/setup-rust-toolchain@v1.8.0
+      - uses: actions-rust-lang/setup-rust-toolchain@v1.10.1
       - uses: actions-rs/cargo@v1
         with:
           command: test
@@ -55,7 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rust-lang/setup-rust-toolchain@v1.8.0
+      - uses: actions-rust-lang/setup-rust-toolchain@v1.10.1
         with:
           components: rustfmt
       - uses: actions-rs/cargo@v1
@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rust-lang/setup-rust-toolchain@v1.8.0
+      - uses: actions-rust-lang/setup-rust-toolchain@v1.10.1
         with:
           components: clippy
       - uses: actions-rs/cargo@v1
@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rust-lang/setup-rust-toolchain@v1.8.0
+      - uses: actions-rust-lang/setup-rust-toolchain@v1.10.1
       - name: Install cargo-deny
         uses: taiki-e/install-action@v2.33.19
         with:
