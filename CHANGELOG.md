@@ -11,3 +11,7 @@
 - Bump dependency versions
 - Allow selecting an http stack
 - Remove the cargo template binary
+
+## v0.6.0
+
+- Bump dependency versions
