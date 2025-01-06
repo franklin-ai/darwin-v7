@@ -15,3 +15,7 @@
 ## v0.6.0
 
 - Bump dependency versions
+
+## v0.7.0
+
+- Bump dependency versions
