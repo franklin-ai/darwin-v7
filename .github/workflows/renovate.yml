@@ -27,7 +27,7 @@ jobs:
         shell: bash
 
       - name: Self-hosted Renovate
-        uses: renovatebot/github-action@v41.0.7
+        uses: renovatebot/github-action@v41.0.8
         with:
           configurationFile: renovate-self-hosted.js
           token: "${{ steps.get_token.outputs.token }}"
