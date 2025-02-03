@@ -105,7 +105,7 @@ pub struct StageConfig {
     pub auto_instantiate: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub champion_stage_id: Option<String>,
-    pub class_mapping: Vec<String>,
+    pub class_mapping: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dataset_id: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -125,7 +125,7 @@ pub struct StageConfig {
     pub readonly: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub retry_if_fails: Option<bool>,
-    pub rules: Vec<String>,
+    pub rules: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub skippable: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
