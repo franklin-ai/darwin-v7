@@ -19,3 +19,9 @@
 ## v0.7.0
 
 - Bump dependency versions
+
+## v0.7.1
+
+- Bump dependency versions
+- Fixed V7 API change for workflow stages.
+- Fixed V7 API change for listing dataset items.
