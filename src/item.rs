@@ -12,15 +12,28 @@ use std::fmt::{self, Display};
 // value.  There is a high degree of variability as to when and why
 // a null may be provided in the JSON payload.
 
-#[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
 pub struct ImageLevel {
     pub format: String,
     pub pixel_ratio: u16,
     pub tile_height: u32,
     pub tile_width: u32,
-    pub x_tiles: u32,
-    pub y_tiles: u32,
+    pub x_tiles: f32,
+    pub y_tiles: f32,
 }
+
+impl PartialEq<Self> for ImageLevel {
+    fn eq(&self, other: &Self) -> bool {
+        self.format == other.format
+            && self.pixel_ratio == other.pixel_ratio
+            && self.tile_width == other.tile_width
+            && self.tile_height == other.tile_height
+            && (self.x_tiles.is_nan() == other.x_tiles.is_nan() || self.x_tiles.eq(&other.x_tiles))
+            && (self.y_tiles.is_nan() == other.y_tiles.is_nan() || self.y_tiles.eq(&other.y_tiles))
+    }
+}
+
+impl Eq for ImageLevel {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Levels {
@@ -325,9 +338,10 @@ impl Display for DatasetItemV2 {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
-pub struct ItemSlotLevel {
-    pub levels: HashMap<usize, ImageLevel>,
-    pub base_key: String,
+pub struct ItemSlotMetadata {
+    pub levels: Option<Levels>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub base_key: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub height: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -340,7 +354,7 @@ pub struct ItemSlot {
     pub fps: Option<f32>,
     pub id: Option<String>,
     pub is_external: Option<bool>,
-    pub metadata: Option<ItemSlotLevel>,
+    pub metadata: Option<ItemSlotMetadata>,
     pub size_bytes: Option<u64>,
     pub slot_name: Option<String>,
     pub streamable: Option<bool>,
@@ -348,6 +362,8 @@ pub struct ItemSlot {
     #[serde(rename = "type")]
     pub item_slot_type: Option<DatasetItemTypes>,
     pub upload_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub legacy_item_id: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy)]
@@ -356,6 +372,40 @@ pub struct DatasetItemLayout {
     #[serde(rename = "type")]
     pub layout_type: Option<String>,
     pub version: Option<u32>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Dummy)]
+pub struct ProcessingError {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub processing_error_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub http_status_code: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stage: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub storage_key: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub raw_error: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, Dummy)]
+pub struct DatasetItemUploads {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub upload_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub file_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub processing_status: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub slot_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub upload_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub processing_error: Option<ProcessingError>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub as_frames: Option<bool>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, Dummy)]
@@ -375,7 +425,7 @@ pub struct DatasetItemV2 {
     pub status: Option<DatasetItemStatus>,
     pub tags: Vec<Option<String>>,
     pub updated_at: Option<String>,
-    pub uploads: Vec<Option<String>>,
+    pub uploads: Vec<Option<DatasetItemUploads>>,
     pub workflow_status: Option<StageType>,
 }
 
@@ -413,8 +463,8 @@ mod test_serde {
                 "pixel_ratio": 1,
                 "tile_height": 2048,
                 "tile_width": 2048,
-                "x_tiles": 82,
-                "y_tiles": 22
+                "x_tiles": 82.0,
+                "y_tiles": 22.0
             },
             "base_key": "some-base-key.jpg"
         }"#;
@@ -443,8 +493,8 @@ mod test_serde {
                 "pixel_ratio": 1,
                 "tile_height": 2048,
                 "tile_width": 2048,
-                "x_tiles": 82,
-                "y_tiles": 22
+                "x_tiles": 82.0,
+                "y_tiles": 22.0
             },
             "base_key": "some-base-key.jpg"
         }"#;
@@ -588,8 +638,13 @@ mod test_serde {
             .metadata
             .as_ref()
             .expect("Expected levels")
-            .levels;
-        assert_eq!(levels.len(), 8);
-        assert_eq!(levels.get(&0).unwrap().format, "png".to_string());
+            .clone()
+            .levels
+            .expect("Expected levels");
+        assert_eq!(levels.image_levels.len(), 8);
+        assert_eq!(
+            levels.image_levels.get(&0).unwrap().format,
+            "png".to_string()
+        );
     }
 }
