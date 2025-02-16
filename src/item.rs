@@ -122,7 +122,7 @@ impl<'de> Visitor<'de> for LevelVisitor {
 }
 
 impl Dummy<fake::Faker> for Levels {
-    fn dummy_with_rng<R: rand::Rng + ?Sized>(_: &fake::Faker, rng: &mut R) -> Self {
+    fn dummy_with_rng<R: fake::rand::RngCore + ?Sized>(_: &fake::Faker, rng: &mut R) -> Self {
         let max_levels: u32 = (2..5).fake_with_rng(rng);
         let base_key: Option<String> = Faker.fake_with_rng(rng);
 
