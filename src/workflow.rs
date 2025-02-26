@@ -21,6 +21,7 @@ pub enum StageType {
     Review,
     Dataset,
     Discard,
+    Sampling,
 }
 
 impl Display for StageType {
@@ -34,6 +35,7 @@ impl Display for StageType {
             StageType::Review => "Review",
             StageType::Dataset => "Dataset",
             StageType::Discard => "Discard",
+            StageType::Sampling => "Sampling",
         };
         write!(f, "{val}")
     }
@@ -131,7 +133,7 @@ pub struct StageConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub test_stage_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub threshold: Option<String>,
+    pub threshold: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub url: Option<String>,
     pub x: Option<u32>,

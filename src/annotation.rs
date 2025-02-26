@@ -160,6 +160,22 @@ pub struct AnnotationDataset {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy)]
+pub struct AnnotationClassImage {
+    pub id: Option<String>,
+    pub index: Option<u32>,
+    pub key: Option<String>,
+    pub y: Option<f64>,
+    pub x: Option<f64>,
+    pub scale: Option<f64>,
+    pub annotation_class_id: Option<u32>,
+    pub crop_key: Option<String>,
+    pub image_height: Option<u32>,
+    pub image_width: Option<u32>,
+    pub crop_url: Option<String>,
+    pub original_image_url: Option<String>,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy)]
 pub struct AnnotationClass {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub annotation_class_image_url: Option<String>,
@@ -182,8 +198,7 @@ pub struct AnnotationClass {
     // #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    pub images: Vec<Option<String>>, // TODO: find out what this type is
+    pub images: Vec<AnnotationClassImage>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub inserted_at: Option<String>,
