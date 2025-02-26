@@ -198,8 +198,7 @@ pub struct AnnotationClass {
     // #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    pub images: Vec<Option<AnnotationClassImage>>,
+    pub images: Vec<AnnotationClassImage>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub inserted_at: Option<String>,
