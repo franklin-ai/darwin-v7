@@ -14,7 +14,7 @@ jobs:
           uses: actions/checkout@v4
 
         - name: Install stable toolchain
-          uses: actions-rust-lang/setup-rust-toolchain@v1.10.1
+          uses: actions-rust-lang/setup-rust-toolchain@v1.11.0
 
         - name: Publish crate
           run: cargo publish --token ${CRATES_TOKEN}
