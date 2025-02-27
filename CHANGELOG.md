@@ -29,3 +29,7 @@
 ## v0.7.2
 
 - Bump dependency versions
+
+## v0.7.3
+
+- Fixed V7 API response structure for listing annotation classes.
