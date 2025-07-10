@@ -96,7 +96,7 @@ pub struct WorkflowProgress {
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq)]
 pub struct StageConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub allowed_class_ids: Option<String>,
+    pub allowed_class_ids: Option<Vec<u32>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub annotation_group_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -107,6 +107,7 @@ pub struct StageConfig {
     pub auto_instantiate: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub champion_stage_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub class_mapping: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dataset_id: Option<u32>,
@@ -127,6 +128,7 @@ pub struct StageConfig {
     pub readonly: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub retry_if_fails: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub rules: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub skippable: Option<bool>,
