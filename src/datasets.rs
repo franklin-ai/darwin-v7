@@ -738,7 +738,7 @@ where
     }
 
     async fn show_dataset(client: &C, id: &u32) -> Result<Dataset> {
-        let response = client.get(&format!("datasets/{}", id)).await?;
+        let response = client.get(&format!("datasets/{id}")).await?;
 
         expect_http_ok!(response, Dataset)
     }
