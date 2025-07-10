@@ -105,7 +105,7 @@ impl<'de> Visitor<'de> for LevelVisitor {
             } else {
                 let level_key = match k.parse::<u32>() {
                     Ok(val) => val,
-                    Err(_) => return Err(serde::de::Error::custom(format!("Invalid key: {}", k))),
+                    Err(_) => return Err(serde::de::Error::custom(format!("Invalid key: {k}"))),
                 };
 
                 let level: ImageLevel = map.next_value()?;
