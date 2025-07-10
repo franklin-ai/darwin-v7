@@ -80,7 +80,7 @@ impl AnnotationImportAnnotation {
     /// * `original_annotation` - A reference to an `ImageAnnotation` from which the name of the annotation class is derived.
     /// * `path` - A vector of `Keypoint` objects defining the vertices of the polygon.
     /// * `eligible_annotation_classes` - A slice of references to `AnnotationClass` objects.
-    ///  The function searches these to find a matching class ID for the `original_annotation`.
+    ///   The function searches these to find a matching class ID for the `original_annotation`.
     /// * `slot_name` - The name of the slot in the dataset item where this annotation will be attached.
     ///
     /// # Returns
