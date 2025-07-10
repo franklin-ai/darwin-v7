@@ -33,3 +33,7 @@
 ## v0.7.3
 
 - Fixed V7 API response structure for listing annotation classes.
+
+## v0.7.4
+
+- Fixed V7 Workflow payload to create workflows with stages.
