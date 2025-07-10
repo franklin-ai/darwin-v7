@@ -446,6 +446,12 @@ where
     async fn list_datasets(client: &C) -> Result<Vec<Option<Dataset>>>;
     async fn list_dataset_items_v2(&self, client: &C) -> Result<Item>;
     async fn show_dataset(client: &C, id: &u32) -> Result<Dataset>;
+
+    async fn list_dataset_items_with_filter(
+        &self,
+        client: &C,
+        item_name_contains: &str,
+    ) -> Result<Item>;
 }
 
 #[async_trait]
@@ -728,7 +734,7 @@ where
     async fn list_dataset_items_v2(&self, client: &C) -> Result<Item> {
         let response = client
             .get(&format!(
-                "v2/teams/{}/items?dataset_ids={}",
+                "v2/teams/{}/items?dataset_ids={}&page[size]=1000",
                 self.team_slug.as_ref().context("Missing team slug")?,
                 self.id.context("Dataset is missing Id")?
             ))
@@ -737,8 +743,25 @@ where
         expect_http_ok!(response, Item)
     }
 
+    async fn list_dataset_items_with_filter(
+        &self,
+        client: &C,
+        item_name_contains: &str,
+    ) -> Result<Item> {
+        let response = client
+            .get(&format!(
+                "v2/teams/{}/items?dataset_ids={}&item_name_contains={}",
+                self.team_slug.as_ref().context("Missing team slug")?,
+                self.id.context("Dataset is missing Id")?,
+                item_name_contains,
+            ))
+            .await?;
+
+        expect_http_ok!(response, Item)
+    }
+
     async fn show_dataset(client: &C, id: &u32) -> Result<Dataset> {
-        let response = client.get(&format!("datasets/{}", id)).await?;
+        let response = client.get(&format!("datasets/{id}")).await?;
 
         expect_http_ok!(response, Dataset)
     }
