@@ -38,7 +38,7 @@ impl RawClient {
         api_key: &str,
     ) -> Result<reqwest::Response, reqwest::Error> {
         // Construct endpoint
-        let api_key = format!("ApiKey {}", api_key);
+        let api_key = format!("ApiKey {api_key}");
 
         self.client
             .get(address)
@@ -53,7 +53,7 @@ impl RawClient {
         api_key: &str,
         data: &S,
     ) -> Result<reqwest::Response, reqwest::Error> {
-        let api_key = format!("ApiKey {}", api_key);
+        let api_key = format!("ApiKey {api_key}");
 
         self.client
             .post(address)
@@ -69,7 +69,7 @@ impl RawClient {
         api_key: &str,
         data: Option<&S>,
     ) -> Result<reqwest::Response, reqwest::Error> {
-        let api_key = format!("ApiKey {}", api_key);
+        let api_key = format!("ApiKey {api_key}");
 
         let req = self.client.delete(address).header(AUTHORIZATION, api_key);
 
@@ -86,7 +86,7 @@ impl RawClient {
         api_key: &str,
         data: Option<&S>,
     ) -> Result<reqwest::Response, reqwest::Error> {
-        let api_key = format!("ApiKey {}", api_key);
+        let api_key = format!("ApiKey {api_key}");
         let request = self.client.put(address).header(AUTHORIZATION, api_key);
 
         if let Some(payload) = data {
@@ -284,7 +284,7 @@ mod tests {
             .and(header("content-type", "application/json"))
             .and(header(
                 "Authorization",
-                format!("ApiKey {}", api_key).as_str(),
+                format!("ApiKey {api_key}").as_str(),
             ))
             .respond_with(ResponseTemplate::new(200))
             .mount(&mock_server)
