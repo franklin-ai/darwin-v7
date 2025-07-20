@@ -446,6 +446,7 @@ where
     async fn list_datasets(client: &C) -> Result<Vec<Option<Dataset>>>;
     async fn list_dataset_items_v2(&self, client: &C) -> Result<Item>;
     async fn show_dataset(client: &C, id: &u32) -> Result<Dataset>;
+    async fn update_instructions(&self, client: &C, instructions: &str) -> Result<()>;
 }
 
 #[async_trait]
@@ -741,6 +742,20 @@ where
         let response = client.get(&format!("datasets/{id}")).await?;
 
         expect_http_ok!(response, Dataset)
+    }
+    async fn update_instructions(&self, client: &C, instructions: &str) -> Result<()> {
+        let mut payload = DatasetUpdate::from(self);
+        payload.instructions = Some(instructions.to_string());
+        let response = client
+            .put(
+                &format!("datasets/{}", self.id.context("Id required")?),
+                Some(&payload),
+            )
+            .await?;
+        if response.status() != 200 {
+            bail!("Invalid status code {}", response.status());
+        }
+        Ok(())
     }
 }
 
