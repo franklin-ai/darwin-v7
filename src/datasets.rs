@@ -10,7 +10,7 @@ use crate::item::{
     AddDataPayload, DataPayloadLevel, DatasetItemStatus, DatasetItemTypes, ExistingSimpleItem, Item,
 };
 use crate::team::TypeCount;
-use crate::workflow::{WorkflowBuilder, WorkflowMethods, WorkflowV2};
+use crate::workflow::{WorkflowMethods, WorkflowV2};
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use csv_async::AsyncReaderBuilder;
@@ -455,7 +455,6 @@ where
     C: V7Methods,
 {
     async fn reset_to_new(&self, client: &C, filter: &Filter) -> Result<()>;
-    async fn set_workflow_v2(&self, client: &C, workflow: &WorkflowBuilder) -> Result<WorkflowV2>;
     async fn get_workflow_v2(&self, client: &C) -> Result<Option<WorkflowV2>>;
     async fn set_stage_v2(
         &self,
@@ -789,20 +788,6 @@ where
         Ok(())
     }
 
-    async fn set_workflow_v2(&self, client: &C, workflow: &WorkflowBuilder) -> Result<WorkflowV2> {
-        let response = client
-            .post(&format!("v2/teams/{}/workflows", client.team()), workflow)
-            .await?;
-        // 201 is correct operation for this endpoint
-        if response.status() != 201 {
-            bail!(
-                "Invalid status code {}. Response: {}",
-                response.status(),
-                response.text().await?
-            )
-        }
-        Ok(response.json().await?)
-    }
     async fn get_workflow_v2(&self, client: &C) -> Result<Option<WorkflowV2>> {
         let workflows = WorkflowV2::get_workflows(client).await?;
         let dataset_name = self.name.as_ref().context("Missing dataset name")?;

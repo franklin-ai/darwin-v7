@@ -10,6 +10,7 @@ use serde_yaml::Value;
 use std::{fmt::Display, path::PathBuf};
 
 use crate::client::V7Methods;
+use crate::workflow::{WorkflowBuilder, WorkflowV2};
 
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
 pub struct Team {
@@ -104,6 +105,38 @@ where
     //     client: &C,
     //     classes: &[AnnotationClass],
     // ) -> Result<()>;
+}
+
+#[async_trait]
+pub trait TeamWorkflowMethods<C>
+where
+    C: V7Methods,
+{
+    async fn create_workflow(&self, client: &C, workflow: &WorkflowBuilder) -> Result<WorkflowV2>;
+}
+
+#[async_trait]
+impl<C> TeamWorkflowMethods<C> for Team
+where
+    C: V7Methods + std::marker::Sync,
+{
+    async fn create_workflow(&self, client: &C, workflow: &WorkflowBuilder) -> Result<WorkflowV2>
+    where
+        C: V7Methods,
+    {
+        let response = client
+            .post(&format!("v2/teams/{}/workflows", self.slug), workflow)
+            .await?;
+        // 201 is correct operation for this endpoint
+        if response.status() != 201 {
+            bail!(
+                "Invalid status code {}. Response: {}",
+                response.status(),
+                response.text().await?
+            )
+        }
+        Ok(response.json().await?)
+    }
 }
 
 impl Team {
