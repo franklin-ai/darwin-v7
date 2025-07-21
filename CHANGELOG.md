@@ -37,3 +37,7 @@
 ## v0.7.4
 
 - Fixed V7 Workflow payload to create workflows with stages.
+
+## v0.7.5
+
+- Added support for updating dataset instructions.
