@@ -37,3 +37,8 @@
 ## v0.7.4
 
 - Fixed V7 Workflow payload to create workflows with stages.
+
+## v0.8.0
+
+- Added support to update dataset instructions.
+- Breaking change: `Dataset::set_workflow_v2` is now `Team::create_workflow` for correctness.
