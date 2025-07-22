@@ -42,3 +42,7 @@
 
 - Added support to update dataset instructions.
 - Breaking change: `Dataset::set_workflow_v2` is now `Team::create_workflow` for correctness.
+
+## v0.8.1
+
+- Fix broken crate publish v0.8.0
