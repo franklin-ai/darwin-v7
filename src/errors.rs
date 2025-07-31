@@ -13,7 +13,7 @@ pub enum DarwinV7Error {
     CsvError(#[from] csv_async::Error),
 
     #[error(transparent)]
-    SerdeJsonError2(#[from] serde_path_to_error::Error<serde_json::Error>),
+    SerdePathToError(#[from] serde_path_to_error::Error<serde_json::Error>),
 
     #[error("HTTP Error: {0} - {1}")]
     HTTPError(StatusCode, String),
