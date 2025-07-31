@@ -1,5 +1,5 @@
+use crate::errors::DarwinV7Error;
 use crate::team::Team;
-use anyhow::{Context, Result};
 use serde_yaml;
 use std::io::Read;
 use std::path::Path;
@@ -44,34 +44,47 @@ impl Config {
         &self.teams
     }
 
-    pub fn from_file<T>(file_path: T) -> Result<Self>
+    pub fn from_file<T>(file_path: T) -> Result<Self, DarwinV7Error>
     where
         T: AsRef<Path>,
     {
-        let mut file = File::open(&file_path)?;
+        let mut file = File::open(&file_path).map_err(|_| {
+            DarwinV7Error::InvalidConfigError("Unable to read config file.".to_string())
+        })?;
         let mut buffer = String::new();
-        file.read_to_string(&mut buffer)?;
+        file.read_to_string(&mut buffer).map_err(|_| {
+            DarwinV7Error::InvalidConfigError("Unable to read config file.".to_string())
+        })?;
 
         Self::try_from(buffer.as_str())
     }
 }
 
-fn get_from_yaml<'b>(value: &'b serde_yaml::Value, key: &'b str) -> anyhow::Result<&'b str> {
+fn get_from_yaml<'b>(value: &'b serde_yaml::Value, key: &'b str) -> Result<&'b str, DarwinV7Error> {
     value
         .get(key)
-        .context("Missing '{key}' from config")?
+        .ok_or(DarwinV7Error::InvalidConfigError(format!(
+            "Missing '{key}' from config"
+        )))?
         .as_str()
-        .context("{key} cannot be represented as a string")
+        .ok_or(DarwinV7Error::InvalidConfigError(format!(
+            "{key} cannot be represented as a string"
+        )))
 }
 
 impl TryFrom<&str> for Config {
-    type Error = anyhow::Error;
+    type Error = DarwinV7Error;
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        let config_value: serde_yaml::Value = serde_yaml::from_str(value)?;
+        let config_value: serde_yaml::Value = serde_yaml::from_str(value).map_err(|_| {
+            DarwinV7Error::InvalidConfigError("Unable to parse config file".to_string())
+        })?;
 
+        let key = "global";
         let global = config_value
-            .get("global")
-            .context("Missing 'global' map from config")?;
+            .get(key)
+            .ok_or(DarwinV7Error::InvalidConfigError(format!(
+                "Missing '{key}' from config"
+            )))?;
 
         let base_url = get_from_yaml(global, "base_url")?.to_string();
         let api_endpoint = get_from_yaml(global, "api_endpoint")?.to_string();
@@ -79,11 +92,16 @@ impl TryFrom<&str> for Config {
 
         let mut teams: HashMap<String, Team> = HashMap::new();
 
+        let key = "teams";
         let team_mapping = config_value
-            .get("teams")
-            .context("Missing 'teams' map from config")?
+            .get(key)
+            .ok_or(DarwinV7Error::InvalidConfigError(format!(
+                "Missing '{key}' from config"
+            )))?
             .as_mapping()
-            .context("'teams' not correctly defined")?;
+            .ok_or(DarwinV7Error::InvalidConfigError(format!(
+                "Missing '{key}' from config"
+            )))?;
 
         for team in team_mapping.iter() {
             let team = Team::try_from(team)?;

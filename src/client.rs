@@ -1,5 +1,4 @@
-use crate::{config::Config, team::Team};
-use anyhow::{Context, Result};
+use crate::{config::Config, errors::DarwinV7Error, team::Team};
 use async_trait::async_trait;
 use log::debug;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE};
@@ -10,7 +9,7 @@ struct RawClient {
 }
 
 impl RawClient {
-    pub fn new() -> Result<Self> {
+    pub fn new() -> Result<Self, DarwinV7Error> {
         // The client currently only accepts application/json
         // The darwin-v7 documentation states that json is one
         // of the accepted content though json is the only
@@ -128,7 +127,7 @@ pub trait V7Methods {
 }
 
 impl V7Client {
-    pub fn new(api_endpoint: String, api_key: String, team: String) -> Result<Self> {
+    pub fn new(api_endpoint: String, api_key: String, team: String) -> Result<Self, DarwinV7Error> {
         let client = RawClient::new()?;
 
         Ok(V7Client {
@@ -139,7 +138,7 @@ impl V7Client {
         })
     }
 
-    pub fn from_config(config: &Config, team: Option<&String>) -> Result<Self> {
+    pub fn from_config(config: &Config, team: Option<&String>) -> Result<Self, DarwinV7Error> {
         // The base endpoint
         let api_endpoint = config.api_endpoint().to_string();
 
@@ -150,10 +149,14 @@ impl V7Client {
         let api_key = &config
             .teams()
             .get(&client_team)
-            .context("The requested team is not found in the config")?
+            .ok_or(DarwinV7Error::InvalidConfigError(
+                "The requested team is not found in the config".to_string(),
+            ))?
             .api_key
             .as_ref()
-            .context("Api key not found in configuration")?;
+            .ok_or(DarwinV7Error::InvalidConfigError(
+                "Api key not found in configuration".to_string(),
+            ))?;
 
         Self::new(api_endpoint, api_key.to_string(), client_team)
     }

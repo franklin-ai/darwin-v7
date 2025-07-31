@@ -1,12 +1,12 @@
 #[allow(unused_imports)]
 use fake::{Dummy, Fake};
 
-use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use strum::{Display, EnumString};
 
 use crate::client::V7Methods;
+use crate::errors::DarwinV7Error;
 use crate::expect_http_ok;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Dummy, PartialEq, Eq, Default)]
@@ -129,28 +129,27 @@ impl From<AnnotationType> for u32 {
 }
 
 impl AnnotationType {
-    pub fn try_from(value: &str) -> Result<Self> {
+    pub fn try_from(value: &str) -> Result<Self, DarwinV7Error> {
         let lower = value.to_lowercase();
         let lower = lower.as_str();
-        let annotation = match lower {
-            "attributes" => AnnotationType::Attributes,
-            "auto_annotate" => AnnotationType::AutoAnnotate,
-            "bounding_box" => AnnotationType::BoundingBox(Default::default()),
-            "cuboid" => AnnotationType::Cuboid,
-            "directional_vector" => AnnotationType::DirectionalVector,
-            "ellipse" => AnnotationType::Ellipse,
-            "inference" => AnnotationType::Inference,
-            "instance_id" => AnnotationType::InstanceId,
-            "keypoint" => AnnotationType::Keypoint(Default::default()),
-            "line" => AnnotationType::Line,
-            "measures" => AnnotationType::Measures,
-            "polygon" => AnnotationType::Polygon(Default::default()),
-            "skeleton" => AnnotationType::Skeleton,
-            "tag" => AnnotationType::Tag(Default::default()),
-            "text" => AnnotationType::Tag(Default::default()),
-            _ => bail!(format!("{} is not a valid annotation type", value)),
-        };
-        Ok(annotation)
+        match lower {
+            "attributes" => Ok(AnnotationType::Attributes),
+            "auto_annotate" => Ok(AnnotationType::AutoAnnotate),
+            "bounding_box" => Ok(AnnotationType::BoundingBox(Default::default())),
+            "cuboid" => Ok(AnnotationType::Cuboid),
+            "directional_vector" => Ok(AnnotationType::DirectionalVector),
+            "ellipse" => Ok(AnnotationType::Ellipse),
+            "inference" => Ok(AnnotationType::Inference),
+            "instance_id" => Ok(AnnotationType::InstanceId),
+            "keypoint" => Ok(AnnotationType::Keypoint(Default::default())),
+            "line" => Ok(AnnotationType::Line),
+            "measures" => Ok(AnnotationType::Measures),
+            "polygon" => Ok(AnnotationType::Polygon(Default::default())),
+            "skeleton" => Ok(AnnotationType::Skeleton),
+            "tag" => Ok(AnnotationType::Tag(Default::default())),
+            "text" => Ok(AnnotationType::Tag(Default::default())),
+            _ => Err(DarwinV7Error::InvalidAnnotationTypeError(value.to_string())),
+        }
     }
 }
 
@@ -214,38 +213,41 @@ pub struct AnnotationClass {
 }
 
 impl AnnotationClass {
-    pub async fn update<C>(&self, client: &C) -> Result<AnnotationClass>
+    pub async fn update<C>(&self, client: &C) -> Result<AnnotationClass, DarwinV7Error>
     where
         C: V7Methods,
     {
         let endpoint = format!(
             "annotation_classes/{}",
-            self.id.context("Annotation class is missing an id")?
+            self.id.ok_or(DarwinV7Error::MissingValueError(
+                "Annotation class is missing an id".to_string()
+            ))?
         );
         let response = client.put(&endpoint, Some(&self)).await?;
 
         expect_http_ok!(response, AnnotationClass)
     }
 
-    pub async fn delete<C>(&self, client: &C) -> Result<()>
+    pub async fn delete<C>(&self, client: &C) -> Result<(), DarwinV7Error>
     where
         C: V7Methods,
     {
         let endpoint = format!(
             "annotation_classes/{}",
-            self.id.context("Annotation class is missing an id")?
+            self.id.ok_or(DarwinV7Error::MissingValueError(
+                "Annotation class is missing an id".to_string()
+            ))?
         );
 
         let response = client.delete::<AnnotationClass>(&endpoint, None).await?;
 
-        if response.status() != 204 {
-            bail!(format!(
-                "Invalid status code {} {}",
+        if response.status() == 204 {
+            Ok(())
+        } else {
+            Err(DarwinV7Error::HTTPError(
                 response.status(),
-                response.text().await?
-            ));
+                response.text().await?,
+            ))
         }
-
-        Ok(())
     }
 }

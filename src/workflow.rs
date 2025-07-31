@@ -1,6 +1,6 @@
 use crate::client::V7Methods;
+use crate::errors::DarwinV7Error;
 use crate::expect_http_ok;
-use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 #[allow(unused_imports)]
 use fake::{Dummy, Fake};
@@ -197,14 +197,20 @@ pub trait WorkflowMethods<C>
 where
     C: V7Methods,
 {
-    async fn list_workflows(client: &C, contains_str: Option<String>) -> Result<Vec<WorkflowV2>>;
-    async fn assign_items(client: &C, data: &AssignItemPayload) -> Result<AssignItemResponse>;
-    async fn get_workflows(client: &C) -> Result<Vec<WorkflowV2>>;
+    async fn list_workflows(
+        client: &C,
+        contains_str: Option<String>,
+    ) -> Result<Vec<WorkflowV2>, DarwinV7Error>;
+    async fn assign_items(
+        client: &C,
+        data: &AssignItemPayload,
+    ) -> Result<AssignItemResponse, DarwinV7Error>;
+    async fn get_workflows(client: &C) -> Result<Vec<WorkflowV2>, DarwinV7Error>;
     async fn update_workflow(
         &self,
         client: &C,
         update_payload: &WorkflowBuilder,
-    ) -> Result<WorkflowV2>;
+    ) -> Result<WorkflowV2, DarwinV7Error>;
 }
 
 #[async_trait]
@@ -212,7 +218,10 @@ impl<C> WorkflowMethods<C> for WorkflowV2
 where
     C: V7Methods + std::marker::Sync,
 {
-    async fn list_workflows(client: &C, contains_str: Option<String>) -> Result<Vec<WorkflowV2>>
+    async fn list_workflows(
+        client: &C,
+        contains_str: Option<String>,
+    ) -> Result<Vec<WorkflowV2>, DarwinV7Error>
     where
         C: V7Methods,
     {
@@ -232,14 +241,17 @@ where
         expect_http_ok!(response, Vec<WorkflowV2>)
     }
 
-    async fn assign_items(client: &C, data: &AssignItemPayload) -> Result<AssignItemResponse> {
+    async fn assign_items(
+        client: &C,
+        data: &AssignItemPayload,
+    ) -> Result<AssignItemResponse, DarwinV7Error> {
         let response = client
             .post(&format!("v2/teams/{}/items/assign", client.team()), &data)
             .await?;
         expect_http_ok!(response, AssignItemResponse)
     }
 
-    async fn get_workflows(client: &C) -> Result<Vec<WorkflowV2>> {
+    async fn get_workflows(client: &C) -> Result<Vec<WorkflowV2>, DarwinV7Error> {
         let response = client
             .get(&format!("v2/teams/{}/workflows", client.team()))
             .await?;
@@ -250,13 +262,15 @@ where
         &self,
         client: &C,
         update_payload: &WorkflowBuilder,
-    ) -> Result<WorkflowV2> {
+    ) -> Result<WorkflowV2, DarwinV7Error> {
         let response = client
             .put(
                 &format!(
                     "v2/teams/{}/workflows/{}",
                     client.team(),
-                    self.id.as_ref().context("Id required")?
+                    self.id.as_ref().ok_or(DarwinV7Error::MissingValueError(
+                        "Workflow is missing an id".to_string(),
+                    ))?
                 ),
                 Some(update_payload),
             )

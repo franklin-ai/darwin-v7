@@ -12,7 +12,6 @@ native-tls = ["reqwest/native-tls"]
 rustls-tls = ["reqwest/rustls-tls"]
 
 [dependencies]
-anyhow = "1.0"
 fake = { version = "4.0", features = ["derive", "always-true-rng"] }
 reqwest = { version = "0.12", features = ["http2", "json", "macos-system-configuration"], default-features = false }
 serde = { version = "1.0.200", features = ["derive"] }
@@ -26,6 +25,7 @@ strum = { version = "0.27", features = ["derive"] }
 log = "0.4"
 futures = "0.3"
 csv-async = "1.3"
+thiserror = "2.0.12"
 
 [dev-dependencies]
 tempfile = "3.10"

@@ -1,8 +1,8 @@
 use crate::classes::BoundingBox;
 use crate::client::V7Methods;
+use crate::errors::DarwinV7Error;
 use crate::expect_http_ok;
 use crate::item::DatasetItemV2;
-use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 #[allow(unused_imports)]
 use fake::{Dummy, Fake};
@@ -31,7 +31,7 @@ where
         client: &C,
         team_slug: String,
         data: CommentThread,
-    ) -> Result<CommentThreadResponse>;
+    ) -> Result<CommentThreadResponse, DarwinV7Error>;
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Dummy, PartialEq)]
@@ -76,13 +76,15 @@ where
         client: &C,
         team_slug: String,
         data: CommentThread,
-    ) -> Result<CommentThreadResponse> {
+    ) -> Result<CommentThreadResponse, DarwinV7Error> {
         let response = client
             .post(
                 &format!(
                     "v2/teams/{}/items/{}/comment_threads",
                     team_slug,
-                    self.id.as_ref().context("Dataset has no Id")?
+                    self.id.as_ref().ok_or(DarwinV7Error::MissingValueError(
+                        "Dataset has no Id".to_string()
+                    ))?
                 ),
                 &data,
             )

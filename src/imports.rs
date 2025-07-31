@@ -1,8 +1,8 @@
 use crate::{
     annotation::{AnnotationClass, Keypoint, Tag},
+    errors::DarwinV7Error,
     export::ImageAnnotation,
 };
-use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
 /// Struct representing the payload data wrapper of a V7 annotation suitable for importing back into a V7 dataset item
@@ -97,7 +97,7 @@ impl AnnotationImportAnnotation {
         path: Vec<Keypoint>,
         eligible_annotation_classes: &[&AnnotationClass],
         slot_name: &str,
-    ) -> Result<Self> {
+    ) -> Result<Self, DarwinV7Error> {
         Ok(AnnotationImportAnnotation {
             id: uuid::Uuid::new_v4().to_string(),
             data: AnnotationImportData::from(path),
@@ -140,7 +140,7 @@ impl AnnotationImportAnnotation {
         original_annotation: &ImageAnnotation,
         eligible_annotation_classes: &[&AnnotationClass],
         slot_name: &str,
-    ) -> Result<Self> {
+    ) -> Result<Self, DarwinV7Error> {
         Ok(AnnotationImportAnnotation {
             id: uuid::Uuid::new_v4().to_string(),
             data: AnnotationImportData {
@@ -182,7 +182,7 @@ impl AnnotationImportAnnotation {
     fn find_annotation_class_id(
         eligible_annotation_classes: &[&AnnotationClass],
         class_name: &str,
-    ) -> Result<u32> {
+    ) -> Result<u32, DarwinV7Error> {
         eligible_annotation_classes
             .iter()
             .find(|ac| {
@@ -192,9 +192,13 @@ impl AnnotationImportAnnotation {
                     false
                 }
             })
-            .context("Unable to find matching annotation class ID from export JSON")?
+            .ok_or(DarwinV7Error::AnnotationClassNotFoundError(
+                class_name.to_string(),
+            ))?
             .id
-            .context("Annotation Class has no ID")
+            .ok_or(DarwinV7Error::MissingValueError(
+                "Annotation class is missing an id".to_string(),
+            ))
     }
 }
 
@@ -203,7 +207,6 @@ mod tests {
     use super::*;
     use crate::annotation::{AnnotationClass, Keypoint};
     use crate::imports::ImageAnnotation;
-    use anyhow::Result;
 
     // A helper function to create a sample ImageAnnotation for testing
     fn create_sample_image_annotation(tag: Option<Tag>) -> ImageAnnotation {
@@ -224,7 +227,7 @@ mod tests {
     }
 
     #[test]
-    fn test_new_polygon_annotation_success() -> Result<()> {
+    fn test_new_polygon_annotation_success() -> Result<(), DarwinV7Error> {
         let original_annotation = create_sample_image_annotation(None);
         let path = vec![Keypoint { x: 10.0, y: 10.0 }, Keypoint { x: 20.0, y: 20.0 }];
         let eligible_annotation_classes = &[&create_sample_annotation_class("Sample Class", 1)];
@@ -264,7 +267,7 @@ mod tests {
     }
 
     #[test]
-    fn test_new_tag_annotation_success() -> Result<()> {
+    fn test_new_tag_annotation_success() -> Result<(), DarwinV7Error> {
         let original_annotation = create_sample_image_annotation(Some(Tag {}));
         let eligible_annotation_classes = &[&create_sample_annotation_class("Sample Class", 1)];
 

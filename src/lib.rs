@@ -4,6 +4,7 @@ pub mod client;
 pub mod comment;
 pub mod config;
 pub mod datasets;
+pub mod errors;
 pub mod export;
 pub mod filter;
 pub mod imports;

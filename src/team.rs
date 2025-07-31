@@ -3,13 +3,13 @@ use fake::{Dummy, Fake};
 
 use crate::annotation::AnnotationClass;
 use crate::expect_http_ok;
-use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_yaml::Value;
 use std::{fmt::Display, path::PathBuf};
 
 use crate::client::V7Methods;
+use crate::errors::DarwinV7Error;
 use crate::workflow::{WorkflowBuilder, WorkflowV2};
 
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
@@ -58,17 +58,32 @@ pub struct TeamAnnotationClasses {
 }
 
 impl TryFrom<(&Value, &Value)> for Team {
-    type Error = anyhow::Error;
+    type Error = DarwinV7Error;
 
-    fn try_from(value: (&Value, &Value)) -> Result<Self, Self::Error> {
-        let slug = value.0.as_str().context("Invalid team slug")?.to_string();
-        let api_key: Option<String> = match value.1.get("api_key") {
-            Some(key) => Some(key.as_str().context("Invalid api-key")?.to_string()),
+    fn try_from((team_slug, team): (&Value, &Value)) -> Result<Self, Self::Error> {
+        let slug = team_slug
+            .as_str()
+            .ok_or(DarwinV7Error::InvalidConfigError(
+                "Invalid team slug".to_string(),
+            ))?
+            .to_string();
+        let api_key: Option<String> = match team.get("api_key") {
+            Some(key) => Some(
+                key.as_str()
+                    .ok_or(DarwinV7Error::InvalidConfigError(
+                        "Invalid api-key".to_string(),
+                    ))?
+                    .to_string(),
+            ),
             None => None,
         };
-        let datasets_dir: Option<PathBuf> = match value.1.get("datasets_dir") {
+        let datasets_dir: Option<PathBuf> = match team.get("datasets_dir") {
             Some(key) => Some(PathBuf::from(
-                key.as_str().context("Invalid datasets_dir")?.to_string(),
+                key.as_str()
+                    .ok_or(DarwinV7Error::InvalidConfigError(
+                        "Invalid datasets_dir".to_string(),
+                    ))?
+                    .to_string(),
             )),
             None => None,
         };
@@ -81,13 +96,17 @@ impl TryFrom<(&Value, &Value)> for Team {
         })
     }
 }
+
 #[async_trait]
 pub trait TeamDescribeMethods<C>
 where
     C: V7Methods,
 {
-    async fn list_memberships(client: &C) -> Result<Vec<TeamMember>>;
-    async fn list_annotation_classes(&self, client: &C) -> Result<TeamAnnotationClasses>;
+    async fn list_memberships(client: &C) -> Result<Vec<TeamMember>, DarwinV7Error>;
+    async fn list_annotation_classes(
+        &self,
+        client: &C,
+    ) -> Result<TeamAnnotationClasses, DarwinV7Error>;
 }
 
 #[async_trait]
@@ -99,7 +118,7 @@ where
         &self,
         client: &C,
         class: &AnnotationClass,
-    ) -> Result<AnnotationClass>;
+    ) -> Result<AnnotationClass, DarwinV7Error>;
     // async fn delete_annotation_classes(
     //     &self,
     //     client: &C,
@@ -112,7 +131,11 @@ pub trait TeamWorkflowMethods<C>
 where
     C: V7Methods,
 {
-    async fn create_workflow(&self, client: &C, workflow: &WorkflowBuilder) -> Result<WorkflowV2>;
+    async fn create_workflow(
+        &self,
+        client: &C,
+        workflow: &WorkflowBuilder,
+    ) -> Result<WorkflowV2, DarwinV7Error>;
 }
 
 #[async_trait]
@@ -120,7 +143,11 @@ impl<C> TeamWorkflowMethods<C> for Team
 where
     C: V7Methods + std::marker::Sync,
 {
-    async fn create_workflow(&self, client: &C, workflow: &WorkflowBuilder) -> Result<WorkflowV2>
+    async fn create_workflow(
+        &self,
+        client: &C,
+        workflow: &WorkflowBuilder,
+    ) -> Result<WorkflowV2, DarwinV7Error>
     where
         C: V7Methods,
     {
@@ -128,14 +155,14 @@ where
             .post(&format!("v2/teams/{}/workflows", self.slug), workflow)
             .await?;
         // 201 is correct operation for this endpoint
-        if response.status() != 201 {
-            bail!(
-                "Invalid status code {}. Response: {}",
+        if response.status() == 201 {
+            Ok(response.json().await?)
+        } else {
+            Err(DarwinV7Error::HTTPError(
                 response.status(),
-                response.text().await?
-            )
+                response.text().await?,
+            ))
         }
-        Ok(response.json().await?)
     }
 }
 
@@ -161,14 +188,17 @@ where
     C: V7Methods + std::marker::Sync,
 {
     // This uses the authentication token
-    async fn list_memberships(client: &C) -> Result<Vec<TeamMember>> {
+    async fn list_memberships(client: &C) -> Result<Vec<TeamMember>, DarwinV7Error> {
         let response = client.get("memberships").await?;
 
         expect_http_ok!(response, Vec<TeamMember>)
     }
 
     // Relies upon the team id / slug
-    async fn list_annotation_classes(&self, client: &C) -> Result<TeamAnnotationClasses> {
+    async fn list_annotation_classes(
+        &self,
+        client: &C,
+    ) -> Result<TeamAnnotationClasses, DarwinV7Error> {
         // TODO: add query params
         let endpoint = format!("teams/{}/annotation_classes", self.slug);
         let response = client.get(&endpoint).await?;
@@ -192,7 +222,7 @@ where
         &self,
         client: &C,
         class: &AnnotationClass,
-    ) -> Result<AnnotationClass>
+    ) -> Result<AnnotationClass, DarwinV7Error>
     where
         C: V7Methods,
     {
@@ -236,13 +266,14 @@ pub struct MetadataSkeleton {
 }
 
 pub mod helpers {
-    use anyhow::Result;
-
-    use crate::client::V7Methods;
+    use crate::{client::V7Methods, errors::DarwinV7Error};
 
     use super::{Team, TeamDescribeMethods, TeamMember};
 
-    pub async fn find_team_members<C, F>(client: &C, func: F) -> Result<Vec<TeamMember>>
+    pub async fn find_team_members<C, F>(
+        client: &C,
+        func: F,
+    ) -> Result<Vec<TeamMember>, DarwinV7Error>
     where
         C: V7Methods + std::marker::Sync,
         F: Fn(&TeamMember) -> bool,
@@ -255,7 +286,10 @@ pub mod helpers {
             .collect::<Vec<TeamMember>>())
     }
 
-    pub async fn find_team_members_by_email<C>(client: &C, email: &str) -> Result<Vec<TeamMember>>
+    pub async fn find_team_members_by_email<C>(
+        client: &C,
+        email: &str,
+    ) -> Result<Vec<TeamMember>, DarwinV7Error>
     where
         C: V7Methods + std::marker::Sync,
     {
