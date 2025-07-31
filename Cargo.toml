@@ -1,6 +1,6 @@
 [package]
 name = "darwin-v7"
-version = "0.8.1"
+version = "0.9.0"
 edition = "2021"
 license = "MIT"
 description = "Unofficial rust client for the [V7 annotation platform](https://darwin.v7labs.com/)"

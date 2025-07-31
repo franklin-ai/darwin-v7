@@ -46,3 +46,7 @@
 ## v0.8.1
 
 - Fix broken crate publish v0.8.0
+
+## v0.9.0
+
+- Breaking change: A new error type, `DarwinV7Error`, has been introduced. All public APIs now use this error type, rather than `anyhow::Error`.
