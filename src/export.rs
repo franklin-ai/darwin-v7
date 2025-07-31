@@ -95,9 +95,10 @@ pub struct JsonExportV2 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use anyhow::Result;
+    use crate::errors::DarwinV7Error;
+
     #[test]
-    fn test_full_v7_export_v2_file() -> Result<()> {
+    fn test_full_v7_export_v2_file() -> Result<(), DarwinV7Error> {
         let contents = r#"
         {
           "version": "2.0",

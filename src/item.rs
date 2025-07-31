@@ -1,5 +1,5 @@
+use crate::errors::DarwinV7Error;
 use crate::workflow::StageType;
-use anyhow::{bail, Result};
 use fake::{Dummy, Fake, Faker};
 use serde::ser::SerializeMap;
 use serde::{de::MapAccess, de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
@@ -222,20 +222,22 @@ impl Display for DatasetItemStatus {
 }
 
 impl TryFrom<&str> for DatasetItemStatus {
-    type Error = anyhow::Error;
+    type Error = DarwinV7Error;
 
     fn try_from(value: &str) -> Result<Self, <DatasetItemStatus as TryFrom<&str>>::Error> {
-        Ok(match value.to_lowercase().as_str() {
-            "annotate" => Self::Annotate,
-            "archived" => Self::Archived,
-            "complete" => Self::Complete,
-            "error" => Self::Error,
-            "new" => Self::New,
-            "processing" => Self::Processing,
-            "review" => Self::Review,
-            "uploading" => Self::Uploading,
-            _ => bail!("Cannot convert DatasetItemStatus from {value}"),
-        })
+        match value.to_lowercase().as_str() {
+            "annotate" => Ok(Self::Annotate),
+            "archived" => Ok(Self::Archived),
+            "complete" => Ok(Self::Complete),
+            "error" => Ok(Self::Error),
+            "new" => Ok(Self::New),
+            "processing" => Ok(Self::Processing),
+            "review" => Ok(Self::Review),
+            "uploading" => Ok(Self::Uploading),
+            _ => Err(DarwinV7Error::InvalidDatasetItemStatusError(
+                value.to_string(),
+            )),
+        }
     }
 }
 

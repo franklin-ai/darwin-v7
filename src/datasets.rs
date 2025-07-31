@@ -3,6 +3,7 @@ use fake::Dummy;
 
 use crate::annotation::AnnotationClass;
 use crate::client::V7Methods;
+use crate::errors::DarwinV7Error;
 use crate::expect_http_ok;
 use crate::filter::Filter;
 use crate::imports::AnnotationImport;
@@ -11,7 +12,6 @@ use crate::item::{
 };
 use crate::team::TypeCount;
 use crate::workflow::{WorkflowMethods, WorkflowV2};
-use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use csv_async::AsyncReaderBuilder;
 use futures::io::Cursor;
@@ -329,7 +329,7 @@ pub struct ItemReport {
     pub url: Option<String>,
 }
 
-pub async fn item_reports_from_bytes(contents: &[u8]) -> Result<Vec<ItemReport>> {
+pub async fn item_reports_from_bytes(contents: &[u8]) -> Result<Vec<ItemReport>, DarwinV7Error> {
     let cursor = Cursor::new(contents);
     let mut rdr = AsyncReaderBuilder::new()
         .delimiter(b',')
@@ -349,7 +349,7 @@ pub async fn item_reports_from_bytes(contents: &[u8]) -> Result<Vec<ItemReport>>
 
 impl Dataset {
     #[allow(dead_code)]
-    pub async fn create_dataset<C>(client: &C, name: &str) -> Result<Dataset>
+    pub async fn create_dataset<C>(client: &C, name: &str) -> Result<Dataset, DarwinV7Error>
     where
         C: V7Methods,
     {
@@ -364,6 +364,39 @@ impl Dataset {
 
         expect_http_ok!(response, Dataset)
     }
+
+    fn _id(&self) -> Result<u32, DarwinV7Error> {
+        self.id.ok_or(DarwinV7Error::MissingValueError(
+            "Dataset is missing an ID".to_string(),
+        ))
+    }
+
+    fn _name(&self) -> Result<&str, DarwinV7Error> {
+        self.name
+            .as_ref()
+            .ok_or(DarwinV7Error::MissingValueError(
+                "Dataset is missing a name".to_string(),
+            ))
+            .map(|s| s.as_str())
+    }
+
+    fn _team_slug(&self) -> Result<&str, DarwinV7Error> {
+        self.team_slug
+            .as_ref()
+            .ok_or(DarwinV7Error::MissingValueError(
+                "Dataset is missing team slug".to_string(),
+            ))
+            .map(|s| s.as_str())
+    }
+
+    fn _slug(&self) -> Result<&str, DarwinV7Error> {
+        self.slug
+            .as_ref()
+            .ok_or(DarwinV7Error::MissingValueError(
+                "Dataset is missing slug".to_string(),
+            ))
+            .map(|s| s.as_str())
+    }
 }
 
 #[async_trait]
@@ -371,8 +404,12 @@ pub trait DatasetArchiveMethods<C>
 where
     C: V7Methods,
 {
-    async fn archive_items(&self, client: &C, filter: &Filter) -> Result<ArchiveResponseItems>;
-    async fn archive_dataset(&self, client: &C) -> Result<Dataset>;
+    async fn archive_items(
+        &self,
+        client: &C,
+        filter: &Filter,
+    ) -> Result<ArchiveResponseItems, DarwinV7Error>;
+    async fn archive_dataset(&self, client: &C) -> Result<Dataset, DarwinV7Error>;
 }
 
 #[async_trait]
@@ -380,27 +417,32 @@ pub trait DatasetDataMethods<C>
 where
     C: V7Methods,
 {
-    async fn assign_items(&self, client: &C, assignee_id: &u32, filter: &Filter) -> Result<()>;
-    async fn update_batch_size(&self, client: &C, size: &u32) -> Result<()>;
+    async fn assign_items(
+        &self,
+        client: &C,
+        assignee_id: &u32,
+        filter: &Filter,
+    ) -> Result<(), DarwinV7Error>;
+    async fn update_batch_size(&self, client: &C, size: &u32) -> Result<(), DarwinV7Error>;
     #[deprecated = "V2 of the V7 API requires use of `register_items_to_dataset`"]
     async fn add_data_to_dataset(
         &self,
         client: &C,
         data: Vec<AddDataPayload>,
         external_storage: String,
-    ) -> Result<AddDataItemsResponse>;
+    ) -> Result<AddDataItemsResponse, DarwinV7Error>;
     async fn register_items_to_dataset(
         &self,
         client: &C,
         data: Vec<ExistingSimpleItem>,
         external_storage: String,
-    ) -> Result<RegisterExistingItemResponse>;
+    ) -> Result<RegisterExistingItemResponse, DarwinV7Error>;
 
     async fn update_annotation_hotkeys(
         &self,
         client: &C,
         hotkeys: HashMap<String, String>,
-    ) -> Result<()>;
+    ) -> Result<(), DarwinV7Error>;
 
     /// Asynchronously imports an annotation into this dataset.
     ///
@@ -418,7 +460,7 @@ where
         client: &C,
         item_id: &str,
         annotation_import: &AnnotationImport,
-    ) -> Result<()>;
+    ) -> Result<(), DarwinV7Error>;
 }
 
 #[async_trait]
@@ -434,8 +476,8 @@ where
         include_authorship: bool,
         include_export_token: bool,
         filter: Option<&Filter>,
-    ) -> Result<()>;
-    async fn list_exports(&self, client: &C) -> Result<Vec<Option<Export>>>;
+    ) -> Result<(), DarwinV7Error>;
+    async fn list_exports(&self, client: &C) -> Result<Vec<Option<Export>>, DarwinV7Error>;
 }
 
 #[async_trait]
@@ -443,10 +485,14 @@ pub trait DatasetDescribeMethods<C>
 where
     C: V7Methods,
 {
-    async fn list_datasets(client: &C) -> Result<Vec<Option<Dataset>>>;
-    async fn list_dataset_items_v2(&self, client: &C) -> Result<Item>;
-    async fn show_dataset(client: &C, id: &u32) -> Result<Dataset>;
-    async fn update_instructions(&self, client: &C, instructions: &str) -> Result<()>;
+    async fn list_datasets(client: &C) -> Result<Vec<Option<Dataset>>, DarwinV7Error>;
+    async fn list_dataset_items_v2(&self, client: &C) -> Result<Item, DarwinV7Error>;
+    async fn show_dataset(client: &C, id: &u32) -> Result<Dataset, DarwinV7Error>;
+    async fn update_instructions(
+        &self,
+        client: &C,
+        instructions: &str,
+    ) -> Result<(), DarwinV7Error>;
 }
 
 #[async_trait]
@@ -454,15 +500,15 @@ pub trait DatasetWorkflowMethods<C>
 where
     C: V7Methods,
 {
-    async fn reset_to_new(&self, client: &C, filter: &Filter) -> Result<()>;
-    async fn get_workflow_v2(&self, client: &C) -> Result<Option<WorkflowV2>>;
+    async fn reset_to_new(&self, client: &C, filter: &Filter) -> Result<(), DarwinV7Error>;
+    async fn get_workflow_v2(&self, client: &C) -> Result<Option<WorkflowV2>, DarwinV7Error>;
     async fn set_stage_v2(
         &self,
         client: &C,
         stage_id: String,
         workflow_id: String,
         filters: Option<SetStageFilter>,
-    ) -> Result<SetStageResponse>;
+    ) -> Result<SetStageResponse, DarwinV7Error>;
 }
 
 #[async_trait]
@@ -470,7 +516,7 @@ pub trait DatasetItemReportMethods<C>
 where
     C: V7Methods,
 {
-    async fn get_item_reports(&self, client: &C) -> Result<Vec<ItemReport>>;
+    async fn get_item_reports(&self, client: &C) -> Result<Vec<ItemReport>, DarwinV7Error>;
 }
 
 #[async_trait]
@@ -480,27 +526,23 @@ where
 {
     /// The docs say a reason is required, but the call actually fails if it is provided
     /// https://docs.v7labs.com/v1.0/reference/archive
-    async fn archive_items(&self, client: &C, filter: &Filter) -> Result<ArchiveResponseItems> {
+    async fn archive_items(
+        &self,
+        client: &C,
+        filter: &Filter,
+    ) -> Result<ArchiveResponseItems, DarwinV7Error> {
         let payload = ArchiveItemPayload {
             filters: filter.clone(),
         };
 
-        let endpoint = &format!(
-            "v2/teams/{}/items/archive",
-            self.team_slug
-                .as_ref()
-                .context("Dataset is missing team slug")?
-        );
+        let endpoint = &format!("v2/teams/{}/items/archive", self._team_slug()?);
         let response = client.post(endpoint, &payload).await?;
         expect_http_ok!(response, ArchiveResponseItems)
     }
 
-    async fn archive_dataset(&self, client: &C) -> Result<Dataset> {
+    async fn archive_dataset(&self, client: &C) -> Result<Dataset, DarwinV7Error> {
         let response = client
-            .put::<String>(
-                &format!("datasets/{}/archive", &self.id.context("Id required")?),
-                None,
-            )
+            .put::<String>(&format!("datasets/{}/archive", self._id()?), None)
             .await?;
 
         expect_http_ok!(response, Dataset)
@@ -512,48 +554,49 @@ impl<C> DatasetDataMethods<C> for Dataset
 where
     C: V7Methods + std::marker::Sync,
 {
-    async fn assign_items(&self, client: &C, assignee_id: &u32, filter: &Filter) -> Result<()> {
+    async fn assign_items(
+        &self,
+        client: &C,
+        assignee_id: &u32,
+        filter: &Filter,
+    ) -> Result<(), DarwinV7Error> {
         let payload = AssignItemPayload {
             assignee_id: *assignee_id,
             filter: filter.clone(),
         };
 
         let response = client
-            .post(
-                &format!("datasets/{}/assign_items", self.id.context("Id required")?),
-                &payload,
-            )
+            .post(&format!("datasets/{}/assign_items", self._id()?), &payload)
             .await?;
 
-        let status = response.status();
-
         // 204 is correct operation for this endpoint
-        if status != 204 {
-            bail!("Invalid status code {status}")
+        if response.status() == 204 {
+            Ok(())
+        } else {
+            Err(DarwinV7Error::HTTPError(
+                response.status(),
+                response.text().await?,
+            ))
         }
-
-        Ok(())
     }
 
-    async fn update_batch_size(&self, client: &C, size: &u32) -> Result<()> {
+    async fn update_batch_size(&self, client: &C, size: &u32) -> Result<(), DarwinV7Error> {
         let mut payload = DatasetUpdate::from(self);
         payload.work_size = Some(*size); // this PUT path requires every parameter
                                          // even if we're not updating them
                                          // so we have to replicate the rest of the existing settings
 
         let response = client
-            .put(
-                &format!("datasets/{}", self.id.context("Id required")?),
-                Some(&payload),
-            )
+            .put(&format!("datasets/{}", self._id()?), Some(&payload))
             .await?;
-        let status = response.status();
-
-        if status != 200 {
-            bail!("Invalid status code {status}");
+        if response.status() == 200 {
+            Ok(())
+        } else {
+            Err(DarwinV7Error::HTTPError(
+                response.status(),
+                response.text().await?,
+            ))
         }
-
-        Ok(())
     }
 
     async fn add_data_to_dataset(
@@ -561,7 +604,7 @@ where
         client: &C,
         data: Vec<AddDataPayload>,
         external_storage: String,
-    ) -> Result<AddDataItemsResponse> {
+    ) -> Result<AddDataItemsResponse, DarwinV7Error> {
         let api_payload = AddDataItemsPayload {
             items: data,
             storage_name: external_storage,
@@ -569,10 +612,8 @@ where
 
         let endpoint = format!(
             "teams/{}/datasets/{}/data",
-            self.team_slug
-                .as_ref()
-                .context("Dataset is missing team slug")?,
-            self.slug.as_ref().context("Dataset is missing slug")?
+            self._team_slug()?,
+            self._slug()?
         );
 
         let response = client.put(&endpoint, Some(&api_payload)).await?;
@@ -585,21 +626,15 @@ where
         client: &C,
         data: Vec<ExistingSimpleItem>,
         external_storage_slug: String,
-    ) -> Result<RegisterExistingItemResponse> {
+    ) -> Result<RegisterExistingItemResponse, DarwinV7Error> {
         let api_payload = RegisterExistingItemPayload {
-            dataset_slug: self
-                .slug
-                .as_ref()
-                .context("Dataset is missing slug")?
-                .to_string(),
+            dataset_slug: self._slug()?.to_string(),
             storage_slug: external_storage_slug,
             items: data,
         };
         let endpoint = format!(
             "v2/teams/{}/items/register_existing_readonly",
-            self.team_slug
-                .as_ref()
-                .context("Dataset is missing team slug")?
+            self._team_slug()?
         );
         let response = client.post(&endpoint, &api_payload).await?;
 
@@ -610,20 +645,20 @@ where
         &self,
         client: &C,
         hotkeys: HashMap<String, String>,
-    ) -> Result<()> {
+    ) -> Result<(), DarwinV7Error> {
         let mut payload = DatasetUpdate::from(self);
         payload.annotation_hotkeys = Some(hotkeys);
         let response = client
-            .put(
-                &format!("datasets/{}", self.id.context("Dataset is missing Id")?),
-                Some(&payload),
-            )
+            .put(&format!("datasets/{}", self._id()?), Some(&payload))
             .await?;
-        let status = response.status();
-        if status != 200 {
-            bail!("Invalid status code {status}");
+        if response.status() == 200 {
+            Ok(())
+        } else {
+            Err(DarwinV7Error::HTTPError(
+                response.status(),
+                response.text().await?,
+            ))
         }
-        Ok(())
     }
 
     /// Asynchronously imports an annotation into a dataset.
@@ -644,20 +679,20 @@ where
         client: &C,
         item_id: &str,
         annotation_import: &AnnotationImport,
-    ) -> Result<()> {
+    ) -> Result<(), DarwinV7Error> {
         let endpoint = format!(
             "v2/teams/{team_slug}/items/{item_id}/import",
-            team_slug = self.team_slug.as_ref().with_context(|| format!(
-                "Dataset is missing team slug. dataset slug: {:?}",
-                self.slug
-            ))?
+            team_slug = self._team_slug()?
         );
         let response = client.post(&endpoint, annotation_import).await?;
-        let status = response.status();
-        if status != 200 {
-            bail!("Import Annotation: Invalid status code {status}");
+        if response.status() == 200 {
+            Ok(())
+        } else {
+            Err(DarwinV7Error::HTTPError(
+                response.status(),
+                response.text().await?,
+            ))
         }
-        Ok(())
     }
 }
 
@@ -674,11 +709,11 @@ where
         include_authorship: bool,
         include_export_token: bool,
         filter: Option<&Filter>,
-    ) -> Result<()> {
+    ) -> Result<(), DarwinV7Error> {
         let endpoint = format!(
             "v2/teams/{}/datasets/{}/exports",
-            self.team_slug.as_ref().context("Missing team slug")?,
-            self.slug.as_ref().context("Dataset is missing slug")?
+            self._team_slug()?,
+            self._slug()?
         );
 
         let payload = GenerateExportPayload {
@@ -691,22 +726,21 @@ where
 
         let response = client.post(&endpoint, &payload).await?;
 
-        if response.status() != 200 {
-            bail!(format!(
-                "Invalid status code {} {}",
+        if response.status() == 200 {
+            Ok(())
+        } else {
+            Err(DarwinV7Error::HTTPError(
                 response.status(),
-                response.text().await?
+                response.text().await?,
             ))
         }
-
-        Ok(())
     }
 
-    async fn list_exports(&self, client: &C) -> Result<Vec<Option<Export>>> {
+    async fn list_exports(&self, client: &C) -> Result<Vec<Option<Export>>, DarwinV7Error> {
         let endpoint = format!(
             "v2/teams/{}/datasets/{}/exports",
-            self.team_slug.as_ref().context("Missing team slug")?,
-            self.slug.as_ref().context("Dataset is missing slug")?
+            self._team_slug()?,
+            self._slug()?
         );
 
         let response = client.get(&endpoint).await?;
@@ -720,41 +754,46 @@ impl<C> DatasetDescribeMethods<C> for Dataset
 where
     C: V7Methods + std::marker::Sync,
 {
-    async fn list_datasets(client: &C) -> Result<Vec<Option<Dataset>>> {
+    async fn list_datasets(client: &C) -> Result<Vec<Option<Dataset>>, DarwinV7Error> {
         let response = client.get("datasets").await?;
 
         expect_http_ok!(response, Vec<Option<Dataset>>)
     }
-    async fn list_dataset_items_v2(&self, client: &C) -> Result<Item> {
+    async fn list_dataset_items_v2(&self, client: &C) -> Result<Item, DarwinV7Error> {
         let response = client
             .get(&format!(
                 "v2/teams/{}/items?dataset_ids={}",
-                self.team_slug.as_ref().context("Missing team slug")?,
-                self.id.context("Dataset is missing Id")?
+                self._team_slug()?,
+                self._id()?
             ))
             .await?;
 
         expect_http_ok!(response, Item)
     }
 
-    async fn show_dataset(client: &C, id: &u32) -> Result<Dataset> {
+    async fn show_dataset(client: &C, id: &u32) -> Result<Dataset, DarwinV7Error> {
         let response = client.get(&format!("datasets/{id}")).await?;
 
         expect_http_ok!(response, Dataset)
     }
-    async fn update_instructions(&self, client: &C, instructions: &str) -> Result<()> {
+    async fn update_instructions(
+        &self,
+        client: &C,
+        instructions: &str,
+    ) -> Result<(), DarwinV7Error> {
         let mut payload = DatasetUpdate::from(self);
         payload.instructions = Some(instructions.to_string());
         let response = client
-            .put(
-                &format!("datasets/{}", self.id.context("Id required")?),
-                Some(&payload),
-            )
+            .put(&format!("datasets/{}", self._id()?), Some(&payload))
             .await?;
-        if response.status() != 200 {
-            bail!("Invalid status code {}", response.status());
+        if response.status() == 200 {
+            Ok(())
+        } else {
+            Err(DarwinV7Error::HTTPError(
+                response.status(),
+                response.text().await?,
+            ))
         }
-        Ok(())
     }
 }
 
@@ -763,34 +802,32 @@ impl<C> DatasetWorkflowMethods<C> for Dataset
 where
     C: V7Methods + std::marker::Sync,
 {
-    async fn reset_to_new(&self, client: &C, filter: &Filter) -> Result<()> {
+    async fn reset_to_new(&self, client: &C, filter: &Filter) -> Result<(), DarwinV7Error> {
         let payload = ResetToNewPayload {
             filter: filter.clone(),
         };
 
         let response = client
             .put(
-                &format!(
-                    "datasets/{}/items/move_to_new",
-                    self.id.context("Dataset missing Id")?
-                ),
+                &format!("datasets/{}/items/move_to_new", self._id()?),
                 Some(&payload),
             )
             .await?;
 
-        let status = response.status();
-
         // 204 is correct operation for this endpoint
-        if status != 204 {
-            bail!("Invalid status code {status}")
+        if response.status() == 204 {
+            Ok(())
+        } else {
+            Err(DarwinV7Error::HTTPError(
+                response.status(),
+                response.text().await?,
+            ))
         }
-
-        Ok(())
     }
 
-    async fn get_workflow_v2(&self, client: &C) -> Result<Option<WorkflowV2>> {
+    async fn get_workflow_v2(&self, client: &C) -> Result<Option<WorkflowV2>, DarwinV7Error> {
         let workflows = WorkflowV2::get_workflows(client).await?;
-        let dataset_name = self.name.as_ref().context("Missing dataset name")?;
+        let dataset_name = self._name()?;
         Ok(workflows
             .into_iter()
             .filter(|workflow| workflow.dataset.is_some())
@@ -799,7 +836,7 @@ where
                     .dataset
                     .as_ref()
                     .expect("No associated dataset to workflow");
-                dataset.name.as_ref() == Some(dataset_name)
+                dataset.name.as_deref() == Some(dataset_name)
             })
             .collect::<Vec<_>>()
             .first()
@@ -812,16 +849,12 @@ where
         stage_id: String,
         workflow_id: String,
         filters: Option<SetStageFilter>,
-    ) -> Result<SetStageResponse> {
-        let filters = if filters.is_none() {
-            SetStageFilter {
-                dataset_ids: vec![self.id.context("Dataset missing Id")?],
-                select_all: true,
-                workflow_stage_ids: None,
-            }
-        } else {
-            filters.context("Invalid filter to set stage")?
-        };
+    ) -> Result<SetStageResponse, DarwinV7Error> {
+        let filters = filters.unwrap_or(SetStageFilter {
+            dataset_ids: vec![self._id()?],
+            select_all: true,
+            workflow_stage_ids: None,
+        });
 
         let payload = SetStagePayloadV2 {
             filters,
@@ -840,19 +873,20 @@ impl<C> DatasetItemReportMethods<C> for Dataset
 where
     C: V7Methods + std::marker::Sync,
 {
-    async fn get_item_reports(&self, client: &C) -> Result<Vec<ItemReport>> {
+    async fn get_item_reports(&self, client: &C) -> Result<Vec<ItemReport>, DarwinV7Error> {
         let endpoint = format!(
             "teams/{}/datasets/{}/item_reports",
-            self.team_slug.as_ref().context("Missing team slug")?,
-            self.slug.as_ref().context("Dataset missing slug")?
+            self._team_slug()?,
+            self._slug()?
         );
         let response = client.get(&endpoint).await?;
         let status = response.status();
         let result = response.text().await?;
-        if status != 200 {
-            bail!(format!("Invalid status code {} {}", status, result))
-        } else {
+
+        if status == 200 {
             item_reports_from_bytes(result.as_bytes()).await
+        } else {
+            Err(DarwinV7Error::HTTPError(status, result))
         }
     }
 }
