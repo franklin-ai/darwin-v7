@@ -1,6 +1,6 @@
 # darwin-v7
 
-Unofficial rust client for the [V7 annotation platform](https://darwin.v7labs.com/)
+Unofficial rust client for the [V7 annotation platform](https://darwin.v7labs.com/) (_This project is no longer maintained._)
 
 ## 🚧 UNDER CONSTRUCTION
 

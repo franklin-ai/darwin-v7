@@ -50,3 +50,7 @@
 ## v0.9.0
 
 - Breaking change: A new error type, `DarwinV7Error`, has been introduced. All public APIs now use this error type, rather than `anyhow::Error`.
+
+## v0.9.1
+
+- Marking project as no longer maintained.

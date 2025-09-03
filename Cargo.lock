@@ -194,7 +194,7 @@ dependencies = [
 
 [[package]]
 name = "darwin-v7"
-version = "0.9.0"
+version = "0.9.1+deprecated"
 dependencies = [
  "async-trait",
  "csv-async",
